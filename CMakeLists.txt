@@ -74,13 +74,9 @@ add_subdirectory (src/executor)
 include_directories ("${PROJECT_SOURCE_DIR}/test")
 add_subdirectory (test)
 
-include_directories ("${PROJECT_SOURCE_DIR}/test/common")
-add_subdirectory (test/common)
-
-include_directories ("${PROJECT_SOURCE_DIR}/test/common")
-add_subdirectory (test/dispatcher)
-
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client Common)
+add_subdirectory (test/common)
+add_subdirectory (test/dispatcher)
 
 # Dispatcher Executable
 add_executable (dispatcher src/dispatcher/main.cxx)
@@ -124,9 +120,6 @@ target_link_libraries (MultiUserSingleJobTypeSmall ${EXTRA_LIBS} TestLib)
 add_executable (MultiUserSingleJobTypeLarge test/MultiUserSingleJobTypeLarge.cpp)
 target_link_libraries (MultiUserSingleJobTypeLarge ${EXTRA_LIBS} TestLib)
 
-add_executable (DispatcherTest test/dispatcher/DispatcherTest.cpp)
-target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
-
 add_executable (OptionPricing test/OptionPricingTest.cpp)
 target_link_libraries (OptionPricing ${EXTRA_LIBS} TestLib)
 
@@ -135,9 +128,6 @@ target_link_libraries (OptionPricingJlo ${EXTRA_LIBS} TestLib)
 
 add_executable (TerminateServer test/TerminateServer.cpp)
 target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
-
-add_executable(ConcurrentDequeTest test/common/ConcurrentDequeTest.cpp)
-target_link_libraries(ConcurrentDequeTest ${EXTRA_LIBS} TestLib)
 
 enable_testing ()
 
