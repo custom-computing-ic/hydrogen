@@ -35,25 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# Escaping for special characters.
-EQUALS = =
-
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /homes/pg1709/workspaces/elastic-dfe-dispatcher
+CMAKE_SOURCE_DIR = /home/paul-g/workspaces/elastic-dfe-dispatcher
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /homes/pg1709/workspaces/elastic-dfe-dispatcher
+CMAKE_BINARY_DIR = /home/paul-g/workspaces/elastic-dfe-dispatcher
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -72,14 +66,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(CMAKE_COMMAND) -E cmake_progress_start /homes/pg1709/workspaces/elastic-dfe-dispatcher/CMakeFiles /homes/pg1709/workspaces/elastic-dfe-dispatcher/src/dispatcher/CMakeFiles/progress.marks
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /homes/pg1709/workspaces/elastic-dfe-dispatcher/CMakeFiles 0
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(CMAKE_COMMAND) -E cmake_progress_start /home/paul-g/workspaces/elastic-dfe-dispatcher/CMakeFiles /home/paul-g/workspaces/elastic-dfe-dispatcher/src/dispatcher/CMakeFiles/progress.marks
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/paul-g/workspaces/elastic-dfe-dispatcher/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/clean
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/clean
 .PHONY : clean
 
 # The main clean target
@@ -88,22 +82,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/preinstall
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/preinstall
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/dispatcher/CMakeFiles/Dispatcher.dir/rule:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/CMakeFiles/Dispatcher.dir/rule
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f CMakeFiles/Makefile2 src/dispatcher/CMakeFiles/Dispatcher.dir/rule
 .PHONY : src/dispatcher/CMakeFiles/Dispatcher.dir/rule
 
 # Convenience name for target.
@@ -112,7 +106,7 @@ Dispatcher: src/dispatcher/CMakeFiles/Dispatcher.dir/rule
 
 # fast build rule for target.
 Dispatcher/fast:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/build
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/build
 .PHONY : Dispatcher/fast
 
 Dispatcher.o: Dispatcher.cpp.o
@@ -120,7 +114,7 @@ Dispatcher.o: Dispatcher.cpp.o
 
 # target to build an object file
 Dispatcher.cpp.o:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/Dispatcher.cpp.o
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/Dispatcher.cpp.o
 .PHONY : Dispatcher.cpp.o
 
 Dispatcher.i: Dispatcher.cpp.i
@@ -128,7 +122,7 @@ Dispatcher.i: Dispatcher.cpp.i
 
 # target to preprocess a source file
 Dispatcher.cpp.i:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/Dispatcher.cpp.i
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/Dispatcher.cpp.i
 .PHONY : Dispatcher.cpp.i
 
 Dispatcher.s: Dispatcher.cpp.s
@@ -136,7 +130,7 @@ Dispatcher.s: Dispatcher.cpp.s
 
 # target to generate assembly for a file
 Dispatcher.cpp.s:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/Dispatcher.cpp.s
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(MAKE) -f src/dispatcher/CMakeFiles/Dispatcher.dir/build.make src/dispatcher/CMakeFiles/Dispatcher.dir/Dispatcher.cpp.s
 .PHONY : Dispatcher.cpp.s
 
 # Help Target
@@ -162,6 +156,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /homes/pg1709/workspaces/elastic-dfe-dispatcher && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/paul-g/workspaces/elastic-dfe-dispatcher && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

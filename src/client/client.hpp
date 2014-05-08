@@ -1,3 +1,3 @@
 /** Contains client stubs. */
 
-int movingAverage();
+void movingAverage();

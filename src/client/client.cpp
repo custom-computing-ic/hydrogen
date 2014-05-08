@@ -2,11 +2,11 @@
 
 #include <iostream>
 
-#include <scheduler>
+#include <Scheduler.hpp>
 
-int movingAverage() {
+void movingAverage() {
   using namespace std;
-  cout << "Doing " << endl;
-  const Scheduler &scheduler = Scheduler();
+  cout << "client::movingAverage" << endl;
+  Scheduler scheduler;
   scheduler.movingAverage();
 }
