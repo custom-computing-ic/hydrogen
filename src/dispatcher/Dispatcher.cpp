@@ -1,4 +1,5 @@
-#include "Dispatcher.hpp"
+#include <Dispatcher.hpp>
+#include <message.hpp>
 
 #include <iostream>
 #include <sys/types.h>
@@ -8,15 +9,6 @@
 #include <strings.h>
 
 using namespace std;
-
-#pragma pack(1)
-typedef struct msg {
-  int msgId; // based on msg id we know what the data means
-  int dataSize;
-  char data[];
-} msg_t;
-#pragma pack(0)
-
 
 void Dispatcher::movingAverage() {
   cout << "Dispatcher::MovingAverage" << endl;

@@ -9,8 +9,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <Scheduler.hpp>
-
 using namespace std;
 
 #pragma pack(1)
