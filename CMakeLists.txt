@@ -12,6 +12,12 @@ add_subdirectory (src/client)
 
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client)
 
+# Dispatcher executable
+add_executable (dispatcher src/dispatcher/main.cxx)
+target_link_libraries (dispatcher Dispatcher)
+
+
+# Tests
 add_executable (MovingAverageOneDfe test/integration/movingAverageOneDfe/main.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS})
 

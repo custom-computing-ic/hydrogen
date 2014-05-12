@@ -11,7 +11,7 @@ int main() {
   int t = 10;
 
   for (int i = 0; i < t; i++) {
-    movingAverage();
+    movingAverage(4, data);
   }
 
   return 0;
