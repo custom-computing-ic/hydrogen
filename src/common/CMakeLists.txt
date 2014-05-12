@@ -1,1 +1,1 @@
-add_library(Common message.cpp)
+add_library(Common message.cpp Server.cpp)
