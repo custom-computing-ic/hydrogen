@@ -1,4 +1,5 @@
-#include "client.hpp"
+#include <client.hpp>
+#include <message.hpp>
 
 #include <iostream>
 #include <cstdio>
@@ -10,14 +11,6 @@
 #include <sys/types.h>
 
 using namespace std;
-
-#pragma pack(1)
-typedef struct msg {
-  int msgId; // based on msg id we know what the data means
-  int dataSize;
-  char data[];
-} msg_t;
-#pragma pack(0)
 
 static void error(char *err) {
   cerr << err << endl;
