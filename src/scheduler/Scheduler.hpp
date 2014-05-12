@@ -5,8 +5,6 @@
 
 class Scheduler {
 
-  Dispatcher dispatcher;
-
 public:
 
   Scheduler() {}

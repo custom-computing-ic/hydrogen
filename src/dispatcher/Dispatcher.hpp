@@ -1,14 +1,18 @@
 #ifndef _DISPATCHER_H_
 #define _DISPATCHER_H_
 
-class Dispatcher {
+#include <Server.hpp>
+#include <string>
 
-  void mainServerLoop(int sockfd);
+class Dispatcher : public Server {
 
 public:
-  void movingAverage();
 
-  void start(int port);
+  Dispatcher(int port, const std::string &name) : super(port, name) {}
+
+  virtual void handleRequest(msg_t& request);
+
+  void movingAverage();
 
 };
 

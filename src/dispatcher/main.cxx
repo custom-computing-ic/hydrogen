@@ -1,13 +1,17 @@
 #include <Dispatcher.hpp>
 
+#include <string>
+
 using namespace std;
 
 int main() {
 
-  Dispatcher d;
-
   int portnumber = 8111;
-  d.start(portnumber);
+
+  const string& name = string("Dispatcher - maxnode1");
+  Dispatcher d(portnumber, name);
+
+  d.start();
 
   return 0;
 }

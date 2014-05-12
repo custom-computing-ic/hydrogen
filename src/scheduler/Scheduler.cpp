@@ -6,5 +6,4 @@ using namespace std;
 
 void Scheduler::movingAverage() {
   cout << "Scheduler::movingAverage" << endl;
-  dispatcher.movingAverage();
 }
