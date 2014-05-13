@@ -1,6 +1,9 @@
 #include <Client.hpp>
 
 #include <iostream>
+/* For read() */
+#include <unistd.h>
+
 #include <netdb.h>
 #include <netinet/in.h>
 #include <cstdlib>
