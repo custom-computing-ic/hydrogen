@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 using namespace std;
+<<<<<<< HEAD
 
 void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
   Client::send(&request, request.sizeBytes());
@@ -43,11 +44,13 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
 
 void Scheduler::start() {
   // Order matters, since the server blocks waiting for requests
-  Client::start();
+  for (auto it = resPool->begin(); it != resPool->end(); it++)
+    (*it)->start();
   Server::start();
 }
 
 void Scheduler::stop() {
-  Client::stop();
+  for (auto it = resPool->begin(); it != resPool->end(); it++)
+    (*it)->start();  
   Server::stop();
 }
