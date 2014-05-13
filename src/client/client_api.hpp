@@ -1,5 +1,5 @@
-#ifndef _CLIENT_H_
-#define _CLIENT_H_
+#ifndef _CLIENT_API_H_
+#define _CLIENT_API_H_
 
 /** Contains client stubs. */
 

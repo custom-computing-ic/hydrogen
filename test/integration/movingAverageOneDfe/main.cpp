@@ -1,5 +1,5 @@
 /** End to end test for moving average */
-#include <client.hpp>
+#include <client_api.hpp>
 
 using namespace std;
 
