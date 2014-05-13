@@ -12,7 +12,7 @@ public:
 
   virtual void handleRequest(msg_t& message, msg_t& response);
 
-  void movingAverage();
+  void movingAverage(int n, int size, int *data, int *out);
 };
 
 

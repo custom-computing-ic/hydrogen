@@ -6,8 +6,11 @@
 
 class Client {
 
-  int sockfd, portNumber;
+  int portNumber;
   const std::string& name;
+
+protected:
+  int sockfd;
 
 public:
 

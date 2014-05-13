@@ -1,6 +1,7 @@
 #include <Server.hpp>
 
 #include <iostream>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -68,29 +69,19 @@ void Server::mainServerLoop() {
       // rebuild msg
       msg = (msg_t*)buffer;
       cout << "Received message:" << endl;
-      cout << "  Id: " << msg->msgId;
-      cout << "  Data size: " << msg->dataSize << endl;
-      cout << "  Params size: " << msg->paramsSize << endl;
-      cout << "  Data: ";
-      for (int i = 0; i < msg->dataSize; i++) {
-        cout << *(((int *)msg->data) + i) << " ";
-      }
-      cout << endl;
-      cout << "  Params: ";
-      for (int i = msg->dataSize; i < msg->dataSize + msg->paramsSize; i++) {
-        cout << *(((int *)msg->data) + i) << " ";
-      }
-      cout << endl;
+      msg->print();
 
       n = write(newsockfd,"Ack", 3);
       if (n < 0)
         cout << "ERROR writing to socket" << endl;
 
-      msg_t response;
-      handleRequest(*msg, response);
+      int sizeBytes = sizeof(msg_t) + msg->dataSize * sizeof(int);
+      msg_t* response = (msg_t *)malloc(sizeBytes);
+      handleRequest(*msg, *response);
 
-      int sizeBytes = sizeof(msg_t) + response.dataSize * sizeof(int);
-      //      n = send(newsockfd, &response,  sizeBytes, 0);
+      cout << "Handled request. Sending response: " << endl;
+      response->print();
+      n = send(newsockfd, response,  sizeBytes, 0);
     } while (msg!= NULL && msg->msgId != MSG_DONE && !shuttingDown);
     cout << "Closing connection " << newsockfd << endl;
     close(newsockfd);
