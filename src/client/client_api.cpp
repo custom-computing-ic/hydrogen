@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void movingAverage(int n, int* data) {
+void movingAverage(int n, int size, int* data, int* out) {
   cout << "client - Send job :: movingAverage" << endl;
 
   int sizeBytes = sizeof(msg_t) + n * sizeof(int);
@@ -29,5 +29,6 @@ void movingAverage(int n, int* data) {
   Client c(portNumber, name);
   c.start();
   c.send(msg, sizeBytes);
+  c.getResult(out);
   c.stop();
 }

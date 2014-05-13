@@ -3,6 +3,6 @@
 
 /** Contains client stubs. */
 
-void movingAverage(int n, int* data);
+void movingAverage(int n, int size, int* data, int* out);
 
 #endif /* _CLIENT_H_ */

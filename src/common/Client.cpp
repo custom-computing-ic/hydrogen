@@ -68,3 +68,9 @@ void Client::stop() {
 
   ::close(sockfd);
 }
+
+void Client::getResult(void* out) {
+  // Need to wait to get the result
+  int size = 6;
+  memset(out, 0, size * sizeof(int));
+}

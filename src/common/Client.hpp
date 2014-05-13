@@ -29,6 +29,8 @@ public:
 
   /** Closes connection to taret host **/
   virtual void stop();
+
+  virtual void getResult(void* out);
 };
 
 #endif /* _CLIENT_H_ */
