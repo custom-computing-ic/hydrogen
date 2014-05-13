@@ -16,7 +16,7 @@ void movingAverage(int n, int* data) {
   cout << "Size bytes " << sizeBytes << endl;
   msg_t *msg = (msg_t *)malloc(sizeBytes);
 
-  msg->msgId = 0;
+  msg->msgId = MSG_MOVING_AVG;
   msg->dataSize = n;
   memcpy(msg->data, data, sizeof(int) * n);
 

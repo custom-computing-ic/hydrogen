@@ -11,7 +11,7 @@
 using namespace std;
 
 static void error(string err) {
-  cerr << err << endl;
+  cout << err << endl;
 }
 
 void Client::send (msg_t *message, int sizeBytes) {
@@ -21,6 +21,7 @@ void Client::send (msg_t *message, int sizeBytes) {
     error("ERROR writing to socket");
 
   char buffer[256];
+  cout << "Waiting to read" << endl;
   n = read(sockfd,buffer,255);
   buffer[3] = '\0';
   if (n < 0)
@@ -58,5 +59,12 @@ void Client::start() {
 
 void Client::stop() {
   cout << "Client::shutting down..." << endl;
+
+  // let the server know we're done
+  msg_t msg;
+  msg.msgId = MSG_DONE;
+  msg.dataSize = 0;
+  send(&msg, sizeof(msg_t));
+
   ::close(sockfd);
 }

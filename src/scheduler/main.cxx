@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <csignal>
 
 using namespace std;
 
@@ -20,6 +21,12 @@ int main(int argc, char** argv) {
     cout << "Usage ./scheduler <portNumber> <dispatcherPortNumber>" << endl;
     return 1;
   }
+
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = kill_handler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
 
   int portnumber = atoi(argv[1]);
   int dispatcherPortNumber = atoi(argv[2]);

@@ -20,7 +20,7 @@ void Server::start() {
   cout << "Sockfd:   " << sockfd << endl;
 
   if (sockfd < 0)
-    cerr << "ERROR opening socket" << endl;
+    cout << "ERROR opening socket" << endl;
 
   struct sockaddr_in serv_addr;
 
@@ -30,7 +30,7 @@ void Server::start() {
 
   if (bind(sockfd, (struct sockaddr *) &serv_addr,
            sizeof(serv_addr)) < 0)
-    cerr << "ERROR on binding" << endl;
+    cout << "ERROR on binding" << endl;
 
   listen(sockfd, 5);
   mainServerLoop();
@@ -47,37 +47,43 @@ void Server::mainServerLoop() {
       continue;
 
     if (newsockfd < 0) {
-      cerr << "ERROR on accept";
+      cout << "ERROR on accept";
       break;
     }
 
-    int maxLen = 2048;
-    char buffer[maxLen];
-    bzero(buffer, maxLen);
-    int n = read(newsockfd, buffer, maxLen);
-    if (n < 0) {
-      cerr << "ERROR reading from socket";
-      continue;
-    }
+    msg_t* msg = NULL;
+    do {
+      int maxLen = 2048;
+      char buffer[maxLen];
+      bzero(buffer, maxLen);
+      int n = read(newsockfd, buffer, maxLen);
+      if (n < 0) {
+        cout << "ERROR reading from socket";
+        continue;
+      }
 
-    // rebuild msg
-    msg_t* msg = (msg_t*)buffer;
+      // rebuild msg
+      msg = (msg_t*)buffer;
+      cout << "Received message:" << endl;
+      cout << "  Id: " << msg->msgId;
+      cout << "  Data size: " << msg->dataSize << endl;
+      cout << "  Data: ";
+      for (int i = 0; i < msg->dataSize; i++) {
+        cout << *(((int *)msg->data) + i) << " ";
+      }
+      cout << endl;
 
-    cout << "Received message:" << endl;
-    cout << "  Id: " << msg->msgId;
-    cout << "  Data size: " << msg->dataSize << endl;
-    cout << "  Data: ";
-    for (int i = 0; i < msg->dataSize; i++) {
-      cout << *(((int *)msg->data) + i) << " ";
-    }
-    cout << endl;
+      n = write(newsockfd,"Ack", 3);
+      if (n < 0)
+        cout << "ERROR writing to socket" << endl;
 
-    n = write(newsockfd,"Ack", 3);
-    if (n < 0)
-      cerr << "ERROR writing to socket" << endl;
-
-    handleRequest(*msg);
+      handleRequest(*msg);
+    } while (msg!= NULL && msg->msgId != MSG_DONE);
+    cout << msg << endl;
+    cout << msg->msgId << endl;
+    cout << "Closing connection" << endl;
     close(newsockfd);
+
   }
 }
 

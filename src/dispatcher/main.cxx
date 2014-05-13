@@ -23,7 +23,6 @@ int main(int argc, char** argv) {
   }
 
   struct sigaction sigIntHandler;
-
   sigIntHandler.sa_handler = kill_handler;
   sigemptyset(&sigIntHandler.sa_mask);
   sigIntHandler.sa_flags = 0;
