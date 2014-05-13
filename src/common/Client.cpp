@@ -15,14 +15,14 @@ static void error(string err) {
 }
 
 void Client::send (msg_t *message, int sizeBytes) {
-  cout << "Sending to " << sockfd << endl;
+  cout << "Sending " << sizeBytes << " to " << sockfd << endl;
   int n = ::send(sockfd, message, sizeBytes, 0);
   if (n < 0)
     error("ERROR writing to socket");
 
   char buffer[256];
-  cout << "Waiting to read" << endl;
-  n = read(sockfd,buffer,255);
+  cout << "Waiting for reply... ";
+  n = read(sockfd, buffer, 255);
   buffer[3] = '\0';
   if (n < 0)
     cout << "ERROR reading from socket" << endl;

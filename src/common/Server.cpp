@@ -43,14 +43,17 @@ void Server::mainServerLoop() {
   while (!shuttingDown) {
     newsockfd = accept(sockfd, NULL, NULL);
 
-    if (shuttingDown)
-      continue;
+    if (shuttingDown) {
+      close(newsockfd);
+      break;
+    }
 
     if (newsockfd < 0) {
       cout << "ERROR on accept";
       break;
     }
 
+    // TOOD fork here to handle the request
     msg_t* msg = NULL;
     do {
       int maxLen = 2048;
@@ -78,12 +81,9 @@ void Server::mainServerLoop() {
         cout << "ERROR writing to socket" << endl;
 
       handleRequest(*msg);
-    } while (msg!= NULL && msg->msgId != MSG_DONE);
-    cout << msg << endl;
-    cout << msg->msgId << endl;
-    cout << "Closing connection" << endl;
+    } while (msg!= NULL && msg->msgId != MSG_DONE && !shuttingDown);
+    cout << "Closing connection " << newsockfd << endl;
     close(newsockfd);
-
   }
 }
 
