@@ -10,10 +10,9 @@ public:
 
   Dispatcher(int port, const std::string &name) : super(port, name) {}
 
-  virtual void handleRequest(msg_t& request);
+  virtual void handleRequest(msg_t& message, msg_t& response);
 
   void movingAverage();
-
 };
 
 

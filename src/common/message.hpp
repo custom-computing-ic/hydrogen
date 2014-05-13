@@ -10,7 +10,13 @@ const int MSG_MOVING_AVG = 2;
 typedef struct msg {
   int msgId; // based on msg id we know what the data means
   int dataSize;
+  int paramsSize;
   char data[];
+
+  int sizeBytes() {
+    return sizeof(msg) + (dataSize + paramsSize) * sizeof(int);
+  }
+
 } msg_t;
 #pragma pack(0)
 

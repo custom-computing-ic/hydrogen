@@ -14,7 +14,9 @@ void Dispatcher::movingAverage() {
   cout << "Dispatcher::MovingAverage" << endl;
 }
 
-void Dispatcher::handleRequest(msg_t& message) {
+void Dispatcher::handleRequest(msg_t& message, msg_t& response) {
   cout << "Handling request " << endl;
-  movingAverage();
+
+  if (message.msgId == MSG_MOVING_AVG)
+    movingAverage();
 }

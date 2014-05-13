@@ -70,8 +70,14 @@ void Server::mainServerLoop() {
       cout << "Received message:" << endl;
       cout << "  Id: " << msg->msgId;
       cout << "  Data size: " << msg->dataSize << endl;
+      cout << "  Params size: " << msg->paramsSize << endl;
       cout << "  Data: ";
       for (int i = 0; i < msg->dataSize; i++) {
+        cout << *(((int *)msg->data) + i) << " ";
+      }
+      cout << endl;
+      cout << "  Params: ";
+      for (int i = msg->dataSize; i < msg->dataSize + msg->paramsSize; i++) {
         cout << *(((int *)msg->data) + i) << " ";
       }
       cout << endl;
@@ -80,7 +86,11 @@ void Server::mainServerLoop() {
       if (n < 0)
         cout << "ERROR writing to socket" << endl;
 
-      handleRequest(*msg);
+      msg_t response;
+      handleRequest(*msg, response);
+
+      int sizeBytes = sizeof(msg_t) + response.dataSize * sizeof(int);
+      //      n = send(newsockfd, &response,  sizeBytes, 0);
     } while (msg!= NULL && msg->msgId != MSG_DONE && !shuttingDown);
     cout << "Closing connection " << newsockfd << endl;
     close(newsockfd);

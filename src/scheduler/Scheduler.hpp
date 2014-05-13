@@ -18,7 +18,7 @@ public:
     Client::super(dispatcherPortNumber, dispatcherHostname)
   {}
 
-  virtual void handleRequest(msg_t& request);
+  virtual void handleRequest(msg_t& request, msg_t& response);
 
   virtual void start();
 

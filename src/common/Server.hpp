@@ -26,7 +26,7 @@ public:
   virtual ~Server() {
   }
 
-  virtual void handleRequest(msg_t& request)=0;
+  virtual void handleRequest(msg_t& request, msg_t& response)=0;
 
   virtual void start();
 
