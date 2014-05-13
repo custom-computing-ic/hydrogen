@@ -6,29 +6,38 @@
 
 using namespace std;
 
+void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
+  Client::send(&request, request.sizeBytes());
+  // wait for reply back
+  // XXX determine buffer size dynamically
+  char buffer[1024];
+  bzero(buffer, 1024);
+  int n = read(Client::sockfd, buffer, 1024);
+
+  msg_t* rsp = (msg_t*)buffer;
+  response.msgId = rsp->msgId;
+  response.dataSize = rsp->dataSize;
+  response.paramsSize = 0;
+  memcpy(response.data, rsp->data, rsp->sizeBytes());
+
+}
+
+
+
 void Scheduler::handleRequest(msg_t& request, msg_t& response) {
-  cout << "Scheduler::movingAverage" << endl;
-  cout << "Sending request to dispatcher now" << endl;
+  cout << "Scheduler recieved request msgID[" <<  request.msgId << "]" << endl;
 
-  if (request.msgId != MSG_DONE) {
-    // don't terminate the connection between the scheduler and dispatcher
-    send(&request, request.sizeBytes());
-
-    // wait for reply back
-    // XXX determine buffer size dynamically
-    char buffer[1024];
-    bzero(buffer, 1024);
-    int n = read(Client::sockfd, buffer, 1024);
-
-    msg_t* rsp = (msg_t*)buffer;
-    response.msgId = rsp->msgId;
-    response.dataSize = rsp->dataSize;
-    response.paramsSize = 0;
-    memcpy(response.data, rsp->data, rsp->dataBytes());
-  } else {
+  switch(request.msgId) {
+    case MSG_DONE:
     response.msgId = MSG_ACK;
     response.dataSize = 0;
     response.paramsSize = 0;
+    break;
+    case MSG_ACK:
+      break;
+    default:
+      cout << "Request added to runQ" << endl ;
+      this->addToReadyQ(request,response);
   }
 }
 

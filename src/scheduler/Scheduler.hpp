@@ -19,7 +19,7 @@ public:
   {}
 
   virtual void handleRequest(msg_t& request, msg_t& response);
-
+  virtual void addToReadyQ(msg& request, msg_t& response);
   virtual void start();
 
   virtual void stop();
