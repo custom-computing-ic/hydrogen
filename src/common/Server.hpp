@@ -7,10 +7,10 @@
 /** A general purpose server */
 class Server {
 
-  int portNumber;
+  int portNumber, newsockfd, sockfd;
   const std::string& name;
-
-  void mainServerLoop(int sockfd);
+  bool shuttingDown;
+  void mainServerLoop();
 
 public:
 
@@ -19,7 +19,9 @@ public:
   Server(int portNumber_, const std::string& name_) :
     portNumber(portNumber_),
     name(name_)
-  {}
+  {
+    shuttingDown = false;
+  }
 
   virtual ~Server() {
   }
@@ -27,6 +29,9 @@ public:
   virtual void handleRequest(msg_t& request)=0;
 
   virtual void start();
+
+  virtual void stop();
+
 };
 
 #endif /* _SERVER_H_ */

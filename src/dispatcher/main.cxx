@@ -1,17 +1,39 @@
 #include <Dispatcher.hpp>
 
 #include <string>
+#include <iostream>
+#include <cstdlib>
+#include <csignal>
 
 using namespace std;
 
-int main() {
+Dispatcher* d;
 
-  int portnumber = 8111;
+void kill_handler(int s) {
+  cout << "Caught kill signal. Cleaning up. Please wait..." << endl;
+  if (d)
+    d->stop();
+}
 
-  const string& name = string("Dispatcher - maxnode1");
-  Dispatcher d(portnumber, name);
+int main(int argc, char** argv) {
 
-  d.start();
+  if (argc < 2) {
+    cout << "Usage ./scheduler <portNumber>" << endl;
+    return 1;
+  }
 
+  struct sigaction sigIntHandler;
+
+  sigIntHandler.sa_handler = kill_handler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+
+  sigaction(SIGINT, &sigIntHandler, NULL);
+
+  int portnumber = atoi(argv[1]);
+
+  const string& name = string("Dispatcher");
+  d = new Dispatcher(portnumber, name);
+  d->start();
   return 0;
 }

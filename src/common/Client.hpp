@@ -10,6 +10,10 @@ class Client {
   const std::string& name;
 
 public:
+
+  typedef Client super;
+
+  /** Construct a client to connect to the given port of the given host */
   Client(int portNumber_, const std::string& name_) :
     portNumber(portNumber_),
     name(name_)
@@ -20,11 +24,11 @@ public:
   /** Send a message to target host. Must be connected. **/
   void send(msg_t *message, int sizeBytes);
 
-  /** Closes connection to taret host **/
-  void close();
-
   /** Opens connection to target host **/
-  void start();
+  virtual void start();
+
+  /** Closes connection to taret host **/
+  virtual void stop();
 };
 
 #endif /* _CLIENT_H_ */

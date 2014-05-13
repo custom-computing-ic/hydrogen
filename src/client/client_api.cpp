@@ -29,5 +29,5 @@ void movingAverage(int n, int* data) {
   Client c(portNumber, name);
   c.start();
   c.send(msg, sizeBytes);
-  c.close();
+  c.stop();
 }

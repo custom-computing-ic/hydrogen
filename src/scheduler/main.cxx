@@ -6,6 +6,14 @@
 
 using namespace std;
 
+Scheduler *s;
+
+void kill_handler(int sig) {
+  cout << "Caught kill signal. Cleaning up. Please wait..." << endl;
+  if (s)
+    s->stop();
+}
+
 int main(int argc, char** argv) {
 
   if (argc < 3) {
@@ -14,9 +22,13 @@ int main(int argc, char** argv) {
   }
 
   int portnumber = atoi(argv[1]);
+  int dispatcherPortNumber = atoi(argv[2]);
 
-  const string& name = string("Scheduler");
-  Scheduler s(portnumber, name);
+  const string& name = "Scheduler";
+  const string& dispatcherHostname = "localhost";
 
-  s.start();
+  s = new Scheduler(portnumber, name, dispatcherPortNumber, dispatcherHostname);
+  s->start();
+
+  return 0;
 }
