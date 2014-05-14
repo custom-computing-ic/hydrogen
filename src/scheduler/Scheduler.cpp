@@ -61,15 +61,14 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
   //TODO: Lookup requestID/Implementation ID in a map and return error if not found
   switch(request.msgId) {
     case MSG_DONE:
-    response.msgId = MSG_ACK;
-    response.dataSize = 0;
-    response.paramsSize = 0;
-    break;
-    case MSG_ACK:
+      response.msgId = MSG_ACK;
+      response.dataSize = 0;
+      response.paramsSize = 0;
       break;
     default:
-      cout << "Request added to runQ" << endl ;
+      cout << "Request added to readyQ" << endl ;
       this->addToReadyQ(request,response);
+      break;
   }
 }
 
