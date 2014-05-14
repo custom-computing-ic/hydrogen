@@ -31,6 +31,13 @@ class Job {
        finishTime = 0;
        AllocatedResources = ResourcePoolPtr(new ResourcePool());
     };
+    Job(msg_t& request) {
+      issueTime = 0;
+      dispatchTime = 0;
+      finishTime = 0;
+  
+      AllocatedResources = std::make_shared<ResourcePool>();
+    }
     Job(int a,int b,std::function<float(Job&)> c);
     Job(int a, int b, std::function<float(Job&)> c, float d);
     /* getters */
