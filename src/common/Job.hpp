@@ -38,7 +38,7 @@ class Job {
     inline int noAllocdRes() const { return AllocatedResources->size();}
     inline int getMin() const { return min;} 
     inline int getMax() const { return max;} 
-    inline int getJid() const { return jid;} 
+    inline int getId() const { return jid;} 
     inline int getPriority() const { return priority; }
     inline std::function<float(Job&)> getCostFunc() { return cost_func;}
     inline float getDispatchTime()const {return dispatchTime;}
@@ -64,9 +64,9 @@ class Job {
     inline float maxCost() const { return defaultJobTime / max;}
     inline void allocate(ResourcePtr a) { AllocatedResources->push_back(a); }
     
-    friend bool operator ==(const Job& lhs, const Job& rhs) { return lhs.getJid() == rhs.getJid();}
+    friend bool operator ==(const Job& lhs, const Job& rhs) { return lhs.getId() == rhs.getId();}
     friend std::ostream & operator<<(std::ostream & s, Job const & j) {
-      s << "Job["<<j.getJid()<<"]";
+      s << "Job["<<j.getId()<<"]";
       return s;
     }
   private:

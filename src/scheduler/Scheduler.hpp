@@ -13,7 +13,12 @@ class Scheduler;
 //TODO Include Allocations and Job classes...
 #include<Allocations.hpp>
 //typedef int Job;
-
+//TODO[mtottenh]: clean this up a bit
+  template <typename T> 
+    class ContainerPtr {
+      public:
+      typedef std::shared_ptr< std::deque < T > >  deque;
+    };
 class Scheduler : public Server {
   /* Algorithm Base and Collection Types */
   typedef std::function<Allocations(Scheduler &)> AlgType;
@@ -47,7 +52,7 @@ public:
   }
   /* Server functions */
   virtual void handleRequest(msg_t& request, msg_t& response);
-
+  virtual void defaultHandler(msg_t& request, msg_t& response);
   virtual void start();
 
   virtual void stop();
@@ -105,7 +110,7 @@ private:
   void dumpInfo();
   void printQInfo(const char*, JobQueuePtr, bool);
   void reclaimResources();
-
+  template <typename T> void removeFromQ(typename ContainerPtr<T>::deque, T);
   /* Scheduling Strategies */ 
   void schedule();
   void schedule(int);

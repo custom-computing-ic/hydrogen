@@ -4,9 +4,25 @@
 #include <unistd.h>
 
 using namespace std;
-//TODO[mtottenh] Finish implementing the rest of the scheduler class
 
-void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
+
+
+template <typename T> 
+void Scheduler::removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
+
+  typename ContainerPtr<T>::deque preserve_list;
+//  preserve_list = new std::deque<T>();
+  auto a = jq->begin();
+  for(;a != jq->end(); a++) {
+    if ((*a)->getId() != j->getId()) {
+      preserve_list->push_back(*a);
+    } 
+  } 
+  jq = preserve_list;
+
+}
+//TODO[mtottenh] Finish implementing the rest of the scheduler class
+void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
   resPool->front()->send(&request, request.sizeBytes());
   // wait for reply back
   // XXX determine buffer size dynamically
@@ -19,6 +35,14 @@ void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
   response.dataSize = rsp->dataSize;
   response.paramsSize = 0;
   memcpy(response.data, rsp->data, rsp->dataBytes());
+}
+
+/* TODO[mtottenh]: insert wrapper here to construct a job from a message when
+  the job class is finished.
+ */
+void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
+  Job j;
+  readyQ->push_back(std::make_shared<Job>(j));
 }
 
 
@@ -138,16 +162,16 @@ void Scheduler::deallocate(Job& j) {
 void Scheduler::realloc(Job& j) {
   auto r = j.getAllocdRes()->begin();
   for (; r != j.getAllocdRes()->end(); r++) {
-//TODO[mtottenh]:    resPool->remove(*r); No remove in a deque... what is this even doing? 
+     this->removeFromQ(resPool, *r);
   }
 
 }
 
-//TODO[mtottenh]: I think the remove() calls are from a wrapper class...
+//TODO[mtottenh]: add code to communicate with dispatcher here...
 void Scheduler::serviceAllocations(Allocations &a) {
   auto j = a.jobs.begin();
   for(;j != a.jobs.end(); j++) {
-    //TODO[mtottenh]: again ... readyQ->remove(*j);
+    this->removeFromQ(readyQ, std::make_shared<Job>(*j));
     this->addToRunQ(*j);
   }
 
@@ -175,8 +199,9 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       response.paramsSize = 0;
       break;
     default:
-      cout << "Request added to readyQ" << endl ;
-      this->addToReadyQ(request,response);
+        defaultHandler(request,response);
+//      cout << "Request added to readyQ" << endl ;
+//      this->addToReadyQ(request,response);
       break;
   }
 }
