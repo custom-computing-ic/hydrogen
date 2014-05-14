@@ -11,7 +11,7 @@
 /** The scheduler is a server for the client API and a client of the dispatcher **/
 class Scheduler;
 //TODO Include Allocations and Job classes...
-class Allocations;
+#include<Allocations.hpp>
 //typedef int Job;
 
 class Scheduler : public Server {
@@ -47,7 +47,6 @@ public:
   }
   /* Server functions */
   virtual void handleRequest(msg_t& request, msg_t& response);
-  virtual void addToReadyQ(msg& request, msg_t& response);
 
   virtual void start();
 
@@ -61,12 +60,13 @@ private:
   inline void setMaxTime(float m) {maxTime = m;}
   inline void setNextJobTime(float njt) { nextJobTime = njt;}
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
+  inline void addResource(int PortNo, const std::string& Hostname, int Rid) 
+  {
+        resPool->push_back(std::make_shared<Resource>(PortNo,Hostname,Rid));
+  }
 
-  void addToRunQ(Job& j);
-  void returnToReadyQ(Job& j,int pos);
-  int estimateFinishTime(Job& j);
+ 
   /* Getters */
-  int numLateJobs();
   inline std::string getStrategy() const { return strat; }
   inline int  readyQSize(){return readyQ->size();}
   inline int  resPoolSize(){return resPool->size();}
@@ -76,11 +76,35 @@ private:
   inline  AlgVecType* getAlgVecPtr() { return &algVec;}
   inline  AlgType getAlg(int i) { return algVec[i];}
   inline  int noAlgs() {return algVec.size();}
+ 
+  inline  Job getFirstReadyProc() 
+  { 
+    Job j = *(readyQ->front());
+    readyQ->pop_front();
+    return j;
+  }
+
+  inline  JobQueuePtr getQueuePointer(std::string s) 
+  {
+    if (s.compare("readyQ") == 0)
+        return readyQ;
+    if (s.compare("runQ") == 0)
+        return runQ;
+    if (s.compare("finishedJobs") == 0)
+        return finishedJobs;
+    return NULL;
+  }
+  /* Helper Functions */ 
+  virtual void addToReadyQ(msg& request, msg_t& response);
+  void addToRunQ(Job& j);
+
+  void returnToReadyQ(Job& j,int pos);
+  int estimateFinishTime(Job& j);
+  int numLateJobs();
   void updateState();
   void dumpInfo();
   void printQInfo(const char*, JobQueuePtr, bool);
   void reclaimResources();
-
 
   /* Scheduling Strategies */ 
   void schedule();
@@ -98,34 +122,6 @@ private:
   void serviceAllocations(Allocations &a);
   void returnResources(Allocations &a);
 
-  inline  Job getFirstReadyProc() 
-  { 
-    Job j = *(readyQ->front());
-    readyQ->pop_front();
-    return j;
-  }
-
-  inline  JobQueuePtr getQueuePointer(std::string s) 
-  {
-    if (s.compare("readyQ") == 0)
-        return readyQ;
-    if (s.compare("runQ") == 0)
-        return runQ;
-    if (s.compare("finishedJobs") == 0)
-        return finishedJobs;
-    return NULL;
- }
-
-
-
-
-  void addToReadyQ(msg& request);
-
-  inline void addResource(int PortNo, const std::string& Hostname, int Rid) 
-  {
-        resPool->push_back(std::make_shared<Resource>(PortNo,Hostname,Rid));
-  }
-  
 
   /*Private Data Members */ 
   ResourcePoolPtr resPool; 
@@ -139,8 +135,6 @@ private:
   float curTime;
   float nextJobTime;
   std::string strat;
-
-
 };
 
 #endif /* _SCHEDULER_H_ */
