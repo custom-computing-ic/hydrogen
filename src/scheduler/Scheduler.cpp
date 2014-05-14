@@ -41,8 +41,8 @@ void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
   the job class is finished.
  */
 void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
-  Job j;
-  readyQ->push_back(std::make_shared<Job>(j));
+//  Job j(request);
+  readyQ->push_back(make_shared<Job>(request));
 }
 
 
@@ -171,7 +171,7 @@ void Scheduler::realloc(Job& j) {
 void Scheduler::serviceAllocations(Allocations &a) {
   auto j = a.jobs.begin();
   for(;j != a.jobs.end(); j++) {
-    this->removeFromQ(readyQ, std::make_shared<Job>(*j));
+    this->removeFromQ(readyQ, make_shared<Job>(*j));
     this->addToRunQ(*j);
   }
 
@@ -197,6 +197,9 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       response.msgId = MSG_ACK;
       response.dataSize = 0;
       response.paramsSize = 0;
+      break;
+    case MSG_Moving_AVG:
+      addToReadyQ(request,response);
       break;
     default:
         defaultHandler(request,response);
