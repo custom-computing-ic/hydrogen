@@ -1,7 +1,7 @@
-#include "job/Job.hpp"
+#include <Job.hpp>
 
 float defaultCostFunction(Job& j) {
-  return j.getdefaultJobTime() /   j.getAllocdRes();
+  return j.getDefaultJobTime() /   j.noAllocdRes();
 }
 
 Job::Job(); 

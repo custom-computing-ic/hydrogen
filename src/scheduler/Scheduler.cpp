@@ -198,7 +198,7 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       response.dataSize = 0;
       response.paramsSize = 0;
       break;
-    case MSG_Moving_AVG:
+    case MSG_MOVING_AVG:
       addToReadyQ(request,response);
       break;
     default:
