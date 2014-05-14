@@ -26,7 +26,8 @@ public:
 
   /** Send a message to target host. Must be connected. **/
   void send(msg_t *message, int sizeBytes);
-
+  /** Read a message from socket into buff **/
+  inline int read(char* buffer, int sizeBytes) { return ::read(sockfd, buffer, sizeBytes); };
   /** Opens connection to target host **/
   virtual void start();
 

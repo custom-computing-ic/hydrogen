@@ -26,7 +26,7 @@ void Client::send (msg_t *message, int sizeBytes) {
   char buffer[256];
   bzero(buffer, 256);
   cout << "Waiting for reply... ";
-  n = read(sockfd, buffer, 255);
+  n = read(buffer, 255);
   buffer[3] = '\0';
   if (n < 0)
     cout << "ERROR reading from socket" << endl;
