@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <strings.h>
@@ -41,7 +42,13 @@ void Server::start() {
 }
 
 void Server::mainServerLoop() {
+  int children = 0;
+  int maxChildren = 0;
   while (!shuttingDown) {
+    while (children > maxChildren) {
+      wait(NULL);
+      children--;
+    }
     newsockfd = accept(sockfd, NULL, NULL);
 
     if (shuttingDown) {
@@ -55,41 +62,59 @@ void Server::mainServerLoop() {
     }
 
     // TOOD fork here to handle the request
-    msg_t* msg = NULL;
-    do {
-      int maxLen = 2048;
-      char buffer[maxLen];
-      bzero(buffer, maxLen);
-      int n = read(newsockfd, buffer, maxLen);
-      if (n < 0) {
-        cout << "ERROR reading from socket";
-        continue;
-      }
+    int pid = fork();
 
-      // rebuild msg
-      msg = (msg_t*)buffer;
-      cout << "Received message:" << endl;
-      msg->print();
+    if (pid > 0) {
+      children++;
+      continue;
+    } else if (pid < 0) {
+      cout << "Error forking process" << endl;
+    } else {
+      // in child process
+      msg_t* msg = NULL;
+      do {
+        int maxLen = 2048;
+        char buffer[maxLen];
+        bzero(buffer, maxLen);
+        int n = read(newsockfd, buffer, maxLen);
+        if (n < 0) {
+          cout << "ERROR reading from socket";
+          continue;
+        }
 
-      n = write(newsockfd,"Ack", 3);
-      if (n < 0)
-        cout << "ERROR writing to socket" << endl;
+        // rebuild msg
+        msg = (msg_t*)buffer;
+        cout << "Received message:" << endl;
+        msg->print();
 
-      int sizeBytes = sizeof(msg_t) + (msg->dataSize) * sizeof(int);
-      cout << sizeBytes << endl;
-      msg_t* response = (msg_t *)malloc(sizeBytes);
+        n = write(newsockfd,"Ack", 3);
+        if (n < 0)
+          cout << "ERROR writing to socket" << endl;
 
-      cout << "Handling request " << endl;
-      handleRequest(*msg, *response);
+        int sizeBytes = sizeof(msg_t) + (msg->dataSize) * sizeof(int);
+        cout << sizeBytes << endl;
+        msg_t* response = (msg_t *)malloc(sizeBytes);
 
-      cout << "Handled request. Sending response: " << endl;
-      response->print();
-      n = send(newsockfd, response,  sizeBytes, 0);
-      free(response);
-    } while (msg!= NULL && msg->msgId != MSG_DONE && !shuttingDown);
-    cout << "Closing connection " << newsockfd << endl;
-    close(newsockfd);
+        cout << "Handling request " << endl;
+        handleRequest(*msg, *response);
+
+        cout << "Handled request. Sending response: " << endl;
+        response->print();
+        n = send(newsockfd, response,  sizeBytes, 0);
+        free(response);
+      } while (msg != NULL && msg->msgId != MSG_DONE && !shuttingDown);
+      cout << "Closing connection " << newsockfd << endl;
+      close(newsockfd);
+      exit(0);
+    }
   }
+
+  // make sure all child processes have finished
+  while (children > 0) {
+    wait(NULL);
+    children--;
+  }
+
 }
 
 void Server::stop() {
