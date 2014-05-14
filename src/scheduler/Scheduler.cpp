@@ -24,7 +24,7 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
     response.msgId = rsp->msgId;
     response.dataSize = rsp->dataSize;
     response.paramsSize = 0;
-    memcpy(response.data, rsp->data, rsp->sizeBytes());
+    memcpy(response.data, rsp->data, rsp->dataBytes());
   } else {
     response.msgId = MSG_ACK;
     response.dataSize = 0;

@@ -17,7 +17,11 @@ typedef struct msg {
   char data[];
 
   int sizeBytes() {
-    return sizeof(msg) + (dataSize + paramsSize) * sizeof(int);
+    return sizeof(msg) + dataBytes();
+  }
+
+  int dataBytes() {
+    return (dataSize + paramsSize) * sizeof(int);
   }
 
   int firstParam() {
