@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 using namespace std;
-//TODO Finish implementing the rest of the scheduler class
+//TODO[mtottenh] Finish implementing the rest of the scheduler class
 
 void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
   resPool->front()->send(&request, request.sizeBytes());
@@ -22,7 +22,7 @@ void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
 }
 
 
-
+//TODO[mottenh]: Actualy make this communicate with the allocated dispatchers..
 void Scheduler::addToRunQ(Job& j) {
   j.setDispatchTime(curTime);
   estimateFinishTime(j);
@@ -37,6 +37,36 @@ void Scheduler::returnToReadyQ(Job& j, int pos) {
   readyQ->insert(it,make_shared<Job>(j));
 }
 
+
+int Scheduler::estimateFinishTime(Job& j) {
+  return -1;
+}
+int Scheduler::numLateJobs() {
+  return -1;
+}
+void Scheduler::updateState() {
+
+}
+
+void Scheduler::dumpInfo() {
+
+}
+void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
+
+}
+void Scheduler::reclaimResources() {
+
+}
+void Scheduler::schedule() {
+
+}
+void Scheduler::schedule(int) {
+
+}
+Allocations Scheduler::schedule(int,bool) {
+
+}
+
 int Scheduler::allocate(Job& j, int max_res, int min_res) {
   if (resPool->size() >= min_res) {
     while (max_res-- > 0 && resPool->size() > 0) {
@@ -49,6 +79,20 @@ int Scheduler::allocate(Job& j, int max_res, int min_res) {
   } else {
     return -1;
   }
+}
+
+
+void Scheduler::deallocate(Job& j) {
+
+}
+void Scheduler::realloc(Job& j) {
+
+}
+void Scheduler::serviceAllocations(Allocations &a) {
+
+}
+void Scheduler::returnResources(Allocations &a) {
+
 }
 
 
@@ -86,10 +130,6 @@ void Scheduler::stop() {
 }
 
 
-int Scheduler::estimateFinishTime(Job& j) {
-
-
-}
 
 
 
