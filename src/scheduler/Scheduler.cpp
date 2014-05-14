@@ -6,19 +6,18 @@
 using namespace std;
 
 void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
-  Client::send(&request, request.sizeBytes());
+  resPool->front()->send(&request, request.sizeBytes());
   // wait for reply back
   // XXX determine buffer size dynamically
   char buffer[1024];
   bzero(buffer, 1024);
-  int n = read(Client::sockfd, buffer, 1024);
+  int n = resPool->front()->read(buffer, 1024);
 
   msg_t* rsp = (msg_t*)buffer;
   response.msgId = rsp->msgId;
   response.dataSize = rsp->dataSize;
   response.paramsSize = 0;
   memcpy(response.data, rsp->data, rsp->sizeBytes());
-
 }
 
 

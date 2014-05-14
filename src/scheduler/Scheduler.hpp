@@ -2,7 +2,7 @@
 #define _SCHEDULER_H_
 
 #include <Server.hpp>
-#include <Client.hpp>
+#include <Resource.hpp>
 #include <Job.hpp>
 #include <string>
 #include <memory>
@@ -20,7 +20,7 @@ class Scheduler : public Server {
   typedef std::vector<AlgType> AlgVecType;
 
   /* Base Types */
-  typedef std::shared_ptr<Client> ResourcePtr;
+  typedef std::shared_ptr<Resource> ResourcePtr;
   typedef std::shared_ptr<Job> JobPtr;
   
   /* Collections of Bases */
@@ -43,7 +43,7 @@ public:
     this->readyQ = JobQueuePtr(new JobQueue()); 
     this->runQ = JobQueuePtr(new JobQueue()); 
     this->finishedJobs = JobQueuePtr(new JobQueue()); 
-    this->addResource(dispatcherPortNumber,dispatcherHostname);
+    this->addResource(dispatcherPortNumber,dispatcherHostname,1);
   }
   /* Server functions */
   virtual void handleRequest(msg_t& request, msg_t& response);
@@ -121,22 +121,24 @@ private:
 
   void addToReadyQ(msg& request);
 
-  inline void addResource(int PortNo, const std::string& Hostname) 
+  inline void addResource(int PortNo, const std::string& Hostname, int Rid) 
   {
-        resPool->push_back(std::make_shared<Client>(PortNo,Hostname));
+        resPool->push_back(std::make_shared<Resource>(PortNo,Hostname,Rid));
   }
-   
+  
+
+  /*Private Data Members */ 
   ResourcePoolPtr resPool; 
   JobQueuePtr readyQ;
   JobQueuePtr runQ;
   JobQueuePtr finishedJobs;
+  AlgVecType algVec;
 
   int window;
   float maxTime;
   float curTime;
   float nextJobTime;
   std::string strat;
-  AlgVecType algVec;
 
 
 };
