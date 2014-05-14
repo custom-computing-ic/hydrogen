@@ -12,14 +12,26 @@
 class Scheduler;
 //TODO Include Allocations and Job classes...
 class Allocations;
-typedef int Job;
+//typedef int Job;
 
 class Scheduler : public Server {
-  typedef std::deque< std::shared_ptr<Client> > ResourcePool;
-  typedef std::deque< std::shared_ptr<Job> > JobQueue;
+  /* Algorithm Base and Collection Types */
   typedef std::function<Allocations(Scheduler &)> AlgType;
   typedef std::vector<AlgType> AlgVecType;
+
+  /* Base Types */
+  typedef std::shared_ptr<Client> ResourcePtr;
+  typedef std::shared_ptr<Job> JobPtr;
+  
+  /* Collections of Bases */
+  typedef std::deque<ResourcePtr> ResourcePool;
+  typedef std::deque<JobPtr> JobQueue;
+
+  /* Pointers to Collections */
   typedef std::shared_ptr<JobQueue> JobQueuePtr;
+  typedef std::shared_ptr<ResourcePool> ResourcePoolPtr;
+
+
 public:
   Scheduler(int port,
 	    const std::string& name,
@@ -27,7 +39,7 @@ public:
 	    const std::string& dispatcherHostname) :
     Server::super(port, name)
   {
-    this->resPool = std::unique_ptr<ResourcePool>(new ResourcePool());
+    this->resPool = ResourcePoolPtr(new ResourcePool());
     this->readyQ = JobQueuePtr(new JobQueue()); 
     this->runQ = JobQueuePtr(new JobQueue()); 
     this->finishedJobs = JobQueuePtr(new JobQueue()); 
@@ -44,7 +56,7 @@ private:
   /* Setters */
   inline void setReadyQ(JobQueuePtr rq) {readyQ = rq;}
   inline void setRunQ(JobQueuePtr rq) {runQ = rq;}
-  inline void setResPool(std::unique_ptr<ResourcePool> r) {resPool=std::move(r);}
+  inline void setResPool(ResourcePoolPtr r) {resPool=r;}
   inline void setWindow(int w) {window = w;}
   inline void setMaxTime(float m) {maxTime = m;}
   inline void setNextJobTime(float njt) { nextJobTime = njt;}
@@ -66,7 +78,7 @@ private:
   inline  int noAlgs() {return algVec.size();}
   void updateState();
   void dumpInfo();
-  void printQInfo(const char*, JobQueue *, bool);
+  void printQInfo(const char*, JobQueuePtr, bool);
   void reclaimResources();
 
 
@@ -114,7 +126,7 @@ private:
         resPool->push_back(std::make_shared<Client>(PortNo,Hostname));
   }
    
-  std::unique_ptr<ResourcePool> resPool; 
+  ResourcePoolPtr resPool; 
   JobQueuePtr readyQ;
   JobQueuePtr runQ;
   JobQueuePtr finishedJobs;
