@@ -79,7 +79,7 @@ void Client::getResult(void* out) {
   // XXX determine buffer size dynamically
   char buffer[1024];
   bzero(buffer, 1024);
-  int n = read(Client::sockfd, buffer, 1024);
+  int n = read(buffer, 1024);
 
   msg_t* rsp = (msg_t*)buffer;
   memcpy(out, rsp->data, rsp->dataBytes());

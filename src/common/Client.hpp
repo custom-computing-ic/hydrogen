@@ -3,7 +3,7 @@
 
 #include <message.hpp>
 #include <string>
-
+#include <unistd.h>
 class Client {
 
   int portNumber;
