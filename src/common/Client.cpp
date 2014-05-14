@@ -75,7 +75,12 @@ void Client::stop() {
 }
 
 void Client::getResult(void* out) {
-  // Need to wait to get the result
-  int size = 6;
-  memset(out, 0, size * sizeof(int));
+  // wait for reply back
+  // XXX determine buffer size dynamically
+  char buffer[1024];
+  bzero(buffer, 1024);
+  int n = read(Client::sockfd, buffer, 1024);
+
+  msg_t* rsp = (msg_t*)buffer;
+  memcpy(out, rsp->data, rsp->dataBytes());
 }
