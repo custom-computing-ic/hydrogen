@@ -39,12 +39,12 @@ void Scheduler::returnToReadyQ(Job& j, int pos) {
 int Scheduler::allocate(Job& j, int max_res, int min_res) {
   if (resPool->size() >= min_res) {
     while (max_res-- > 0 && resPool->size() > 0) {
-      j.allocate(res->getContainer()->back());
+      j.allocate(resPool->back());
       resPool->pop_back();
     }
-    std::cout << "Allocated " << j.getAllocdRes()->size()
+    std::cout << "Allocated " << j.noAllocdRes()
               << " Resources to " << j << "\n";
-    return j.noAllocdRes()->size();
+    return j.noAllocdRes();
   } else {
     return -1;
   }
@@ -86,7 +86,10 @@ void Scheduler::stop() {
 }
 
 
+int Scheduler::estimateFinishTime(Job& j) {
 
+
+}
 
 
 

@@ -9,15 +9,14 @@ class Resource : public Client {
     Resource(int port,
              const std::string& name,
              int id) :
-      Client::super(port,name),
-      rid(id)
+      Client::super(port,name)
     {
-
+      rid = id;
     }
     
-    virtual void start();
-
-    virtual void stop();
+    virtual void start() { Client::start();};
+    virtual void getResult(void *out) { Client::getResult(out); };
+    virtual void stop() { Client::stop(); };
 
 
 
