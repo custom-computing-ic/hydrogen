@@ -1,4 +1,5 @@
-#include "algs.hpp"
+#include <algs.hpp>
+#include <algorithm>
 
 #define MAGIC_NUMBER 100
 #define MAX_RES 10
@@ -6,11 +7,11 @@
 /***** Priority Agnostic algorithms (FCFS) *****/
 Allocations FCFSMin(Scheduler &s) {
   Allocations a;
-  JobQueue* rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQueue");
   std::cout << "Using FCFSMin" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    Job j = rq->getJob(i);
+    Job j = s.getJobFromQ(rq,i);
     if (s.allocate(j,j.getMin(),j.getMin()) > 0) {
       /* successfully allocated the min resources */
 //      std::cout << "Adding " << j  << " To allocations\n";
@@ -25,11 +26,11 @@ Allocations FCFSMin(Scheduler &s) {
 
 Allocations FCFSAsManyAsPos(Scheduler &s) {
   Allocations a;
-  JobQueue* rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQueue");
   std::cout << "Using FCFSAMAP" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    Job j = rq->getJob(i);
+    Job j = s.getJobFromQ(rq,i);
     if (s.allocate(j,j.getMax(),j.getMin()) > 0) {
       /* successfully allocated the min resources */
       a.jobs.push_back(j);
@@ -42,12 +43,12 @@ Allocations FCFSAsManyAsPos(Scheduler &s) {
 }
 Allocations FCFSMax(Scheduler &s) {
   Allocations a;
-  JobQueue* rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQueue");
   std::cout << "Using FCFS Max" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
 
-    Job j = rq->getJob(i);
+    Job j = s.getJobFromQ(rq,i);
 //    std::cout << "Trying to allocate " << j << "[" << s.resPoolSize() << "]\t";
     if (s.allocate(j,j.getMax(),j.getMax()) > 0) {
       /* successfully allocated the min resources */
@@ -99,7 +100,7 @@ bool sortByMin(Job i, Job j) { return (i.getMin() < j.getMin()); }
 Allocations SJTF(Scheduler &s) {
   int w_size = s.getWindow();
   std::cout << "Using SJTF\n";
-  JobQueue* rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQueue");
   Allocations aloc; 
   if (rq == NULL) {
     std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
@@ -112,7 +113,7 @@ Allocations SJTF(Scheduler &s) {
   /* Get the minimum Job size (min number of req resources) */ 
   std::deque<Job> job_window;
   for (int i = 0; i < w_size && i < rq->size(); i++) {
-    job_window.push_back(rq->getJob(i));
+    job_window.push_back(s.getJobFromQ(rq,i));
   }
   std::sort(job_window.begin(), job_window.end(), sortByTime);
   auto min_elem =  std::min_element(job_window.begin(), job_window.end(), sortByMin);
@@ -128,7 +129,7 @@ Allocations SJTF(Scheduler &s) {
 }
 
 Allocations ManagedMode(Scheduler &s) {
-  AlgVecType* av = s.getAlgVecPtr();
+  auto av = s.getAlgVecPtr();
   std::deque<Allocations> allocations;
   std::cout << "**Scheduling using the managed mode**\n"
             << "Res[" <<s.resPoolSize() << "]\t" 

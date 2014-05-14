@@ -2,7 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
-
+#define MODE_MANAGED 4
 using namespace std;
 
 
@@ -200,6 +200,7 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       break;
     case MSG_MOVING_AVG:
       addToReadyQ(request,response);
+      schedule(MODE_MANAGED);
       break;
     default:
         defaultHandler(request,response);

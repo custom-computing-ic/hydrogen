@@ -1,6 +1,6 @@
 #ifndef __algs_h__
 #define __algs_h__
-#include "../Scheduler.hpp"
+#include <Scheduler.hpp>
 /* Scheduling Algorithms */
 Allocations FCFSMin(Scheduler &s);
 Allocations FCFSMax(Scheduler &s);

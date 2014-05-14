@@ -35,6 +35,19 @@ int main(int argc, char** argv) {
   const string& dispatcherHostname = "localhost";
 
   s = new Scheduler(portnumber, name, dispatcherPortNumber, dispatcherHostname);
+
+  /* Add some scheduling algorithms */
+  /* 0 */
+  s->addSchedAlg(FCFSMax);
+  /* 1 */
+  s->addSchedAlg(FCFSMin);
+  /* 2 */
+  s->addSchedAlg(FCFSAsManyAsPos);
+  /* 3 */
+  s->addSchedAlg(SJTF);
+  /* 4 */
+  s->addSchedAlg(ManagedMode);
+
   s->start();
 
   return 0;
