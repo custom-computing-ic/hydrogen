@@ -9,7 +9,7 @@ using namespace std;
 int main() {
 
   int data[] = {1, 2, 3, 4, 5, 6};
-  int exp[]  = {0, 2, 3, 4, 5, 0};
+  int exp[]  = {2, 3, 4, 5, 0, 0};
 
   /** Ask for a simple moving average a few times */
   int t = 1;

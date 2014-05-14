@@ -16,14 +16,18 @@ void Dispatcher::movingAverage(int n, int size, int *data, int *out) {
   cout << "Dispatcher::MovingAverage" << endl;
   cout << " n:    " << n << endl;
   cout << " size: " << size << endl;
-  out[0] = 0;
-  out[n - 1] = 0;
-  for (int i = 1; i < n - 1; i++) {
+
+  for (int i = 0; i <= n - size; i++) {
     out[i] = 0;
-    for (int j = 0; j < size/2; j++)
-      out[i] += data[i - j];
+    for (int j = 0; j < size; j++)
+      out[i] += data[i + j];
     out[i] /= size;
   }
+
+  for (int i = n - size + 1; i < n; i++) {
+    out[i] = 0;
+  }
+
 }
 
 void Dispatcher::handleRequest(msg_t& message, msg_t& response) {
