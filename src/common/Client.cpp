@@ -24,6 +24,7 @@ void Client::send (msg_t *message, int sizeBytes) {
     error("ERROR writing to socket");
 
   char buffer[256];
+  bzero(buffer, 256);
   cout << "Waiting for reply... ";
   n = read(sockfd, buffer, 255);
   buffer[3] = '\0';
@@ -67,6 +68,7 @@ void Client::stop() {
   msg_t msg;
   msg.msgId = MSG_DONE;
   msg.dataSize = 0;
+  msg.paramsSize = 0;
   send(&msg, sizeof(msg_t));
 
   ::close(sockfd);

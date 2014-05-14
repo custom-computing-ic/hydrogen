@@ -75,13 +75,17 @@ void Server::mainServerLoop() {
       if (n < 0)
         cout << "ERROR writing to socket" << endl;
 
-      int sizeBytes = sizeof(msg_t) + msg->dataSize * sizeof(int);
+      int sizeBytes = sizeof(msg_t) + (msg->dataSize) * sizeof(int);
+      cout << sizeBytes << endl;
       msg_t* response = (msg_t *)malloc(sizeBytes);
+
+      cout << "Handling request " << endl;
       handleRequest(*msg, *response);
 
       cout << "Handled request. Sending response: " << endl;
       response->print();
       n = send(newsockfd, response,  sizeBytes, 0);
+      free(response);
     } while (msg!= NULL && msg->msgId != MSG_DONE && !shuttingDown);
     cout << "Closing connection " << newsockfd << endl;
     close(newsockfd);
