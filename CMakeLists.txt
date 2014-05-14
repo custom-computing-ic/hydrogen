@@ -28,5 +28,9 @@ target_link_libraries (scheduler Scheduler)
 add_executable (MovingAverageOneDfe test/integration/movingAverageOneDfe/main.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS})
 
+add_executable (MultiUserSingleJobType test/integration/MultiUserSingleJobType.cpp)
+target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS})
+
 enable_testing ()
 add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
+add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
