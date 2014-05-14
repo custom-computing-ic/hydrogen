@@ -41,9 +41,22 @@ void Scheduler::returnToReadyQ(Job& j, int pos) {
 int Scheduler::estimateFinishTime(Job& j) {
   return -1;
 }
+
+
+/*
+ * TODO[mtottenh]: Check implementations of getDispatchTime/IssueTime with timevals
+ * in the minites/seconds range not just random floats.. 
+ */
+
 int Scheduler::numLateJobs() {
-  return -1;
+  int sum = 0;
+  auto it = finishedJobs->begin();
+  for(;it != finishedJobs->end(); it++) {
+    sum = (*it)->getDispatchTime() - (*it)->getIssueTime() > 1 ? sum+1 : sum;
+  }
+  return sum;
 }
+
 void Scheduler::updateState() {
 
 }
@@ -54,17 +67,43 @@ void Scheduler::dumpInfo() {
 void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
 
 }
+//TODO[mtottenh]: Add this to the header file. This could be 
+// dangerous.. it seems to remove all the resources in the runQ and return them to the pool.
+// use with extreme caution
 void Scheduler::reclaimResources() {
 
+  auto j = runQ->begin();
+
+  for (;j != runQ->end(); j++) {
+    auto a = (*j)->getAllocdRes()->begin();
+    for (;a != (*j)->getAllocdRes()->end(); a++) {
+      resPool->push_back(*a);
+    }
+  }
+
 }
+
+
+//TODO[mtottenh]: Check if this is ever used. I think it can be removed.
 void Scheduler::schedule() {
 
 }
-void Scheduler::schedule(int) {
 
+//TODO[mtottenh]: Collapse the below back into 1 function. needless code duplication here.
+void Scheduler::schedule(int choice) {
+  Allocations a;
+  if (resPool->size() > 0) {
+    a = this->algVec[choice](*this);
+    serviceAllocations(a);
+  }
 }
-Allocations Scheduler::schedule(int,bool) {
-
+Allocations Scheduler::schedule(int choice, bool flag) {
+  flag = false;
+  Allocations a;
+  if (resPool->size() > 0) {
+    a = this->algVec[choice](*this);
+  }
+ return a;
 }
 
 int Scheduler::allocate(Job& j, int max_res, int min_res) {
@@ -81,21 +120,47 @@ int Scheduler::allocate(Job& j, int max_res, int min_res) {
   }
 }
 
-
+//TODO[mtottenh]:Check this functions as intended. I'm not sure about getAllocdRes()->***/
 void Scheduler::deallocate(Job& j) {
+  std::cout << "De-allocating " << j  
+            << "{" << j.noAllocdRes() << "}" 
+            << "|" << resPool->size() << "|"; 
+  auto r = j.getAllocdRes()->begin(); 
+  for (; r != j.getAllocdRes()->end(); r++) { 
+    resPool->push_back(*r); 
+  } 
+  j.getAllocdRes()->clear(); 
+  std::cout << "(" << resPool->size() << ")\n";
 
 }
+
+/*TODO[mtottenh]: Is this ever used? */
 void Scheduler::realloc(Job& j) {
+  auto r = j.getAllocdRes()->begin();
+  for (; r != j.getAllocdRes()->end(); r++) {
+//TODO[mtottenh]:    resPool->remove(*r); No remove in a deque... what is this even doing? 
+  }
 
 }
+
+//TODO[mtottenh]: I think the remove() calls are from a wrapper class...
 void Scheduler::serviceAllocations(Allocations &a) {
+  auto j = a.jobs.begin();
+  for(;j != a.jobs.end(); j++) {
+    //TODO[mtottenh]: again ... readyQ->remove(*j);
+    this->addToRunQ(*j);
+  }
 
 }
 void Scheduler::returnResources(Allocations &a) {
-
+  auto j = a.jobs.begin();
+  for (;j != a.jobs.end(); j++) {
+    auto r = j->getAllocdRes()->begin();
+    for (;r <  j->getAllocdRes()->end(); r++) {
+      resPool->push_back(*r);
+    }
+  } 
 }
-
-
 
 
 
