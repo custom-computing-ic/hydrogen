@@ -4,7 +4,7 @@
 #include <sstream>
 #include <functional>
 #include <vector>
-
+#include <Resource.hpp>
 
 class Job {
 	public:
@@ -44,7 +44,7 @@ class Job {
 
     inline float minCost() const { return defaultJobTime / min;}
     inline float maxCost() const { return defaultJobTime / max;}
-    inline void allocate(Res a ) { allocdResources.push_back(a); }
+    inline void allocate(Resource a ) { allocdResources.push_back(a); }
     
     friend bool operator ==(const Job& lhs, const Job& rhs) { return lhs.getJid() == rhs.getJid();}
     friend std::ostream & operator<<(std::ostream & s, Job const & j) {
@@ -62,7 +62,7 @@ class Job {
     float dispatchTime;
     float finishTime;
     std::function<float(Job&)> cost_func;
-    std::vector<Res> allocdResources;
+    std::vector<Resource> allocdResources;
 
 };
 #endif
