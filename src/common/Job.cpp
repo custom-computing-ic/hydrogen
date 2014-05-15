@@ -7,7 +7,6 @@ float defaultCostFunction(Job& j) {
   return j.getDefaultJobTime() /   j.noAllocdRes();
 }
 
-Job::Job(); 
 
 
 Job::Job(int a, int b, std::function<float(Job&)> c) {

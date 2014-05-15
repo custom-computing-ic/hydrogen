@@ -11,8 +11,8 @@
 class Job {
 
   /* Base Types */
-  typedef std::shared_ptr<Resource> ResourcePtr;
-  typedef std::shared_ptr<Job> JobPtr;
+  typedef std::unique_ptr<Resource> ResourcePtr;
+  typedef std::unique_ptr<Job> JobPtr;
 
   /* Collections of Bases */
   typedef std::deque<ResourcePtr> ResourcePool;
@@ -70,7 +70,8 @@ class Job {
 
     inline float minCost() const { return defaultJobTime / min;}
     inline float maxCost() const { return defaultJobTime / max;}
-    inline void allocate(ResourcePtr a) { AllocatedResources->push_back(a); }
+
+    inline void allocate(ResourcePtr a) { AllocatedResources->push_back(move(a)); }
     
     friend bool operator ==(const Job& lhs, const Job& rhs) { return lhs.getId() == rhs.getId();}
     friend std::ostream & operator<<(std::ostream & s, Job const & j) {

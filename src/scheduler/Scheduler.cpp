@@ -8,18 +8,18 @@ using namespace std;
 
 
 template <typename T> 
-void Scheduler::removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
+T Scheduler::removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
 
   typename ContainerPtr<T>::deque preserve_list;
 //  preserve_list = new std::deque<T>();
   auto a = jq->begin();
   for(;a != jq->end(); a++) {
     if ((*a)->getId() != j->getId()) {
-      preserve_list->push_back(*a);
+      preserve_list->push_back( move(*a) );
     } 
   } 
   jq = preserve_list;
-
+  return j;
 }
 
 int Scheduler::getJobStatus(int jobID) {
@@ -57,30 +57,32 @@ void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
   the job class is finished.
  */
 int Scheduler::addToReadyQ(msg_t& request) {
-  readyQ->push_back(make_shared<Job>(request,this->getNextId()));
+  readyQ->push_back(unique_ptr<Job>(new Job(request,this->getNextId())));
   return readyQ->back()->getId();
 }
 
 
 //TODO[mottenh]: Actualy make this communicate with the allocated dispatchers..
-void Scheduler::addToRunQ(Job& j) {
-  cout << "Adding " << j << "to the runQ\n";
-  j.setDispatchTime(curTime);
-  estimateFinishTime(j);
-  runQ->push_back(make_shared<Job>(j));
+void Scheduler::addToRunQ(std::unique_ptr<Job> j) {
+  cout << "Adding " << *j << "to the runQ\n";
+  j->setDispatchTime(curTime);
+  j = move (estimateFinishTime(move(j)));
+  runQ->push_back( move(j));
+
 }
 
 
-void Scheduler::returnToReadyQ(Job& j, int pos) {
+void Scheduler::returnToReadyQ(JobPtr j, int pos) {
   auto it = readyQ->begin();
   for (int i = 0; i < pos && it < readyQ->end(); i++, it++);
 
-  readyQ->insert(it,make_shared<Job>(j));
+  readyQ->insert(it,move(j));
 }
 
 
-int Scheduler::estimateFinishTime(Job& j) {
-  return -1;
+Scheduler::JobPtr Scheduler::estimateFinishTime(JobPtr j) {
+  //TODO[mtottenh]:Add code to estimate a job finish time
+  return j;
 }
 
 
@@ -118,7 +120,7 @@ void Scheduler::reclaimResources() {
   for (;j != runQ->end(); j++) {
     auto a = (*j)->getAllocdRes()->begin();
     for (;a != (*j)->getAllocdRes()->end(); a++) {
-      resPool->push_back(*a);
+      resPool->push_back(   move(*a)   );
     }
   }
 
@@ -150,7 +152,7 @@ Allocations Scheduler::schedule(int choice, bool flag) {
 int Scheduler::allocate(Job& j, int max_res, int min_res) {
   if (resPool->size() >= min_res) {
     while (max_res-- > 0 && resPool->size() > 0) {
-      j.allocate(resPool->back());
+      j.allocate( move(resPool->back()) );
       resPool->pop_back();
     }
     std::cout << "Allocated " << j.noAllocdRes()
@@ -162,24 +164,24 @@ int Scheduler::allocate(Job& j, int max_res, int min_res) {
 }
 
 //TODO[mtottenh]:Check this functions as intended. I'm not sure about getAllocdRes()->***/
-void Scheduler::deallocate(Job& j) {
-  std::cout << "De-allocating " << j  
-            << "{" << j.noAllocdRes() << "}" 
+Scheduler::JobPtr Scheduler::deallocate(JobPtr j) {
+  std::cout << "De-allocating " << *j  
+            << "{" << j->noAllocdRes() << "}" 
             << "|" << resPool->size() << "|"; 
-  auto r = j.getAllocdRes()->begin(); 
-  for (; r != j.getAllocdRes()->end(); r++) { 
-    resPool->push_back(*r); 
+  auto r = j->getAllocdRes()->begin(); 
+  for (; r != j->getAllocdRes()->end(); r++) { 
+    resPool->push_back( move(*r )); 
   } 
-  j.getAllocdRes()->clear(); 
+  j->getAllocdRes()->clear(); 
   std::cout << "(" << resPool->size() << ")\n";
-
+  return j;
 }
 
 /*TODO[mtottenh]: Is this ever used? */
-void Scheduler::realloc(Job& j) {
-  auto r = j.getAllocdRes()->begin();
-  for (; r != j.getAllocdRes()->end(); r++) {
-     this->removeFromQ(resPool, *r);
+void Scheduler::realloc(JobPtr j) {
+  auto r = j->getAllocdRes()->begin();
+  for (; r != j->getAllocdRes()->end(); r++) {
+     this->removeFromQ(resPool, move( *r));
   }
 
 }
@@ -188,17 +190,17 @@ void Scheduler::realloc(Job& j) {
 void Scheduler::serviceAllocations(Allocations &a) {
   auto j = a.jobs.begin();
   for(;j != a.jobs.end(); j++) {
-    this->removeFromQ(readyQ, make_shared<Job>(*j));
-    this->addToRunQ(*j);
+    *j = move(removeFromQ(readyQ, move(*j)));
+    addToRunQ(move(*j));
   }
 
 }
 void Scheduler::returnResources(Allocations &a) {
   auto j = a.jobs.begin();
   for (;j != a.jobs.end(); j++) {
-    auto r = j->getAllocdRes()->begin();
-    for (;r <  j->getAllocdRes()->end(); r++) {
-      resPool->push_back(*r);
+    auto r = (*j)->getAllocdRes()->begin();
+    for (;r !=  (*j)->getAllocdRes()->end(); r++) {
+      resPool->push_back(  move(*r)  );
     }
   } 
 }

@@ -28,8 +28,8 @@ class Scheduler : public Server {
   typedef std::vector<AlgType> AlgVecType;
 
   /* Base Types */
-  typedef std::shared_ptr<Resource> ResourcePtr;
-  typedef std::shared_ptr<Job> JobPtr;
+  typedef std::unique_ptr<Resource> ResourcePtr;
+  typedef std::unique_ptr<Job> JobPtr;
   
   /* Collections of Bases */
   typedef std::deque<ResourcePtr> ResourcePool;
@@ -63,9 +63,9 @@ public:
   
   virtual void stop();
 
-  Job getJobFromQ(JobQueuePtr rq, int i) 
+  JobPtr getJobFromQ(JobQueuePtr rq, int i) 
   {
-    return *(*rq)[i];   
+    return (*rq)[i];   
   }
   inline std::string getStrategy() const { return strat; }
   inline int  readyQSize(){return readyQ->size();}
@@ -89,7 +89,7 @@ public:
   }
   int  allocate(Job &j, int m, int n);
   inline  AlgVecType* getAlgVecPtr() { return &algVec;}
-  void realloc(Job& j);
+  void realloc(JobPtr j);
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
 private:
   /* Setters */
@@ -102,7 +102,7 @@ private:
 
   inline void addResource(int PortNo, const std::string& Hostname, int Rid) 
   {
-        resPool->push_back(std::make_shared<Resource>(PortNo,Hostname,Rid));
+        resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
   }
 
  
@@ -124,18 +124,18 @@ private:
 
   /* Helper Functions */ 
   int addToReadyQ(msg_t& request);
-  void addToRunQ(Job& j);
+  void addToRunQ(JobPtr j);
   void kickStartRunQ();
   int getJobStatus(int jobID);
   msg_t getJobResponse(int);
-  void returnToReadyQ(Job& j,int pos);
-  int estimateFinishTime(Job& j);
+  void returnToReadyQ(JobPtr j,int pos);
+  JobPtr estimateFinishTime(JobPtr j);
   int numLateJobs();
   void updateState();
   void dumpInfo();
   void printQInfo(const char*, JobQueuePtr, bool);
   void reclaimResources();
-  template <typename T> void removeFromQ(typename ContainerPtr<T>::deque, T);
+  template <typename T> T removeFromQ(typename ContainerPtr<T>::deque, T);
 
 
   /* Attempts to allocate a least n resources to job j
@@ -144,7 +144,7 @@ private:
    */
   /* Helper functions for resource managment */
 
-  void deallocate(Job& j);
+  JobPtr deallocate(JobPtr j);
 
   void serviceAllocations(Allocations &a);
 

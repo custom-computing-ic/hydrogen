@@ -11,7 +11,7 @@ Allocations FCFSMin(Scheduler &s) {
   std::cout << "Using FCFSMin" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    Job j = s.getJobFromQ(rq,i);
+    auto j = move(s.getJobFromQ(rq,i));
     if (s.allocate(j,j.getMin(),j.getMin()) > 0) {
       /* successfully allocated the min resources */
 //      std::cout << "Adding " << j  << " To allocations\n";

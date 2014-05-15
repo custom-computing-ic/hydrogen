@@ -10,13 +10,13 @@ class Allocations {
     Allocations() {
       score = 0;
     }
-    std::deque<Job> jobs;
+    std::deque<std::unique_ptr<Job>> jobs;
     float score;
     float makespan() { float sum = 0; 
-                       std::deque<Job>::iterator it = jobs.begin();
-                       for(;it<jobs.end();it++) 
+                       auto it = jobs.begin();
+                       for(;it != jobs.end();it++) 
                        {
-                          sum += it->cost();
+                          sum += (*it)->cost();
                        } 
                        return sum;}
 
