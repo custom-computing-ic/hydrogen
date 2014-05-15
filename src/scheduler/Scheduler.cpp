@@ -30,6 +30,8 @@ int Scheduler::getJobStatus(int jobID) {
       return (*it)->getStatus();
     }
   }
+
+  return -1;
   //check readyQ
   //check finishedQ
 
@@ -55,13 +57,14 @@ void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
   the job class is finished.
  */
 int Scheduler::addToReadyQ(msg_t& request) {
-  readyQ->push_back(make_shared<Job>(request));
+  readyQ->push_back(make_shared<Job>(request,this->getNextId()));
   return readyQ->back()->getId();
 }
 
 
 //TODO[mottenh]: Actualy make this communicate with the allocated dispatchers..
 void Scheduler::addToRunQ(Job& j) {
+  cout << "Adding " << j << "to the runQ\n";
   j.setDispatchTime(curTime);
   estimateFinishTime(j);
   runQ->push_back(make_shared<Job>(j));
@@ -235,9 +238,14 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       schedule(MODE_MANAGED);
       kickStartRunQ();
       jobStatus = getJobStatus(jobID);
+      std::cout << "jobID[" << jobID << "] : Status code " << jobStatus << std::endl;
       if (jobStatus < 0) {
         //TODO[paul-g]:Maybe have some meaningful error codes for the client?
         //at the moment I'm just acking back
+        response.msgId = MSG_ACK;
+        response.dataSize = 0;
+        response.paramsSize = 0;
+
       } else {
         if (jobStatus == 0) {
            //job Done

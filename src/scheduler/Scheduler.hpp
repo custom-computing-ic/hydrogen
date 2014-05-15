@@ -53,9 +53,10 @@ public:
     finishedJobs = JobQueuePtr(new JobQueue()); 
     addResource(dispatcherPortNumber,dispatcherHostname,1);
 
-
+    nextJid = 1;
   }
   /* Server functions */
+  int getNextId() { return nextJid++;}
   virtual void handleRequest(msg_t& request, msg_t& response);
   virtual void defaultHandler(msg_t& request, msg_t& response);
   virtual void start();
@@ -122,7 +123,7 @@ private:
 
 
   /* Helper Functions */ 
-  virtual int addToReadyQ(msg_t& request);
+  int addToReadyQ(msg_t& request);
   void addToRunQ(Job& j);
   void kickStartRunQ();
   int getJobStatus(int jobID);
@@ -161,6 +162,7 @@ private:
   float curTime;
   float nextJobTime;
   std::string strat;
+  int nextJid;
 };
 
 #endif /* _SCHEDULER_H_ */

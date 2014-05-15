@@ -31,7 +31,7 @@ class Job {
        finishTime = 0;
        AllocatedResources = ResourcePoolPtr(new ResourcePool());
     };
-    Job(msg_t& request);
+    Job(msg_t& request,int);
    /* {
       issueTime = 0;
       dispatchTime = 0;

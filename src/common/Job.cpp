@@ -1,6 +1,8 @@
 #include <Job.hpp>
-static int jobID = 0;
-int getNextId() {return ++jobID;}
+
+//static int jobID = 0;
+//int getNextId() {return ++jobID;}
+
 float defaultCostFunction(Job& j) {
   return j.getDefaultJobTime() /   j.noAllocdRes();
 }
@@ -29,7 +31,7 @@ Job::Job(int a, int b, std::function<float(Job&)> c, float d) {
   status = -1;
 } 
 /* for constructing a Job object from a message request */
-Job::Job(msg_t& request) {
+Job::Job(msg_t& request,int id) {
   //TODO[mtottenh]: Replace this with metadata gained from executor
   min = 1;
   max = 2; 
@@ -44,7 +46,7 @@ Job::Job(msg_t& request) {
   AllocatedResources = std::make_shared<ResourcePool>();
   status = 2;
   req = request;
-  jid = getNextId();
+  jid = id;
 }
  
 msg_t Job::run() {
