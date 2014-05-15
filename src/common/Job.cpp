@@ -1,5 +1,6 @@
 #include <Job.hpp>
-
+static int jobID = 0;
+int getNextId() {return ++jobID;}
 float defaultCostFunction(Job& j) {
   return j.getDefaultJobTime() /   j.noAllocdRes();
 }
@@ -15,6 +16,7 @@ Job::Job(int a, int b, std::function<float(Job&)> c) {
   dispatchTime = 0;
   defaultJobTime = 1.0;
   finishTime = 0;
+  status = -1;
 } 
 Job::Job(int a, int b, std::function<float(Job&)> c, float d) {
   min = a;
@@ -24,6 +26,7 @@ Job::Job(int a, int b, std::function<float(Job&)> c, float d) {
   dispatchTime = 0;
   defaultJobTime = d;
   finishTime = 0;
+  status = -1;
 } 
 /* for constructing a Job object from a message request */
 Job::Job(msg_t& request) {
@@ -39,12 +42,23 @@ Job::Job(msg_t& request) {
   dispatchTime = 0;
   finishTime = 0;
   AllocatedResources = std::make_shared<ResourcePool>();
-   
+  status = 2;
+  req = request;
+  jid = getNextId();
 }
  
+msg_t Job::run() {
+  AllocatedResources->front()->send(&req, req.sizeBytes());
+
+}
+
 
 std::string Job::str() const {
   std::stringstream s; 
   s << "Job["<<this->getId() << "]"; 
   return s.str();
+}
+
+void Job::getResponse(char* buffer, int sizeBytes) {
+  int n = AllocatedResources->front()->read(buffer, sizeBytes);
 }

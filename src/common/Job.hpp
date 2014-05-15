@@ -43,6 +43,7 @@ class Job {
     Job(int a, int b, std::function<float(Job&)> c, float d);
     /* getters */
     std::string str() const;
+    inline int getStatus() const { return status; }
     inline int noAllocdRes() const { return AllocatedResources->size();}
     inline int getMin() const { return min;} 
     inline int getMax() const { return max;} 
@@ -64,8 +65,7 @@ class Job {
     inline void setMax(int a) {max = a;}
     inline void setJid(int a) {jid = a;}
     inline void setCostFunc(std::function<float(Job&)> f) {cost_func = f;}
-
-
+    inline void setStatus(int a) { status = a;}
     inline float cost() { return cost_func(*this);}
 
     inline float minCost() const { return defaultJobTime / min;}
@@ -77,16 +77,21 @@ class Job {
       s << "Job["<<j.getId()<<"]";
       return s;
     }
+    msg_t run();
+    void getResponse(char*,int);
   private:
   	int min;
 		int max;
     int jid;
     int uid;
+    int status;
     int priority;
     float defaultJobTime;
     float issueTime;
     float dispatchTime;
     float finishTime;
+
+    msg_t req;
     std::function<float(Job&)> cost_func;
     ResourcePoolPtr AllocatedResources;
 

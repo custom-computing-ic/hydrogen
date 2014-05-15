@@ -122,9 +122,11 @@ private:
 
 
   /* Helper Functions */ 
-  virtual void addToReadyQ(msg& request, msg_t& response);
+  virtual int addToReadyQ(msg_t& request);
   void addToRunQ(Job& j);
-
+  void kickStartRunQ();
+  int getJobStatus(int jobID);
+  msg_t getJobResponse(int);
   void returnToReadyQ(Job& j,int pos);
   int estimateFinishTime(Job& j);
   int numLateJobs();

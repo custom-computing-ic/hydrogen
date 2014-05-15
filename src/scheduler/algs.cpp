@@ -7,7 +7,7 @@
 /***** Priority Agnostic algorithms (FCFS) *****/
 Allocations FCFSMin(Scheduler &s) {
   Allocations a;
-  auto rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQ");
   std::cout << "Using FCFSMin" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -26,7 +26,7 @@ Allocations FCFSMin(Scheduler &s) {
 
 Allocations FCFSAsManyAsPos(Scheduler &s) {
   Allocations a;
-  auto rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQ");
   std::cout << "Using FCFSAMAP" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -43,7 +43,7 @@ Allocations FCFSAsManyAsPos(Scheduler &s) {
 }
 Allocations FCFSMax(Scheduler &s) {
   Allocations a;
-  auto rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQ");
   std::cout << "Using FCFS Max" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -70,7 +70,7 @@ Allocations FCFSMax(Scheduler &s) {
 /***** Priority Scheduler with Backfill *****/
 /*Allocations PBackfill(Scheduler &s) {
   int w_size = s.getWindow();
-  JobQueue* rq = s.getQueuePointer("readyQueue");
+  JobQueue* rq = s.getQueuePointer("readyQ");
  
   if (rq == nullptr) {
     std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
@@ -100,7 +100,7 @@ bool sortByMin(Job i, Job j) { return (i.getMin() < j.getMin()); }
 Allocations SJTF(Scheduler &s) {
   int w_size = s.getWindow();
   std::cout << "Using SJTF\n";
-  auto rq = s.getQueuePointer("readyQueue");
+  auto rq = s.getQueuePointer("readyQ");
   Allocations aloc; 
   if (rq == NULL) {
     std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
@@ -135,7 +135,6 @@ Allocations ManagedMode(Scheduler &s) {
             << "Res[" <<s.resPoolSize() << "]\t" 
             << "RQ[" << s.readyQSize() << "]\n";
   for(unsigned int i = 0; i < av->size()-1; i++) {
-//    testAlgorithm = 
     allocations.push_back( s.schedule(i,true));
     s.returnResources(allocations.back());
   }

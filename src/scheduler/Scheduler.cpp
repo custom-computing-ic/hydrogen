@@ -21,6 +21,20 @@ void Scheduler::removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
   jq = preserve_list;
 
 }
+
+int Scheduler::getJobStatus(int jobID) {
+  //check runQ
+  
+  for (auto it = runQ->begin(); it != runQ->end(); it++) {
+    if ((*it)->getId() == jobID) {
+      return (*it)->getStatus();
+    }
+  }
+  //check readyQ
+  //check finishedQ
+
+}
+
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
 void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
   resPool->front()->send(&request, request.sizeBytes());
@@ -40,9 +54,9 @@ void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
 /* TODO[mtottenh]: insert wrapper here to construct a job from a message when
   the job class is finished.
  */
-void Scheduler::addToReadyQ(msg_t& request, msg_t& response) {
-//  Job j(request);
+int Scheduler::addToReadyQ(msg_t& request) {
   readyQ->push_back(make_shared<Job>(request));
+  return readyQ->back()->getId();
 }
 
 
@@ -186,11 +200,29 @@ void Scheduler::returnResources(Allocations &a) {
   } 
 }
 
-
+msg_t Scheduler::getJobResponse(int jobID) {
+  msg_t response;
+  char buffer[1024];
+  bzero(buffer, 1024);
+  for (auto job = runQ->begin(); job != runQ->end(); job++) {
+    if ((*job)->getId() == jobID) {
+      (*job)->getResponse(buffer,1024);
+    }
+  } 
+ 
+  msg_t* rsp = (msg_t*)buffer;
+  response.msgId = rsp->msgId;
+  response.dataSize = rsp->dataSize;
+  response.paramsSize = 0;
+  memcpy(response.data, rsp->data, rsp->dataBytes()); 
+  return response;
+}
 
 /* Server Handling */
 void Scheduler::handleRequest(msg_t& request, msg_t& response) {
   cout << "Scheduler recieved request msgID[" <<  request.msgId << "]" << endl;
+  int jobID = -1;
+  int jobStatus = -1;
   //TODO: Lookup requestID/Implementation ID in a map and return error if not found
   switch(request.msgId) {
     case MSG_DONE:
@@ -199,8 +231,31 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       response.paramsSize = 0;
       break;
     case MSG_MOVING_AVG:
-      addToReadyQ(request,response);
+      jobID = addToReadyQ(request);
       schedule(MODE_MANAGED);
+      kickStartRunQ();
+      jobStatus = getJobStatus(jobID);
+      if (jobStatus < 0) {
+        //TODO[paul-g]:Maybe have some meaningful error codes for the client?
+        //at the moment I'm just acking back
+      } else {
+        if (jobStatus == 0) {
+           //job Done
+           response = getJobResponse(jobID);
+        }
+        if (jobStatus == 1) {
+          response.msgId = MSG_ACK;
+          response.dataSize = 0;
+          response.paramsSize = 0;
+           //Job in progress - 
+        }
+        if (jobStatus == 2) {
+          response.msgId = MSG_ACK;
+          response.dataSize = 0;
+          response.paramsSize = 0;
+           //Job not yet started - 
+        }
+      }
       break;
     default:
         defaultHandler(request,response);
@@ -209,7 +264,14 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       break;
   }
 }
-
+void Scheduler::kickStartRunQ() {
+  for (auto job = runQ->begin(); job != runQ->end(); job++)  {
+    if ( (*job)->getStatus() == 2 ) {
+      (*job)->setStatus(1);
+      (*job)->run();
+    }
+  }
+}
 void Scheduler::start() {
   // Order matters, since the server blocks waiting for requests
   for (auto it = resPool->begin(); it != resPool->end(); it++)
