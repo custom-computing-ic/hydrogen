@@ -10,8 +10,8 @@ Allocations CB(Scheduler &s);
 Allocations ManagedMode(Scheduler &s);
 
 /* Scoring algorithms */
-bool sortByTime(Job i, Job j);
-bool sortByMin(Job i, Job j);
+bool sortByTime(const std::unique_ptr<Job>& i, const std::unique_ptr<Job>& j);
+bool sortByMin(const std::unique_ptr<Job>& i, const std::unique_ptr<Job>& j);
 void score(Allocations &a, Scheduler &s);
 Allocations selectMaxScore(std::deque<Allocations> &a);
 

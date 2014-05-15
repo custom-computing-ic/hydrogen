@@ -7,20 +7,6 @@ using namespace std;
 
 
 
-template <typename T> 
-T Scheduler::removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
-
-  typename ContainerPtr<T>::deque preserve_list;
-//  preserve_list = new std::deque<T>();
-  auto a = jq->begin();
-  for(;a != jq->end(); a++) {
-    if ((*a)->getId() != j->getId()) {
-      preserve_list->push_back( move(*a) );
-    } 
-  } 
-  jq = preserve_list;
-  return j;
-}
 
 int Scheduler::getJobStatus(int jobID) {
   //check runQ
@@ -134,10 +120,8 @@ void Scheduler::schedule() {
 
 //TODO[mtottenh]: Collapse the below back into 1 function. needless code duplication here.
 void Scheduler::schedule(int choice) {
-  Allocations a;
   if (resPool->size() > 0) {
-    a = this->algVec[choice](*this);
-    serviceAllocations(a);
+    this->algVec[choice](*this).serviceAllocations(*this);
   }
 }
 Allocations Scheduler::schedule(int choice, bool flag) {
@@ -149,18 +133,16 @@ Allocations Scheduler::schedule(int choice, bool flag) {
  return a;
 }
 
-int Scheduler::allocate(Job& j, int max_res, int min_res) {
+Scheduler::JobPtr Scheduler::allocate(JobPtr j, int max_res, int min_res) {
   if (resPool->size() >= min_res) {
     while (max_res-- > 0 && resPool->size() > 0) {
-      j.allocate( move(resPool->back()) );
+      j->allocate( move(resPool->back()) );
       resPool->pop_back();
     }
-    std::cout << "Allocated " << j.noAllocdRes()
-              << " Resources to " << j << "\n";
-    return j.noAllocdRes();
-  } else {
-    return -1;
+    std::cout << "Allocated " << j->noAllocdRes()
+              << " Resources to " << *j << "\n";
   }
+  return j;
 }
 
 //TODO[mtottenh]:Check this functions as intended. I'm not sure about getAllocdRes()->***/
@@ -178,32 +160,17 @@ Scheduler::JobPtr Scheduler::deallocate(JobPtr j) {
 }
 
 /*TODO[mtottenh]: Is this ever used? */
-void Scheduler::realloc(JobPtr j) {
+Scheduler::JobPtr Scheduler::realloc(JobPtr j) {
   auto r = j->getAllocdRes()->begin();
   for (; r != j->getAllocdRes()->end(); r++) {
-     this->removeFromQ(resPool, move( *r));
+     *r = move(removeFromQ(resPool, move( *r)));
   }
-
+  return j;
 }
 
-//TODO[mtottenh]: add code to communicate with dispatcher here...
-void Scheduler::serviceAllocations(Allocations &a) {
-  auto j = a.jobs.begin();
-  for(;j != a.jobs.end(); j++) {
-    *j = move(removeFromQ(readyQ, move(*j)));
-    addToRunQ(move(*j));
-  }
 
-}
-void Scheduler::returnResources(Allocations &a) {
-  auto j = a.jobs.begin();
-  for (;j != a.jobs.end(); j++) {
-    auto r = (*j)->getAllocdRes()->begin();
-    for (;r !=  (*j)->getAllocdRes()->end(); r++) {
-      resPool->push_back(  move(*r)  );
-    }
-  } 
-}
+//void Scheduler::returnResources(Allocations &a) 
+
 
 msg_t Scheduler::getJobResponse(int jobID) {
   msg_t response;

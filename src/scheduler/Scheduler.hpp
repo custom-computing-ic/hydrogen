@@ -65,7 +65,8 @@ public:
 
   JobPtr getJobFromQ(JobQueuePtr rq, int i) 
   {
-    return (*rq)[i];   
+    return move(rq->at(i));   
+
   }
   inline std::string getStrategy() const { return strat; }
   inline int  readyQSize(){return readyQ->size();}
@@ -87,10 +88,29 @@ public:
         return finishedJobs;
     return NULL;
   }
-  int  allocate(Job &j, int m, int n);
+  JobPtr  allocate(JobPtr j, int m, int n);
   inline  AlgVecType* getAlgVecPtr() { return &algVec;}
-  void realloc(JobPtr j);
+  JobPtr realloc(JobPtr j);
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
+  void addToRunQ(JobPtr j);
+  template <typename T> 
+  T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
+    typename ContainerPtr<T>::deque preserve_list;
+//  preserve_list = new std::deque<T>();
+    auto a = jq->begin();
+    for(;a != jq->end(); a++) {
+      if ((*a)->getId() != j->getId()) {
+        preserve_list->push_back( move(*a) );
+      } 
+    } 
+    jq = preserve_list;
+    return j;
+  }
+
+
+
+
+
 private:
   /* Setters */
   inline void setReadyQ(JobQueuePtr rq) {readyQ = rq;}
@@ -114,9 +134,9 @@ private:
   inline  AlgType getAlg(int i) { return algVec[i];}
   inline  int noAlgs() {return algVec.size();}
  
-  inline  Job getFirstReadyProc() 
+  inline  JobPtr getFirstReadyProc() 
   { 
-    Job j = *(readyQ->front());
+    JobPtr j = std::move( readyQ->front() ) ;
     readyQ->pop_front();
     return j;
   }
@@ -124,7 +144,7 @@ private:
 
   /* Helper Functions */ 
   int addToReadyQ(msg_t& request);
-  void addToRunQ(JobPtr j);
+
   void kickStartRunQ();
   int getJobStatus(int jobID);
   msg_t getJobResponse(int);
@@ -135,7 +155,7 @@ private:
   void dumpInfo();
   void printQInfo(const char*, JobQueuePtr, bool);
   void reclaimResources();
-  template <typename T> T removeFromQ(typename ContainerPtr<T>::deque, T);
+
 
 
   /* Attempts to allocate a least n resources to job j
