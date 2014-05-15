@@ -47,10 +47,10 @@ Job::Job(msg_t& request,int id) {
   req = request;
   jid = id;
 }
- 
+// TODO[mtottenh]: Change this... I dont think it needs to return a result anymore
 msg_t Job::run() {
   AllocatedResources->front()->send(&req, req.sizeBytes());
-
+  return req;
 }
 
 
