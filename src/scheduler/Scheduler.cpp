@@ -203,7 +203,7 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       response.paramsSize = 0;
       break;
     case MSG_MOVING_AVG:
-      jobID = addToReadyQ(request);
+  /*    jobID = addToReadyQ(request);
       schedule(MODE_MANAGED);
       kickStartRunQ();
       jobStatus = getJobStatus(jobID);
@@ -233,7 +233,7 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
            //Job not yet started - 
         }
       }
-      break;
+      break;*/
     default:
         defaultHandler(request,response);
 //      cout << "Request added to readyQ" << endl ;
