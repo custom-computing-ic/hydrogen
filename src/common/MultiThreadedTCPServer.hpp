@@ -54,6 +54,10 @@ public:
   explicit MultiThreadedTCPServer(const std::string& address, const std::string& port,
       std::size_t thread_pool_size);
 
+  virtual ~MultiThreadedTCPServer() {}
+
+  typedef MultiThreadedTCPServer super;
+
   void run();
 
   // A thread safe function to be called by each connection
