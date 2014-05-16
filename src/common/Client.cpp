@@ -9,6 +9,7 @@
 
 using namespace std;
 using namespace boost::asio::ip;
+namespace ba = boost::asio;
 
 void Client::send(msg_t *message) {
   char buf[1024];
@@ -41,6 +42,8 @@ void Client::stop() {
   send(&msg);
 
   // XXX close socket?
+  boost::system::error_code ignored_ec;
+  socket_->shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
 }
 
 void Client::getResult(void* out) {

@@ -33,6 +33,7 @@ public:
   /** Read a message from socket into buff **/
   inline int read(char* buffer, int sizeBytes) {
     char buf[1024];
+    memset(buf, 0, 1024);
     for (;;) {
       boost::system::error_code error;
       size_t reply_len = socket_->read_some(boost::asio::buffer(buf), error);
