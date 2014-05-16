@@ -58,7 +58,7 @@ public:
   /* Server functions */
   int getNextId() { return nextJid++;}
   virtual msg_t* handle_request(msg_t* request);
-  virtual void defaultHandler(msg_t& request, msg_t& response);
+  virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
   virtual void start();
 
   virtual void stop();

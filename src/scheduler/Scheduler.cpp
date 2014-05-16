@@ -24,13 +24,13 @@ int Scheduler::getJobStatus(int jobID) {
 }
 
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
-void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
+void Scheduler::defaultHandler(msg_t& request, msg_t& response, int responseSize) {
   resPool->front()->send(&request);
+
   // wait for reply back
-  // XXX determine buffer size dynamically
-  char buffer[1024];
-  bzero(buffer, 1024);
-  int n = resPool->front()->read(buffer, 1024);
+  char buffer[responseSize];
+  memset(buffer, 0, responseSize);
+  int n = resPool->front()->read(buffer, responseSize);
 
   cout << "Default handler " << endl;
   request.print();
@@ -247,7 +247,7 @@ msg_t* Scheduler::handle_request(msg_t* request) {
       cout << "Request data size " << request->dataSize << endl;
       int sizeBytes = sizeof(msg_t) + sizeof(int) * request->dataSize;
       msg_t* response = (msg_t*)calloc(sizeBytes, 1);
-      defaultHandler(*request, *response);
+      defaultHandler(*request, *response, sizeBytes);
       return response;
 //      cout << "Request added to readyQ" << endl ;
 //      this->addToReadyQ(request,response);

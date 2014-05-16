@@ -31,23 +31,7 @@ public:
   void send(msg_t *message);
 
   /** Read a message from socket into buff **/
-  inline int read(char* buffer, int sizeBytes) {
-    // TODO[paul-g]: this is not safe, not some blocking IO
-    char buf[1024];
-    memset(buf, 0, 1024);
-    //    for (;;) {
-    std::cout << "Client.read::Waiting for result..." << std::endl;
-      boost::system::error_code error;
-      size_t reply_len = socket_->read_some(boost::asio::buffer(buf), error);
-      // if (error == boost::asio::error::eof)
-      //   break; // Connection closed cleanly by peer.
-      // else if (error)
-      //   throw boost::system::system_error(error); // Some other error.
-      //    }
-    memcpy(buffer, buf, sizeBytes);
-    // XXX error code...
-    return 0;
-  }
+  int read(char* buffer, int sizeBytes);
 
   /** Opens connection to target host **/
   virtual void start();
