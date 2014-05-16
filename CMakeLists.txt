@@ -1,9 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 project (elastic-dfe)
 
-
 SET(CMAKE_CXX_COMPILER  "/usr/bin/clang++")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -Weverything")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x ")
+
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)
 
@@ -20,7 +20,7 @@ set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client)
 
 # Dispatcher Executable
 add_executable (dispatcher src/dispatcher/main.cxx)
-target_link_libraries (dispatcher Dispatcher)
+target_link_libraries (dispatcher Dispatcher pthread boost_system boost_thread)
 
 # Scheduler Executable
 add_executable (scheduler src/scheduler/main.cxx)
@@ -34,6 +34,10 @@ target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS})
 add_executable (MultiUserSingleJobType test/integration/MultiUserSingleJobType.cpp)
 target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS})
 
+add_executable (DispatcherTest test/DispatcherTest.cpp)
+target_link_libraries (DispatcherTest ${EXTRA_LIBS})
+
 enable_testing ()
+# add_test ("DispatcherTest" DispatcherTest)
 add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
 add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
