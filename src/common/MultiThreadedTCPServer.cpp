@@ -34,18 +34,27 @@ MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const stri
 
   start_accept();
 }
-
+//Pretty sure we can replace this nasty vector with 
+//a nice thread_group
 void MultiThreadedTCPServer::run() {
   cout << "Creating thread pool size " << thread_pool_size_ << endl;
+  //boost::thread_group worker_threads;
+
   vector<boost::shared_ptr<boost::thread> > threads;
   for (size_t i = 0; i < thread_pool_size_; ++i) {
+
     boost::shared_ptr<boost::thread> thread(new boost::thread(
                                                               boost::bind(&boost::asio::io_service::run, &io_service_)));
     threads.push_back(thread);
+    
+  //  worker_threads.create_thread(boost::bind(&boost::asio::io_service_run, &io_service_));
+
   }
 
   for (size_t i = 0; i < threads.size(); ++i)
     threads[i]->join();
+
+  //worker_threads.join_all();
 }
 
 void MultiThreadedTCPServer::start_accept() {
