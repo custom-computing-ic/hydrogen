@@ -1,18 +1,27 @@
 #ifndef _DISPATCHER_H_
 #define _DISPATCHER_H_
 
-#include <Server.hpp>
+#include <MultiThreadedTCPServer.hpp>
 #include <string>
+#include <boost/lexical_cast.hpp>
 
-class Dispatcher : public Server {
+#include "DispatcherServer.hpp"
+
+class Dispatcher {
+
+  MultiThreadedTCPServer *server;
 
 public:
 
-  Dispatcher(int port, const std::string &name) : super(port, name) {}
+  Dispatcher(int port, const std::string &name) {
+    server = new DispatcherServer("localhost", boost::lexical_cast<std::string>(port), 2);
+    server->run();
+  }
 
-  virtual void handleRequest(msg_t& message, msg_t& response);
+  ~Dispatcher() {
+    delete server;
+  }
 
-  void movingAverage(int n, int size, int *data, int *out);
 };
 
 
