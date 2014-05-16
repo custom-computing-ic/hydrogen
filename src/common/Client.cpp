@@ -47,15 +47,17 @@ void Client::stop() {
 }
 
 void Client::getResult(void* out) {
-  for (;;) {
+  // TODO[paul-g]: this is not safe, not some blocking IO
+  // for (;;) {
+  //   cout << "Waiting for result..." << endl;
     char buf[1024];
     boost::system::error_code error;
     size_t reply_len = socket_->read_some(boost::asio::buffer(buf), error);
     msg_t* rsp = (msg_t*)buf;
     memcpy(out, rsp->data, rsp->dataBytes());
-    if (error == boost::asio::error::eof)
-      break; // Connection closed cleanly by peer.
-    else if (error)
-      throw boost::system::system_error(error); // Some other error.
-  }
+    // if (error == boost::asio::error::eof)
+    //   break; // Connection closed cleanly by peer.
+    // else if (error)
+    //   throw boost::system::system_error(error); // Some other error.
+    //  }
 }

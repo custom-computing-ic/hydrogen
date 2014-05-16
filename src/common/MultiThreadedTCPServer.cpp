@@ -10,7 +10,7 @@ using namespace std;
 namespace ba = boost::asio;
 
 MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const string& port,
-    size_t thread_pool_size)
+                                               size_t thread_pool_size)
   : thread_pool_size_(thread_pool_size),
     signals_(io_service_),
     acceptor_(io_service_),
@@ -40,7 +40,7 @@ void MultiThreadedTCPServer::run() {
   vector<boost::shared_ptr<boost::thread> > threads;
   for (size_t i = 0; i < thread_pool_size_; ++i) {
     boost::shared_ptr<boost::thread> thread(new boost::thread(
-          boost::bind(&boost::asio::io_service::run, &io_service_)));
+                                                              boost::bind(&boost::asio::io_service::run, &io_service_)));
     threads.push_back(thread);
   }
 
@@ -52,7 +52,7 @@ void MultiThreadedTCPServer::start_accept() {
   cout << "Start accept\n";
   new_connection_.reset(new connection(io_service_, *this));
   acceptor_.async_accept(new_connection_->socket(),
-			 boost::bind(&MultiThreadedTCPServer::handle_accept, this));
+                         boost::bind(&MultiThreadedTCPServer::handle_accept, this));
 }
 
 void MultiThreadedTCPServer::handle_accept() {
@@ -66,7 +66,7 @@ void MultiThreadedTCPServer::handle_stop() {
 }
 
 connection::connection(ba::io_service& io_service,
-		       MultiThreadedTCPServer& server)
+                       MultiThreadedTCPServer& server)
   : strand_(io_service),
     socket_(io_service),
     server_(server)
@@ -84,22 +84,31 @@ void connection::start() {
 }
 
 void connection::handle_read() {
-  // unpack request
-  msg_t* request = (msg_t*)buffer_.data();
 
-  // do work and generate reply
-  msg_t* reply = server_.handle_request(request);
+  // XXX TODO[paul-g]: Need to do this async
+  msg_t* request = NULL;
+  do {
+    // unpack request
+    request = (msg_t*)buffer_.data();
 
-  char buffer[1024];
-  cout << "MTSv copying back: " << endl;
-  reply->print();
-  memcpy(buffer, reply, reply->sizeBytes());
+    // do work and generate reply
+    msg_t* reply = server_.handle_request(request);
 
-  ba::async_write(socket_,
-		  ba::buffer(buffer),
-		  strand_.wrap(
-			       boost::bind(&connection::handle_write, shared_from_this(),
-					   ba::placeholders::error)));
+    // write reply back
+    char buffer[1024];
+    memcpy(buffer, reply, reply->sizeBytes());
+    ba::write(socket_,
+              ba::buffer(buffer, reply->sizeBytes()));
+
+    // wait for new request
+    // XXX this may not read all the bytes...
+    socket_.read_some(boost::asio::buffer(buffer_, 1024));
+    // ba::read(socket_,
+    // 	     ba::buffer(buffer_, 1024));
+  } while (request != NULL && request->msgId != MSG_DONE);
+
+  boost::system::error_code ignored_ec;
+  socket_.shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
 }
 
 void connection::handle_write(const boost::system::error_code& e) {
