@@ -2,6 +2,7 @@
 #define _MESSAGE_H_
 
 #include <iostream>
+#include <cstdlib>
 
 /** Message ids */
 const int MSG_DONE = 0;
@@ -42,10 +43,13 @@ typedef struct msg {
     for (int i = dataSize; i < dataSize + paramsSize; i++) {
       cout << *(((int *)data) + i) << " ";
     }
+
     cout << endl;
   }
 
 } msg_t;
 #pragma pack(0)
+
+msg_t* msg_empty();
 
 #endif /* _MESSAGE_H_ */
