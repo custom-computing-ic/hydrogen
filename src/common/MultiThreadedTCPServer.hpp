@@ -8,6 +8,8 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 
+#include "message.hpp"
+
 class MultiThreadedTCPServer;
 
 /// Represents a single connection from a client.
@@ -61,7 +63,7 @@ public:
   void run();
 
   // A thread safe function to be called by each connection
-  virtual std::string do_work()=0;
+  virtual msg_t* handle_request(msg_t* request)=0;
 
 private:
   void start_accept();

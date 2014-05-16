@@ -4,6 +4,8 @@
 #include <boost/thread.hpp>
 #include <vector>
 
+#include "message.hpp"
+
 using namespace std;
 namespace ba = boost::asio;
 
@@ -82,12 +84,19 @@ void connection::start() {
 }
 
 void connection::handle_read() {
-  string reply = server_.do_work();
+  // unpack request
+  msg_t* request = (msg_t*)buffer_.data();
+
+  // do work and generate reply
+  msg_t* reply = server_.handle_request(request);
+
+  char buffer[1024];
+  memcpy(buffer, reply, reply->sizeBytes());
   ba::async_write(socket_,
-                           ba::buffer(reply),
-                           strand_.wrap(
-                                        boost::bind(&connection::handle_write, shared_from_this(),
-                                                    ba::placeholders::error)));
+		  ba::buffer(buffer),
+		  strand_.wrap(
+			       boost::bind(&connection::handle_write, shared_from_this(),
+					   ba::placeholders::error)));
 }
 
 void connection::handle_write(const boost::system::error_code& e) {
