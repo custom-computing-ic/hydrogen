@@ -32,11 +32,19 @@ void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
   bzero(buffer, 1024);
   int n = resPool->front()->read(buffer, 1024);
 
+  cout << "Default handler " << endl;
+  request.print();
+  response.print();
+
   msg_t* rsp = (msg_t*)buffer;
+  rsp->print();
   response.msgId = rsp->msgId;
   response.dataSize = rsp->dataSize;
   response.paramsSize = 0;
   memcpy(response.data, rsp->data, rsp->dataBytes());
+
+  cout << "DefHandler Response" << endl;
+  response.print();
 }
 
 /* TODO[mtottenh]: insert wrapper here to construct a job from a message when
@@ -191,17 +199,17 @@ msg_t Scheduler::getJobResponse(int jobID) {
 }
 
 /* Server Handling */
-void Scheduler::handleRequest(msg_t& request, msg_t& response) {
-  cout << "Scheduler recieved request msgID[" <<  request.msgId << "]" << endl;
+msg_t* Scheduler::handle_request(msg_t* request) {
+  cout << "Scheduler recieved request msgID[" <<  request->msgId << "]" << endl;
+  request->print();
   int jobID = -1;
   int jobStatus = -1;
   //TODO: Lookup requestID/Implementation ID in a map and return error if not found
-  switch(request.msgId) {
+  msg_t* response;
+  response = msg_ack();
+  switch(request->msgId) {
     case MSG_DONE:
-      response.msgId = MSG_ACK;
-      response.dataSize = 0;
-      response.paramsSize = 0;
-      break;
+      return msg_ack();
     case MSG_MOVING_AVG:
   /*    jobID = addToReadyQ(request);
       schedule(MODE_MANAGED);
@@ -211,9 +219,9 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
       if (jobStatus < 0) {
         //TODO[paul-g]:Maybe have some meaningful error codes for the client?
         //at the moment I'm just acking back
-        response.msgId = MSG_ACK;
-        response.dataSize = 0;
-        response.paramsSize = 0;
+        response->msgId = MSG_ACK;
+        response->dataSize = 0;
+        response->paramsSize = 0;
 
       } else {
         if (jobStatus == 0) {
@@ -221,21 +229,26 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
            response = getJobResponse(jobID);
         }
         if (jobStatus == 1) {
-          response.msgId = MSG_ACK;
-          response.dataSize = 0;
-          response.paramsSize = 0;
+          response->msgId = MSG_ACK;
+          response->dataSize = 0;
+          response->paramsSize = 0;
            //Job in progress -
         }
         if (jobStatus == 2) {
-          response.msgId = MSG_ACK;
-          response.dataSize = 0;
-          response.paramsSize = 0;
+          response->msgId = MSG_ACK;
+          response->dataSize = 0;
+          response->paramsSize = 0;
            //Job not yet started -
         }
       }
       break;*/
     default:
-        defaultHandler(request,response);
+      // XXX TODO[paul-g]: need to actually determine data size here
+      cout << "Request data size " << request->dataSize << endl;
+      int sizeBytes = sizeof(msg_t) + sizeof(int) * request->dataSize;
+      msg_t* response = (msg_t*)calloc(sizeBytes, 1);
+      defaultHandler(*request, *response);
+      return response;
 //      cout << "Request added to readyQ" << endl ;
 //      this->addToReadyQ(request,response);
       break;
@@ -253,11 +266,10 @@ void Scheduler::start() {
   // Order matters, since the server blocks waiting for requests
   for (auto it = resPool->begin(); it != resPool->end(); it++)
     (*it)->start();
-  Server::start();
+  run();
 }
 
 void Scheduler::stop() {
   for (auto it = resPool->begin(); it != resPool->end(); it++)
     (*it)->start();
-  Server::stop();
 }

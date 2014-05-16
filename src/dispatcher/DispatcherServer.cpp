@@ -48,6 +48,10 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->dataSize = n;
     response->paramsSize = 0;
     memcpy(response->data, out, nBytes);
+
+    cout << "Dispatcher response:" << endl;
+    response->print();
+
     return response;
   }
 

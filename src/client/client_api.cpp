@@ -14,7 +14,7 @@ void movingAverage(int n, int size, int* data, int* out) {
 
   int sizeBytes = sizeof(msg_t) + (n + 1) * sizeof(int);
   cout << "Size bytes " << sizeBytes << endl;
-  msg_t *msg = (msg_t *)malloc(sizeBytes);
+  msg_t *msg = (msg_t *)calloc(sizeBytes, 1);
 
   msg->msgId = MSG_MOVING_AVG;
   msg->dataSize = n;
@@ -31,5 +31,6 @@ void movingAverage(int n, int size, int* data, int* out) {
   Client c(portNumber, name);
   c.start();
   c.send(msg);
-  c.getResult(out);  c.stop();
+  c.getResult(out);
+  c.stop();
 }

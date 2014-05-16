@@ -32,9 +32,15 @@ public:
 
   /** Read a message from socket into buff **/
   inline int read(char* buffer, int sizeBytes) {
-    boost::system::error_code error;
     char buf[1024];
-    socket_->read_some(boost::asio::buffer(buf), error);
+    for (;;) {
+      boost::system::error_code error;
+      size_t reply_len = socket_->read_some(boost::asio::buffer(buf), error);
+      if (error == boost::asio::error::eof)
+        break; // Connection closed cleanly by peer.
+      else if (error)
+        throw boost::system::system_error(error); // Some other error.
+    }
     memcpy(buffer, buf, sizeBytes);
     // XXX error code...
     return 0;

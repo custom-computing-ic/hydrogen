@@ -4,7 +4,7 @@
 #include <memory>
 #include <deque>
 #include <vector>
-#include <Server.hpp>
+#include <MultiThreadedTCPServer.hpp>
 #include <Resource.hpp>
 #include <Job.hpp>
 #include<Allocations.hpp>
@@ -17,12 +17,12 @@ class Scheduler;
 
 //typedef int Job;
 //TODO[mtottenh]: clean this up a bit
-  template <typename T> 
+  template <typename T>
     class ContainerPtr {
       public:
       typedef std::shared_ptr< std::deque < T > >  deque;
     };
-class Scheduler : public Server {
+class Scheduler : public MultiThreadedTCPServer {
   /* Algorithm Base and Collection Types */
   typedef std::function<Allocations(Scheduler &)> AlgType;
   typedef std::vector<AlgType> AlgVecType;
@@ -30,7 +30,7 @@ class Scheduler : public Server {
   /* Base Types */
   typedef std::unique_ptr<Resource> ResourcePtr;
   typedef std::unique_ptr<Job> JobPtr;
-  
+
   /* Collections of Bases */
   typedef std::deque<ResourcePtr> ResourcePool;
   typedef std::deque<JobPtr> JobQueue;
@@ -41,44 +41,44 @@ class Scheduler : public Server {
 
 
 public:
-  Scheduler(int port,
+  Scheduler(const std::string& port,
 	    const std::string& name,
 	    int dispatcherPortNumber,
 	    const std::string& dispatcherHostname) :
-    Server::super(port, name)
+    MultiThreadedTCPServer::super(name, port, 1)
   {
     resPool = ResourcePoolPtr(new ResourcePool());
-    readyQ = JobQueuePtr(new JobQueue()); 
-    runQ = JobQueuePtr(new JobQueue()); 
-    finishedJobs = JobQueuePtr(new JobQueue()); 
+    readyQ = JobQueuePtr(new JobQueue());
+    runQ = JobQueuePtr(new JobQueue());
+    finishedJobs = JobQueuePtr(new JobQueue());
     addResource(dispatcherPortNumber,dispatcherHostname,1);
 
     nextJid = 1;
   }
   /* Server functions */
   int getNextId() { return nextJid++;}
-  virtual void handleRequest(msg_t& request, msg_t& response);
+  virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response);
   virtual void start();
-  
+
   virtual void stop();
 
-  JobPtr getJobFromQ(JobQueuePtr rq, int i) 
+  JobPtr getJobFromQ(JobQueuePtr rq, int i)
   {
-    return move(rq->at(i));   
+    return move(rq->at(i));
 
   }
   inline std::string getStrategy() const { return strat; }
   inline int  readyQSize(){return readyQ->size();}
   inline int  resPoolSize(){return resPool->size();}
-  inline int    getWindow() const { return window;} 
-  /* Scheduling Strategies */ 
+  inline int    getWindow() const { return window;}
+  /* Scheduling Strategies */
   void schedule();
   void schedule(int);
   Allocations schedule(int,bool);
   void returnResources(Allocations &a);
 
-  inline  JobQueuePtr getQueuePointer(std::string s) 
+  inline  JobQueuePtr getQueuePointer(std::string s)
   {
     if (s.compare("readyQ") == 0)
         return readyQ;
@@ -93,7 +93,7 @@ public:
   JobPtr realloc(JobPtr j);
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
   void addToRunQ(JobPtr j);
-  template <typename T> 
+  template <typename T>
   T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
     typename ContainerPtr<T>::deque preserve_list;
 //  preserve_list = new std::deque<T>();
@@ -101,8 +101,8 @@ public:
     for(;a != jq->end(); a++) {
       if ((*a)->getId() != j->getId()) {
         preserve_list->push_back( move(*a) );
-      } 
-    } 
+      }
+    }
     jq = preserve_list;
     return j;
   }
@@ -120,12 +120,12 @@ private:
   inline void setMaxTime(float m) {maxTime = m;}
   inline void setNextJobTime(float njt) { nextJobTime = njt;}
 
-  inline void addResource(int PortNo, const std::string& Hostname, int Rid) 
+  inline void addResource(int PortNo, const std::string& Hostname, int Rid)
   {
         resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
   }
 
- 
+
   /* Getters */
 
   inline float  getCurTime() const {return curTime;}
@@ -133,16 +133,16 @@ private:
 
   inline  AlgType getAlg(int i) { return algVec[i];}
   inline  int noAlgs() {return algVec.size();}
- 
-  inline  JobPtr getFirstReadyProc() 
-  { 
+
+  inline  JobPtr getFirstReadyProc()
+  {
     JobPtr j = std::move( readyQ->front() ) ;
     readyQ->pop_front();
     return j;
   }
 
 
-  /* Helper Functions */ 
+  /* Helper Functions */
   int addToReadyQ(msg_t& request);
 
   void kickStartRunQ();
@@ -170,8 +170,8 @@ private:
 
 
 
-  /*Private Data Members */ 
-  ResourcePoolPtr resPool; 
+  /*Private Data Members */
+  ResourcePoolPtr resPool;
   JobQueuePtr readyQ;
   JobQueuePtr runQ;
   JobQueuePtr finishedJobs;

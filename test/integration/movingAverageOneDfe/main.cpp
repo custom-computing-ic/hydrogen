@@ -12,7 +12,7 @@ int main() {
   int exp[]  = {2, 3, 4, 5, 0, 0};
 
   /** Ask for a simple moving average a few times */
-  int t = 10;
+  int t = 1;
   int out[6];
   memset(out, 0, sizeof(int) * 6);
 

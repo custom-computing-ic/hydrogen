@@ -51,5 +51,6 @@ typedef struct msg {
 #pragma pack(0)
 
 msg_t* msg_empty();
+msg_t* msg_ack();
 
 #endif /* _MESSAGE_H_ */

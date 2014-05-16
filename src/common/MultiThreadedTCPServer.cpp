@@ -91,7 +91,10 @@ void connection::handle_read() {
   msg_t* reply = server_.handle_request(request);
 
   char buffer[1024];
+  cout << "MTSv copying back: " << endl;
+  reply->print();
   memcpy(buffer, reply, reply->sizeBytes());
+
   ba::async_write(socket_,
 		  ba::buffer(buffer),
 		  strand_.wrap(
