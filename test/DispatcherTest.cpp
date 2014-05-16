@@ -33,6 +33,7 @@ int main() {
 
     c.send(msg);
     c.getResult(out);
+    c.stop();
   } catch (exception& e) {
     cerr << e.what() << endl;
   }
