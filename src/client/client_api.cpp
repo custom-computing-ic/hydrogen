@@ -30,7 +30,6 @@ void movingAverage(int n, int size, int* data, int* out) {
 
   Client c(portNumber, name);
   c.start();
-  c.send(msg, sizeBytes);
-  c.getResult(out);
-  c.stop();
+  c.send(msg);
+  c.getResult(out);  c.stop();
 }

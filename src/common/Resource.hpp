@@ -6,13 +6,13 @@
 
 class Resource : public Client {
   public:
-    //TODO[mtottenh] : This is so bad.. Every time we copy a resouce 
+    //TODO[mtottenh] : This is so bad.. Every time we copy a resouce
     // we end up invoking a new client connection!
     Resource(Resource const & r) :
       Client::super(r.getPort(),r.getName())
     {
         rid = r.getId();
-    } 
+    }
     Resource(int port,
              const std::string& name,
              int id) :

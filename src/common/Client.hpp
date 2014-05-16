@@ -3,14 +3,15 @@
 
 #include <message.hpp>
 #include <string>
-#include <unistd.h>
+#include <boost/asio.hpp>
+
 class Client {
 
-  int portNumber;
   const std::string& name;
+  int port;
 
 protected:
-  int sockfd;
+  boost::asio::ip::tcp::socket* socket_;
 
 public:
 
@@ -18,16 +19,27 @@ public:
 
   /** Construct a client to connect to the given port of the given host */
   Client(int portNumber_, const std::string& name_) :
-    portNumber(portNumber_),
+    port(portNumber_),
     name(name_)
   {}
 
-  virtual ~Client() {}
+  virtual ~Client() {
+    delete socket_;
+  }
 
   /** Send a message to target host. Must be connected. **/
-  void send(msg_t *message, int sizeBytes);
+  void send(msg_t *message);
+
   /** Read a message from socket into buff **/
-  inline int read(char* buffer, int sizeBytes) { return ::read(sockfd, buffer, sizeBytes); };
+  inline int read(char* buffer, int sizeBytes) {
+    boost::system::error_code error;
+    char buf[1024];
+    socket_->read_some(boost::asio::buffer(buf), error);
+    memcpy(buffer, buf, sizeBytes);
+    // XXX error code...
+    return 0;
+  }
+
   /** Opens connection to target host **/
   virtual void start();
 

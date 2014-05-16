@@ -10,7 +10,7 @@ using namespace std;
 
 int Scheduler::getJobStatus(int jobID) {
   //check runQ
-  
+
   for (auto it = runQ->begin(); it != runQ->end(); it++) {
     if ((*it)->getId() == jobID) {
       return (*it)->getStatus();
@@ -25,7 +25,7 @@ int Scheduler::getJobStatus(int jobID) {
 
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
 void Scheduler::defaultHandler(msg_t& request, msg_t& response) {
-  resPool->front()->send(&request, request.sizeBytes());
+  resPool->front()->send(&request);
   // wait for reply back
   // XXX determine buffer size dynamically
   char buffer[1024];
@@ -74,7 +74,7 @@ Scheduler::JobPtr Scheduler::estimateFinishTime(JobPtr j) {
 
 /*
  * TODO[mtottenh]: Check implementations of getDispatchTime/IssueTime with timevals
- * in the minites/seconds range not just random floats.. 
+ * in the minites/seconds range not just random floats..
  */
 
 int Scheduler::numLateJobs() {
@@ -96,7 +96,7 @@ void Scheduler::dumpInfo() {
 void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
 
 }
-//TODO[mtottenh]: Add this to the header file. This could be 
+//TODO[mtottenh]: Add this to the header file. This could be
 // dangerous.. it seems to remove all the resources in the runQ and return them to the pool.
 // use with extreme caution
 void Scheduler::reclaimResources() {
@@ -147,14 +147,14 @@ Scheduler::JobPtr Scheduler::allocate(JobPtr j, int max_res, int min_res) {
 
 //TODO[mtottenh]:Check this functions as intended. I'm not sure about getAllocdRes()->***/
 Scheduler::JobPtr Scheduler::deallocate(JobPtr j) {
-  std::cout << "De-allocating " << *j  
-            << "{" << j->noAllocdRes() << "}" 
-            << "|" << resPool->size() << "|"; 
-  auto r = j->getAllocdRes()->begin(); 
-  for (; r != j->getAllocdRes()->end(); r++) { 
-    resPool->push_back( move(*r )); 
-  } 
-  j->getAllocdRes()->clear(); 
+  std::cout << "De-allocating " << *j
+            << "{" << j->noAllocdRes() << "}"
+            << "|" << resPool->size() << "|";
+  auto r = j->getAllocdRes()->begin();
+  for (; r != j->getAllocdRes()->end(); r++) {
+    resPool->push_back( move(*r ));
+  }
+  j->getAllocdRes()->clear();
   std::cout << "(" << resPool->size() << ")\n";
   return j;
 }
@@ -169,7 +169,7 @@ Scheduler::JobPtr Scheduler::realloc(JobPtr j) {
 }
 
 
-//void Scheduler::returnResources(Allocations &a) 
+//void Scheduler::returnResources(Allocations &a)
 
 
 msg_t Scheduler::getJobResponse(int jobID) {
@@ -180,13 +180,13 @@ msg_t Scheduler::getJobResponse(int jobID) {
     if ((*job)->getId() == jobID) {
       (*job)->getResponse(buffer,1024);
     }
-  } 
- 
+  }
+
   msg_t* rsp = (msg_t*)buffer;
   response.msgId = rsp->msgId;
   response.dataSize = rsp->dataSize;
   response.paramsSize = 0;
-  memcpy(response.data, rsp->data, rsp->dataBytes()); 
+  memcpy(response.data, rsp->data, rsp->dataBytes());
   return response;
 }
 
@@ -224,13 +224,13 @@ void Scheduler::handleRequest(msg_t& request, msg_t& response) {
           response.msgId = MSG_ACK;
           response.dataSize = 0;
           response.paramsSize = 0;
-           //Job in progress - 
+           //Job in progress -
         }
         if (jobStatus == 2) {
           response.msgId = MSG_ACK;
           response.dataSize = 0;
           response.paramsSize = 0;
-           //Job not yet started - 
+           //Job not yet started -
         }
       }
       break;*/
@@ -258,14 +258,6 @@ void Scheduler::start() {
 
 void Scheduler::stop() {
   for (auto it = resPool->begin(); it != resPool->end(); it++)
-    (*it)->start();  
+    (*it)->start();
   Server::stop();
 }
-
-
-
-
-
-
-
-
