@@ -12,8 +12,8 @@ int Scheduler::getJobStatus(int jobID) {
   //check runQ
 
   for (auto it = runQ->begin(); it != runQ->end(); it++) {
-    if ((*it)->getId() == jobID) {
-      return (*it)->getStatus();
+    if ((std::get<0>(**it))->getId() == jobID) {
+      return (std::get<0>(**it))->getStatus();
     }
   }
 
@@ -47,31 +47,17 @@ void Scheduler::defaultHandler(msg_t& request, msg_t& response, int responseSize
   response.print();
 }
 
-/* TODO[mtottenh]: insert wrapper here to construct a job from a message when
-  the job class is finished.
- */
-int Scheduler::addToReadyQ(msg_t& request) {
-  readyQ->push_back(unique_ptr<Job>(new Job(request,this->getNextId())));
-  return readyQ->back()->getId();
-}
 
 
-//TODO[mottenh]: Actualy make this communicate with the allocated dispatchers..
-void Scheduler::addToRunQ(std::unique_ptr<Job> j) {
-  cout << "Adding " << *j << "to the runQ\n";
-  j->setDispatchTime(curTime);
-  j = move (estimateFinishTime(move(j)));
-  runQ->push_back( move(j));
-
-}
+//TODO[mtottenh]: Replace calls of addToXQ with enqueue(x)
 
 
-void Scheduler::returnToReadyQ(JobPtr j, int pos) {
+/*void Scheduler::returnToReadyQ(JobPtr j, int pos) {
   auto it = readyQ->begin();
   for (int i = 0; i < pos && it < readyQ->end(); i++, it++);
 
   readyQ->insert(it,move(j));
-}
+}*/
 
 
 Scheduler::JobPtr Scheduler::estimateFinishTime(JobPtr j) {
@@ -82,14 +68,14 @@ Scheduler::JobPtr Scheduler::estimateFinishTime(JobPtr j) {
 
 /*
  * TODO[mtottenh]: Check implementations of getDispatchTime/IssueTime with timevals
- * in the minites/seconds range not just random floats..
+ * in the minites/seconds range not just random floats.. Also add Q locks
  */
 
 int Scheduler::numLateJobs() {
   int sum = 0;
   auto it = finishedJobs->begin();
   for(;it != finishedJobs->end(); it++) {
-    sum = (*it)->getDispatchTime() - (*it)->getIssueTime() > 1 ? sum+1 : sum;
+    sum = (std::get<0>(**it))->getDispatchTime() - (std::get<0>(**it))->getIssueTime() > 1 ? sum+1 : sum;
   }
   return sum;
 }
@@ -112,8 +98,8 @@ void Scheduler::reclaimResources() {
   auto j = runQ->begin();
 
   for (;j != runQ->end(); j++) {
-    auto a = (*j)->getAllocdRes()->begin();
-    for (;a != (*j)->getAllocdRes()->end(); a++) {
+    auto a = (std::get<0>(**j))->getAllocdRes()->begin();
+    for (;a != (std::get<0>(**j))->getAllocdRes()->end(); a++) {
       resPool->push_back(   move(*a)   );
     }
   }
@@ -141,14 +127,14 @@ Allocations Scheduler::schedule(int choice, bool flag) {
  return a;
 }
 
-Scheduler::JobPtr Scheduler::allocate(JobPtr j, int max_res, int min_res) {
+Job Scheduler::allocate(Job &j, int max_res, int min_res) {
   if (resPool->size() >= min_res) {
     while (max_res-- > 0 && resPool->size() > 0) {
-      j->allocate( move(resPool->back()) );
+      j.allocate( move(resPool->back()) );
       resPool->pop_back();
     }
-    std::cout << "Allocated " << j->noAllocdRes()
-              << " Resources to " << *j << "\n";
+    std::cout << "Allocated " << j.noAllocdRes()
+              << " Resources to " << j << "\n";
   }
   return j;
 }
@@ -179,14 +165,14 @@ Scheduler::JobPtr Scheduler::realloc(JobPtr j) {
 
 //void Scheduler::returnResources(Allocations &a)
 
-
+//TODO[mtottenh]: Remove this
 msg_t Scheduler::getJobResponse(int jobID) {
   msg_t response;
   char buffer[1024];
   bzero(buffer, 1024);
   for (auto job = runQ->begin(); job != runQ->end(); job++) {
-    if ((*job)->getId() == jobID) {
-      (*job)->getResponse(buffer,1024);
+    if (std::get<0>(**job)->getId() == jobID) {
+      std::get<0>(**job)->getResponse(buffer,1024);
     }
   }
 
@@ -237,7 +223,8 @@ void Scheduler::schedLoop() {
     if (QStatus.getReadyQStatus() == true) {
       //attempt to schedule
       //TODO[mtottenh]: modify schedule to lock all Q's for now.
-      if ( schedule() ) {
+      if(true) {
+      //if ( schedule() ) {
         // we managed to deposite some jobs in the runQ
         // tell the dispatcher that it has work todo
         QStatus.setRunQStatus(true);
@@ -264,8 +251,24 @@ void Scheduler::dispatcherLoop() {
 }
 
 msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, int sizeBytes) {
-    //creat (job,condvar) pair
-    //enqueue(readyQ,(job,condvar))
+  //creat (job,condvar) pair
+  //
+  boost::condition_variable jCondVar;
+  boost::mutex jobMutex;
+  boost::unique_lock<boost::mutex> lock(jobMutex);
+  struct JobInfo jInfo;
+  jInfo.setFinished(false);
+//  std::unique_ptr<Job> j (new Job(request,getNextId()));
+//  auto jobTuple = std::tie(j,jInfo,jCondVar);
+//  auto jobTuplePtr = std::unique_ptr<decltype(jobTuple)>(&jobTuple);
+  auto t = std::make_tuple(std::unique_ptr<Job>(),std::ref(jInfo),std::ref(jCondVar));
+  std::get<0>(t) = std::unique_ptr<Job> ( new Job(request,getNextId()));
+  enqueue(readyQ, &t, readyQMtx);
+  
+
+  while (!jInfo.isFinished()) {
+    jCondVar.wait(lock);
+  }
     //block on job condition
     //wake up
     //dequeue(finishedQ,(job,condvar));
@@ -275,14 +278,6 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, int sizeB
 
 
 
-void Scheduler::kickStartRunQ() {
-  for (auto job = runQ->begin(); job != runQ->end(); job++)  {
-    if ( (*job)->getStatus() == 2 ) {
-      (*job)->setStatus(1);
-      (*job)->run();
-    }
-  }
-}
 void Scheduler::start() {
   // Order matters, since the server blocks waiting for requests
   for (auto it = resPool->begin(); it != resPool->end(); it++)
