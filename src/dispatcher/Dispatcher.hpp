@@ -14,7 +14,7 @@ class Dispatcher {
 public:
 
   Dispatcher(int port, const std::string &name) {
-    server = new DispatcherServer("localhost", boost::lexical_cast<std::string>(port), 2);
+    server = new DispatcherServer(name, boost::lexical_cast<std::string>(port), 2);
     server->run();
   }
 
