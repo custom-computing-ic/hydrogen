@@ -258,6 +258,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, int sizeB
   boost::unique_lock<boost::mutex> lock(jobMutex);
   struct JobInfo jInfo;
   jInfo.setFinished(false);
+  std::cout << "In ConcurrentHandler - Recieved Job\n" << std::endl;
 //  std::unique_ptr<Job> j (new Job(request,getNextId()));
 //  auto jobTuple = std::tie(j,jInfo,jCondVar);
 //  auto jobTuplePtr = std::unique_ptr<decltype(jobTuple)>(&jobTuple);
@@ -280,8 +281,8 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, int sizeB
 
 void Scheduler::start() {
   // Order matters, since the server blocks waiting for requests
-  for (auto it = resPool->begin(); it != resPool->end(); it++)
-    (*it)->start();
+//  for (auto it = resPool->begin(); it != resPool->end(); it++)
+//    (*it)->start();
   //Fire up the Scheduling and dispatch threads.
   schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
   dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
