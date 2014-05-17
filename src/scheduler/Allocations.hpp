@@ -6,20 +6,21 @@ class Scheduler;
 class Allocations {
 
   private:
-    std::deque<std::unique_ptr<Job>> jobs;
+    std::deque<Job> jobs;
     float score;
   public:
     Allocations() {
       score = 0;
     }
 
-    Allocations(const Allocations& a) {
+  /*  Allocations(const Allocations& a) {
       for ( auto& jobPtr : a.jobs) {
         this->jobs.push_back(  std::unique_ptr<Job>(new Job(*jobPtr)  ));
       }
       this->score = a.score;
     
-    };
+    };*/
+    /*
     Allocations& operator=(const Allocations& a) {
       //true deep coppy
       for ( auto& jobPtr : a.jobs) {
@@ -32,21 +33,19 @@ class Allocations {
    ~Allocations() = default;
 
 //    Allocations(Allocations&& a) : {
-
+*/
 
   //  }
 
-    void addJob(std::unique_ptr<Job> j) {
-      jobs.push_back(move(j));
+    void addJob(Job &j) {
+      jobs.push_back(j);
     }
 
     float makespan() { float sum = 0; 
                        auto it = jobs.begin();
                        for(;it != jobs.end();it++) 
                        {
-                          if (*it != nullptr) {
-                             sum += (*it)->cost();
-                          }
+                          sum += it->cost();
                        } 
                        return sum;}
    int noJobs() { return jobs.size();}

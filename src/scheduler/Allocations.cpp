@@ -3,8 +3,9 @@
 void Allocations::serviceAllocations(Scheduler &s) {
   auto j = jobs.begin();
   for(;j != jobs.end(); j++) {
-    *j = move(s.removeFromQ(s.getQueuePointer("readyQ"), move(*j)));
-    s.addToRunQ(move(*j));
+   
+//    s.addToRunQ(s.removeJobFromQ(s.getQueuePointer("readyQ"), *j));
+;
   } 
 }
 
