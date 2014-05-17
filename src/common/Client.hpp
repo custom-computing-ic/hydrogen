@@ -7,8 +7,8 @@
 
 class Client {
 
-  const std::string& name;
   int port;
+  const std::string& name;
 
 protected:
   boost::asio::ip::tcp::socket* socket_;
@@ -31,7 +31,7 @@ public:
   void send(msg_t *message);
 
   /** Read a message from socket into buff **/
-  int read(char* buffer, int sizeBytes);
+  int read(char* buffer, size_t sizeBytes);
 
   /** Opens connection to target host **/
   virtual void start();

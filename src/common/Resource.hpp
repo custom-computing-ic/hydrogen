@@ -13,14 +13,12 @@ class Resource : public Client {
     {
         rid = r.getId();
     }
-    Resource(int port,
-             const std::string& name,
+    Resource(int port_,
+             const std::string& name_,
              int id) :
-      Client::super(port,name)
+      Client::super(port_, name_)
     {
       rid = id;
-      this->port = port;
-      this->name = name;
     }
     ~Resource() {
     }

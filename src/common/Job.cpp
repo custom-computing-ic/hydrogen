@@ -60,6 +60,6 @@ std::string Job::str() const {
   return s.str();
 }
 
-void Job::getResponse(char* buffer, int sizeBytes) {
+void Job::getResponse(char* buffer, size_t sizeBytes) {
   int n = AllocatedResources->front()->read(buffer, sizeBytes);
 }
