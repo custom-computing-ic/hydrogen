@@ -11,12 +11,12 @@ Allocations FCFSMin(Scheduler &s) {
   std::cout << "Using FCFSMin" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    auto j = move(s.getJobFromQ(rq,i));
-    j = move ( s.allocate(move(j),j->getMin(),j->getMin()));
+    auto j = s.getJobFromQ(rq,i);    // COPY the job accross
+    j =  s.allocate(j,j.getMin(),j.getMin());
 
-    if ( j->noAllocdRes() > 0) {
+    if ( j.noAllocdRes() > 0) {
       /* successfully allocated the min resources */
-      a.addJob(move(j));
+      a.addJob(j);
     } else {
       break;
       /* if we can't allocate then just stop */
@@ -31,12 +31,12 @@ Allocations FCFSAsManyAsPos(Scheduler &s) {
   std::cout << "Using FCFSAMAP" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    auto j = move(s.getJobFromQ(rq,i));
-    j = move ( s.allocate(move(j),j->getMax(),j->getMin()));
+    auto j = s.getJobFromQ(rq,i);
+    j = s.allocate(j,j.getMax(),j.getMin());
 
-    if ( j->noAllocdRes() > 0) {
+    if ( j.noAllocdRes() > 0) {
       /* successfully allocated the min resources */
-      a.addJob(move(j));
+      a.addJob(j);
     } else {
       break;
       /* if we can't allocate then just stop */
@@ -51,11 +51,11 @@ Allocations FCFSMax(Scheduler &s) {
   std::cout << "Using FCFS Max" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    auto j = move(s.getJobFromQ(rq,i));
-    j = move ( s.allocate(move(j),j->getMax(),j->getMax()));
-    if ( j->noAllocdRes() > 0) {
+    auto j = s.getJobFromQ(rq,i);
+    j = s.allocate(j,j.getMax(),j.getMax());
+    if ( j.noAllocdRes() > 0) {
       /* successfully allocated the min resources */
-      a.addJob(move(j));
+      a.addJob(j);
     } else {
       break;
       /* if we can't allocate then just stop */
