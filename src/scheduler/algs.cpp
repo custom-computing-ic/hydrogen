@@ -147,7 +147,7 @@ Allocations ManagedMode(Scheduler &s) {
   std::cout << "**Scheduling using the managed mode**\n"
             << "Res[" <<s.resPoolSize() << "]\t" 
             << "RQ[" << s.readyQSize() << "]\n";
-/*  for(unsigned int i = 0; i < av->size()-1; i++) {
+  for(unsigned int i = 0; i < av->size()-1; i++) {
     allocations.push_back( std::move(s.schedule(i,true)));
     s.returnResources(allocations.back());
   }
@@ -155,12 +155,12 @@ Allocations ManagedMode(Scheduler &s) {
   for (;a < allocations.end(); a++) {
     score(*a,s);
   }
-  Allocations* mChoice = selectMaxScore(allocations);
-  auto j = mChoice->jobs.begin();
-  for (;j != mChoice->jobs.end(); j++) {
+  Allocations mChoice = selectMaxScore(allocations);
+  auto j = mChoice.jobs.begin();
+  for (;j != mChoice.jobs.end(); j++) {
     *j = move(s.realloc(move(*j)));
   }
-  return *mChoice;*/
+  return *mChoice;
   return allocations.front();
 }
 

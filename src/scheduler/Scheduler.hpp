@@ -118,7 +118,7 @@ public:
 	    const std::string& name,
 	    int dispatcherPortNumber,
 	    const std::string& dispatcherHostname) :
-    MultiThreadedTCPServer::super(name, port, 1)
+    MultiThreadedTCPServer::super(name, port, 5)
 
 
   {
@@ -133,11 +133,22 @@ public:
   }
 
   template <typename T> void enqueue(typename ContainerPtr<T*>::deque container, 
-                                      T* elem, boost::mutex &lock)
+                                      T* elem, boost::mutex &lock, const std::string& name)
   {
-    boost::lock_guard<boost::mutex> guard(lock);
+    //Check that this shouldn't be the lock passed in.
+    boost::lock_guard<boost::mutex> guard(qMutex);
+
     container->push_back(elem);
+    //Change this to derive the name from Q ptri
+    if (name == "readyQ")
+      QStatus.setReadyQStatus(true);
+    if (name == "runQ")
+      QStatus.setRunQStatus(true);
+    if (name == "finishedQ")
+      QStatus.setFinishedQStatus(true);
+    std::cout << "Added element to " << name << ", calling notify_all().\n";
     QCondVar.notify_all();
+
   }
 
   /* Server functions */

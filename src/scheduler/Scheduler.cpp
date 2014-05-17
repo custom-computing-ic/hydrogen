@@ -218,20 +218,28 @@ void Scheduler::schedLoop() {
     //If we have no results or nothing to try and schedule wait
     while ( !QStatus.getReadyQStatus() && !QStatus.getFinishedQStatus() ) {
       QCondVar.wait(lock);
+      std::cout << "SchedLoop woke up\n";
     } 
     //A job was deposited in the readyQ
     if (QStatus.getReadyQStatus() == true) {
       //attempt to schedule
+      std::cout << "Event happened: readyQ\n";
       //TODO[mtottenh]: modify schedule to lock all Q's for now.
       if(true) {
-      //if ( schedule() ) {
-        // we managed to deposite some jobs in the runQ
-        // tell the dispatcher that it has work todo
-        QStatus.setRunQStatus(true);
-        QCondVar.notify_all();
+        std::cout << "Scheduling\n";
+        auto a = schedule(MODE_MANAGED,true);
+        // deposite jobs in the runQ attomically
+        
+        //
+        auto j = readyQ->front();
+        readyQ->pop_front();
+        QStatus.setReadyQStatus(false);
+        std::get<1>(*j).setFinished(true);
+        std::get<2>(*j).notify_all();
+        //QStatus.setRunQStatus(true);
+        //QCondVar.notify_all();
       } else {
         //No/not enough free resources for a schedule
-
       }
 
     }
@@ -246,6 +254,15 @@ void Scheduler::schedLoop() {
 
 void Scheduler::dispatcherLoop() {
   while (true) {
+    //wait on readyQ or FinishedQ condvar
+    boost::unique_lock<boost::mutex> lock(qMutex);
+    //TODO[mtottenh]: change finishedQStatus to somethign that indicates a dfe
+    //has a result. Might not be able to have this as a condvar wait
+    //situation....
+    while ( !QStatus.getRunQStatus() && !QStatus.getFinishedQStatus() ) {
+      QCondVar.wait(lock);
+      std::cout << "SchedLoop woke up\n";
+    } 
 
   }
 }
@@ -259,21 +276,17 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, int sizeB
   struct JobInfo jInfo;
   jInfo.setFinished(false);
   std::cout << "In ConcurrentHandler - Recieved Job\n" << std::endl;
-//  std::unique_ptr<Job> j (new Job(request,getNextId()));
-//  auto jobTuple = std::tie(j,jInfo,jCondVar);
-//  auto jobTuplePtr = std::unique_ptr<decltype(jobTuple)>(&jobTuple);
   auto t = std::make_tuple(std::unique_ptr<Job>(),std::ref(jInfo),std::ref(jCondVar));
   std::get<0>(t) = std::unique_ptr<Job> ( new Job(request,getNextId()));
-  enqueue(readyQ, &t, readyQMtx);
+  enqueue(readyQ, &t, readyQMtx,"readyQ");
   
 
   while (!jInfo.isFinished()) {
     jCondVar.wait(lock);
   }
-    //block on job condition
-    //wake up
-    //dequeue(finishedQ,(job,condvar));
-    //return job.response
+  std::cout << "Job finished\n" << std::endl;
+  //dequeue(finishedQ,(job,condvar));
+  return nullptr;
 }
 
 
