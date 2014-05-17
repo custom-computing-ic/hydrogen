@@ -24,9 +24,10 @@ class Resource : public Client {
     }
     ~Resource() {
     }
-    virtual void start() { Client::start();};
-    virtual void getResult(void *out) { Client::getResult(out); };
-    virtual void stop() { Client::stop(); };
+
+    virtual void start();
+    virtual void getResult(void *out);
+    virtual void stop();
     virtual int getId() const { return rid; }
     virtual int getPort() const {return port;}
     virtual std::string getName() const  {return name;}

@@ -9,6 +9,8 @@
 using namespace std;
 namespace ba = boost::asio;
 
+MultiThreadedTCPServer::~MultiThreadedTCPServer() {}
+
 MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const string& port,
                                                size_t thread_pool_size)
   : thread_pool_size_(thread_pool_size),
@@ -34,7 +36,7 @@ MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const stri
 
   start_accept();
 }
-//Pretty sure we can replace this nasty vector with 
+//Pretty sure we can replace this nasty vector with
 //a nice thread_group
 void MultiThreadedTCPServer::run() {
   cout << "Creating thread pool size " << thread_pool_size_ << endl;
@@ -46,7 +48,7 @@ void MultiThreadedTCPServer::run() {
     boost::shared_ptr<boost::thread> thread(new boost::thread(
                                                               boost::bind(&boost::asio::io_service::run, &io_service_)));
     threads.push_back(thread);
-    
+
   //  worker_threads.create_thread(boost::bind(&boost::asio::io_service_run, &io_service_));
 
   }
