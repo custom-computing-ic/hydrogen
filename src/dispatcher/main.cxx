@@ -10,7 +10,7 @@ using namespace std;
 int main(int argc, char** argv) {
 
   if (argc < 2) {
-    cout << "Usage ./scheduler <portNumber>" << endl;
+    cout << "Usage ./dispatcher <portNumber>" << endl;
     return 1;
   }
 
