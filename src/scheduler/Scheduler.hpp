@@ -4,6 +4,9 @@
 #include <memory>
 #include <deque>
 #include <vector>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #include <MultiThreadedTCPServer.hpp>
 #include <Resource.hpp>
 #include <Job.hpp>
@@ -15,42 +18,107 @@ class Scheduler;
 /** The scheduler is a server for the client API and a client of the dispatcher **/
 //TODO Include Allocations and Job classes...
 
-//typedef int Job;
 //TODO[mtottenh]: clean this up a bit
-  template <typename T>
-    class ContainerPtr {
-      public:
-      typedef std::shared_ptr< std::deque < T > >  deque;
-    };
+template <typename T>
+class ContainerPtr {
+  public:
+    typedef std::shared_ptr< std::deque < T > >  deque;
+};
+
+
+// Simple data structure to indicate which Q an event occured on with atomic 
+// get/set methods.
+struct QInfo {
+  bool readyQEvent;
+  bool runQEvent
+  bool finishedQEvent;
+
+  boost::mutex readyQStatusLock;
+  boost::mutex runQStatusLock;
+  boost::mutex finishedQStatusLock;
+
+  bool getReadyQStatus() {
+    boost::lock_guard<boost::mutex> l1(readyQStatusLock);
+    return readyQEvent;
+  }
+
+  bool getRunQStatus() {
+    boost::lock_guard<boost::mutex> l2(runQStatusLock);
+    return runQEvent;
+  }
+
+  bool getFinishedQStatus() {
+    boost::lock_guard<boost::mutex> l3(finishedQStatusLock);
+    return finishedQEvent;
+  }
+
+  void setReadyQStatus(bool p) {
+    boost::lock_guard<boost::mutex> l1(readyQStatusLock);
+    readyQEvent = p;
+  }
+  void setRunQStatus(bool p) {
+    boost::lock_guard<boost::mutex> l2(runQStatusLock);
+    runQEvent = p;
+  }
+
+  void setFinishedQStatus(bool p) {
+    boost::lock_guard<boost::mutex> l3(finishedQStatusLock);
+    finishedQEvent = p;
+  }
+
+};
+
+
+struct JobInfo {
+  bool finished;
+  boost::mutex jobInfoLock;
+
+  bool isFinished() { 
+    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    return finsihed;
+  }
+  void setFinished(bool p) {
+    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    finished = p;
+  }
+
+};
+
 class Scheduler : public MultiThreadedTCPServer {
   /* Algorithm Base and Collection Types */
   typedef std::function<Allocations(Scheduler &)> AlgType;
   typedef std::vector<AlgType> AlgVecType;
-
   /* Base Types */
   typedef std::unique_ptr<Resource> ResourcePtr;
   typedef std::unique_ptr<Job> JobPtr;
-
   /* Collections of Bases */
   typedef std::deque<ResourcePtr> ResourcePool;
   typedef std::deque<JobPtr> JobQueue;
-
   /* Pointers to Collections */
   typedef std::shared_ptr<JobQueue> JobQueuePtr;
   typedef std::shared_ptr<ResourcePool> ResourcePoolPtr;
 
 
 public:
+  ~Scheduler() {
+    schedulerThread->join();
+    dispatcherThread->join();
+    delete schedulerThread;
+    delete dispatcherThread;
+  }
   Scheduler(const std::string& port,
 	    const std::string& name,
 	    int dispatcherPortNumber,
 	    const std::string& dispatcherHostname) :
     MultiThreadedTCPServer::super(name, port, 1)
+
+
   {
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
     runQ = JobQueuePtr(new JobQueue());
     finishedJobs = JobQueuePtr(new JobQueue());
+    //TODO[mtottenh]: Change Resource so that it doesn't inherit from client
     addResource(dispatcherPortNumber,dispatcherHostname,1);
 
     nextJid = 1;
@@ -59,6 +127,9 @@ public:
   int getNextId() { return nextJid++;}
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
+  msg_t* concurrentHandler(msg_t& request, msg_t& response, int responseSize);
+  void schedLoop();
+  void dispatcherLoop();
   virtual void start();
 
   virtual void stop();
@@ -169,14 +240,17 @@ private:
   void serviceAllocations(Allocations &a);
 
 
-
+  boost::mutex qMutex;
+  boost::condition_variable QCondVar;
+  boost::thread *schedulerThread;
+  boost::thread *dispatcherThread;
+  struct QInfo QStatus;
   /*Private Data Members */
   ResourcePoolPtr resPool;
   JobQueuePtr readyQ;
   JobQueuePtr runQ;
   JobQueuePtr finishedJobs;
   AlgVecType algVec;
-
   int window;
   float maxTime;
   float curTime;

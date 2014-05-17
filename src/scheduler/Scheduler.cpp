@@ -211,49 +211,70 @@ msg_t* Scheduler::handle_request(msg_t* request) {
     case MSG_DONE:
       return msg_ack();
     case MSG_MOVING_AVG:
-  /*    jobID = addToReadyQ(request);
-      schedule(MODE_MANAGED);
-      kickStartRunQ();
-      jobStatus = getJobStatus(jobID);
-      std::cout << "jobID[" << jobID << "] : Status code " << jobStatus << std::endl;
-      if (jobStatus < 0) {
-        //TODO[paul-g]:Maybe have some meaningful error codes for the client?
-        //at the moment I'm just acking back
-        response->msgId = MSG_ACK;
-        response->dataSize = 0;
-        response->paramsSize = 0;
-
-      } else {
-        if (jobStatus == 0) {
-           //job Done
-           response = getJobResponse(jobID);
-        }
-        if (jobStatus == 1) {
-          response->msgId = MSG_ACK;
-          response->dataSize = 0;
-          response->paramsSize = 0;
-           //Job in progress -
-        }
-        if (jobStatus == 2) {
-          response->msgId = MSG_ACK;
-          response->dataSize = 0;
-          response->paramsSize = 0;
-           //Job not yet started -
-        }
-      }
-      break;*/
     default:
       // XXX TODO[paul-g]: need to actually determine data size here
       cout << "Request data size " << request->dataSize << endl;
       int sizeBytes = sizeof(msg_t) + sizeof(int) * request->dataSize;
       msg_t* response = (msg_t*)calloc(sizeBytes, 1);
-      defaultHandler(*request, *response, sizeBytes);
-      return response;
-//      cout << "Request added to readyQ" << endl ;
-//      this->addToReadyQ(request,response);
+      return  concurrentHandler(*request, *response, sizeBytes);
+//      defaultHandler(*request, *response, sizeBytes);
+//      return response;
       break;
   }
 }
+
+//Need a QStatus struct.
+
+void Scheduler::schedLoop() {
+  while (true) {
+    //wait on readyQ or FinishedQ condvar
+    boost::unique_lock<boost::mutex> lock(qMutex);
+    //If we have no results or nothing to try and schedule wait
+    while ( !QStatus.getReadyQStatus() && !QStatus.getFinishedQStatus() ) {
+      QCondVar.wait(lock);
+    } 
+    //A job was deposited in the readyQ
+    if (QStatus.getReadyQStatus() == true) {
+      //attempt to schedule
+      //TODO[mtottenh]: modify schedule to lock all Q's for now.
+      if ( schedule() ) {
+        // we managed to deposite some jobs in the runQ
+        // tell the dispatcher that it has work todo
+        QStatus.setRunQStatus(true);
+        QCondVar.notify_all();
+      } else {
+        //No/not enough free resources for a schedule
+
+      }
+
+    }
+    //A result was returned on the finishedQ
+    if (QStatus.getFinishedQStatus() == true) {
+      //communicate to main thread that jobs in the finished Q are done
+      //finshedQ.notifyClients();
+      QStatus.setFinishedQStatus(false);
+    }
+  }
+}
+
+void Scheduler::dispatcherLoop() {
+  while (true) {
+
+  }
+}
+
+msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, int sizeBytes) {
+    //creat (job,condvar) pair
+    //enqueue(readyQ,(job,condvar))
+    //block on job condition
+    //wake up
+    //dequeue(finishedQ,(job,condvar));
+    //return job.response
+}
+
+
+
+
 void Scheduler::kickStartRunQ() {
   for (auto job = runQ->begin(); job != runQ->end(); job++)  {
     if ( (*job)->getStatus() == 2 ) {
@@ -266,6 +287,9 @@ void Scheduler::start() {
   // Order matters, since the server blocks waiting for requests
   for (auto it = resPool->begin(); it != resPool->end(); it++)
     (*it)->start();
+  //Fire up the Scheduling and dispatch threads.
+  schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
+  dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
   run();
 }
 
