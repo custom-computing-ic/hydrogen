@@ -1,15 +1,13 @@
 #include <Job.hpp>
 
-//static int jobID = 0;
-//int getNextId() {return ++jobID;}
 
-float defaultCostFunction(Job& j) {
-  return j.getDefaultJobTime() /   j.noAllocdRes();
+float defaultCostFunction(JobResPair& p) {
+  return std::get<0>(*std::get<0>(p))->getDefaultJobTime() /   std::get<1>(p).size();
 }
 
 
 
-Job::Job(int a, int b, std::function<float(Job&)> c) {
+Job::Job(int a, int b, CostFunctionType c) {
   min = a;
   max = b;
   cost_func = c;
@@ -19,7 +17,7 @@ Job::Job(int a, int b, std::function<float(Job&)> c) {
   finishTime = 0;
   status = -1;
 }
-Job::Job(int a, int b, std::function<float(Job&)> c, float d) {
+Job::Job(int a, int b, CostFunctionType c, float d) {
   min = a;
   max = b;
   cost_func = c;
@@ -42,14 +40,13 @@ Job::Job(msg_t& request,int id) {
   issueTime = 0;
   dispatchTime = 0;
   finishTime = 0;
-  AllocatedResources = std::make_shared<ResourcePool>();
   status = 2;
   req = request;
   jid = id;
 }
 // TODO[mtottenh]: Change this... I dont think it needs to return a result anymore
 msg_t Job::run() {
-  AllocatedResources->front()->send(&req);
+  std::cout << "In Job::run() : Needs Implementing\n";
   return req;
 }
 
@@ -61,5 +58,5 @@ std::string Job::str() const {
 }
 
 void Job::getResponse(char* buffer, size_t sizeBytes) {
-  int n = AllocatedResources->front()->read(buffer, sizeBytes);
+  std::cout << "In Job::getResponse: Needs Implementing\n";
 }
