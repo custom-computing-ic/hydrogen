@@ -4,7 +4,7 @@
 #include <message.hpp>
 #include <string>
 #include <boost/asio.hpp>
-
+class Resource;
 class Client {
 
 protected:
@@ -21,6 +21,7 @@ public:
     port(portNumber_),
     name(name_)
   {}
+  Client(Resource& r);
 
   virtual ~Client() {
     delete socket_;

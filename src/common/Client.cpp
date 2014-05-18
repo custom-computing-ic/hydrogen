@@ -6,11 +6,15 @@
 #include <cstring>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
-
+#include <Resource.hpp>
 using namespace std;
 using namespace boost::asio::ip;
 namespace ba = boost::asio;
-
+Client::Client(Resource &r) :
+  name(r.getName())
+{
+  port = r.getPort();
+}
 void Client::send(msg_t *message) {
   char buf[1024];
   memcpy(buf, message, message->sizeBytes());
