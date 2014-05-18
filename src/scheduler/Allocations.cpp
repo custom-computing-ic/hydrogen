@@ -3,22 +3,18 @@
 void Allocations::serviceAllocations(Scheduler &s) {
   auto j = jobs.begin();
   for(;j != jobs.end(); j++) {
-   
-//    s.addToRunQ(s.removeJobFromQ(s.getQueuePointer("readyQ"), *j));
-;
-  } 
+    auto elem = s.removeJobFromReadyQ(*j);
+    s.addToRunQ(elem);
+  }
+
 }
 
 
 void Allocations::returnResources(Scheduler& s) {
-/*
- auto j = a.jobs.begin();
-  for (;j != a.jobs.end(); j++) {
-    auto r = (*j)->getAllocdRes()->begin();
-    for (;r !=  (*j)->getAllocdRes()->end(); r++) {
-      resPool->push_back(  move(*r)  );
+  auto it = jobs.begin();
+  for ( ; it != jobs.end(); it++) {
+    for (auto r : std::get<1>(*it) ) {
+       s.addResource(r);
     }
   }
-
-*/
 }
