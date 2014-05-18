@@ -120,7 +120,8 @@ public:
 
   inline  AlgVecType* getAlgVecPtr() { return &algVec;}
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
-
+  void runJobs();
+  void runJob(JobResPair& j);
   Job removeJobFromQ(JobQueuePtr jq, Job& j) {
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
     auto a = jq->begin();

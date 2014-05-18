@@ -252,7 +252,27 @@ void Scheduler::schedLoop() {
     }
   }
 }
+void Scheduler::runJobs() {
 
+    for (auto j : *runQ) {
+      //for each job in the runQ check if it is started.
+      //if not, start it running
+      auto jobTuplePtr = std::get<0>(j);
+      if (! std::get<1>(*jobTuplePtr).isStarted()){
+        runJob(j);
+      }
+    }
+}
+void Scheduler::runJob(JobResPair& j) {
+  auto ResourceList = std::get<1>(j);
+  auto jobTuplePtr = std::get<0>(j);
+  auto jobPtr = std::get<0>(*jobTuplePtr);
+ //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O 
+  Client c(ResourceList.front());
+  msg_t req = jobPtr->getReq();
+  c.send(&req);
+
+}
 void Scheduler::dispatcherLoop() {
   while (true) {
     //wait on readyQ or FinishedQ condvar
@@ -260,9 +280,15 @@ void Scheduler::dispatcherLoop() {
     //TODO[mtottenh]: change finishedQStatus to somethign that indicates a dfe
     //has a result. Might not be able to have this as a condvar wait
     //situation....
-    while ( !QStatus.getRunQStatus() && !QStatus.getFinishedQStatus() ) {
+    while ( !QStatus.getRunQStatus() ) {
       QCondVar.wait(lock);
       std::cout << "Dispatcher thread woke up\n";
+    }
+    if (QStatus.getRunQStatus()) {
+      std::cout << "Event on Run Q, itterating overQ and starting any"
+                << "Jobs \n";
+       
+      runJobs(); 
     } 
 
   }
@@ -307,4 +333,5 @@ void Scheduler::start() {
 void Scheduler::stop() {
 //  for (auto it = resPool->begin(); it != resPool->end(); it++)
 //    (*it)->start();
+
 }
