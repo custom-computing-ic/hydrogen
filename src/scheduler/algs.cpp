@@ -5,19 +5,28 @@
 #define MAX_RES 10
 
 /***** Priority Agnostic algorithms (FCFS) *****/
-Allocations FCFSMin(Scheduler &s) {
-  Allocations a;
-  auto rq = s.getQueuePointer("readyQ");
+Allocations* FCFSMin(Scheduler &s) {
+  Allocations* a = new Allocations();
+  auto rq = s.getReadyQPtr();
   std::cout << "Using FCFSMin" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    auto j = s.getJobFromQ(rq,i);    // COPY the job accross
-    j =  s.allocate(j,j.getMin(),j.getMin());
+    JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
+    if (j == nullptr) {
+      std::cout << "FATAL ERROR COPYING JOB!\n";
+    }
 
-    if ( j.noAllocdRes() > 0) {
+    auto resourceList =  s.allocate(*std::get<0>(*j),
+                                    std::get<0>(*j)->getMin(),
+                                    std::get<0>(*j)->getMin());
+
+    //TODO: make allocate leave resources in the pool?
+    if (resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      a.addJob(j);
+      std::cout << "Allocated " << resourceList.size() << " resources to job\n";
+      a->addJobResourcePair(j,resourceList);
     } else {
+      std::cout << "FCFSMin Can't allocate resources to job\n";
       break;
       /* if we can't allocate then just stop */
     }
@@ -25,18 +34,20 @@ Allocations FCFSMin(Scheduler &s) {
   return a;
 }
 
-Allocations FCFSAsManyAsPos(Scheduler &s) {
-  Allocations a;
-  auto rq = s.getQueuePointer("readyQ");
+Allocations* FCFSAsManyAsPos(Scheduler &s) {
+  Allocations *a = new Allocations();
+  auto rq = s.getReadyQPtr();
   std::cout << "Using FCFSAMAP" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    auto j = s.getJobFromQ(rq,i);
-    j = s.allocate(j,j.getMax(),j.getMin());
+    JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
+    auto resourceList =  s.allocate(*std::get<0>(*j),
+                                    std::get<0>(*j)->getMax(),
+                                    std::get<0>(*j)->getMin());
 
-    if ( j.noAllocdRes() > 0) {
+    if ( resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      a.addJob(j);
+      a->addJobResourcePair(j,resourceList);
     } else {
       break;
       /* if we can't allocate then just stop */
@@ -45,17 +56,19 @@ Allocations FCFSAsManyAsPos(Scheduler &s) {
   return a;
 
 }
-Allocations FCFSMax(Scheduler &s) {
-  Allocations a;
-  auto rq = s.getQueuePointer("readyQ");
+Allocations* FCFSMax(Scheduler &s) {
+  Allocations *a = new Allocations();
+  auto rq = s.getReadyQPtr();
   std::cout << "Using FCFS Max" << "\n";
   int w_size = s.getWindow();
   for (int i = 0; i < w_size && i < s.readyQSize(); i++) {
-    auto j = s.getJobFromQ(rq,i);
-    j = s.allocate(j,j.getMax(),j.getMax());
-    if ( j.noAllocdRes() > 0) {
+    JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
+    auto resourceList =  s.allocate(*std::get<0>(*j),
+                                    std::get<0>(*j)->getMax(),
+                                    std::get<0>(*j)->getMax()); 
+    if ( resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      a.addJob(j);
+      a->addJobResourcePair(j,resourceList);
     } else {
       break;
       /* if we can't allocate then just stop */
@@ -98,22 +111,21 @@ Allocations FCFSMax(Scheduler &s) {
   return (Allocations)nullptr;
 }*/
 
-bool sortByTime(const std::unique_ptr<Job>& i, const std::unique_ptr<Job>& j)
+bool sortByTime(const JobTuplePtr i, const JobTuplePtr j)
 {
-  return (i->minCost() < j->minCost()); 
+  return    (std::get<0>(*i))->minCost() < (std::get<0>(*j))->minCost(); 
 }
-bool sortByMin(const std::unique_ptr<Job>& i, const std::unique_ptr<Job>& j)
-{ 
-  return (i->getMin() < j->getMin()); 
+bool sortByMin(const JobTuplePtr i, const JobTuplePtr j) { 
+  
+  return (std::get<0>(*i)->getMin() < std::get<0>(*j)->getMin()); 
 }
 /***** Shortest Job Time First Mode *****/
-Allocations SJTF(Scheduler &s) {
-  Allocations aloc;
-/*  int w_size = s.getWindow();
+Allocations* SJTF(Scheduler &s) {
+  Allocations *aloc = new Allocations();
+  int w_size = s.getWindow();
   std::cout << "Using SJTF\n";
-  auto rq = s.getQueuePointer("readyQ");
-  Allocations aloc; 
-  if (rq == NULL) {
+  JobQueuePtr rq = s.getReadyQPtr();
+  if (rq == nullptr) {
     std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
     return aloc;
   }
@@ -122,46 +134,55 @@ Allocations SJTF(Scheduler &s) {
     return aloc;
   }
   // Get the minimum Job size (min number of req resources) 
-  std::deque<std::unique_ptr<Job>> job_window;
+  JobQueue job_window;
   for (int i = 0; i < w_size && i < rq->size(); i++) {
-
-    job_window.push_back(move(s.getJobFromQ(rq,i)));
-
+    job_window.push_back(s.copyJobFromQ(rq,i));
   }
   std::sort(job_window.begin(), job_window.end(), sortByTime);
   auto min_elem =  std::min_element(job_window.begin(), job_window.end(), sortByMin);
   auto nend = job_window.end();
-  while((*min_elem)->getMin() < s.resPoolSize() && min_elem < nend) {
-   *min_elem = move(s.allocate(move(*min_elem), (*min_elem)->getMin(), (*min_elem)->getMin()));
-   aloc.jobs.push_back(move(*min_elem));
-   nend = remove(job_window.begin(),nend,move(*min_elem));
+
+  while(*min_elem != nullptr && 
+       (std::get<0>(**min_elem))->getMin() < s.resPoolSize() && 
+       min_elem < nend) {
+
+   auto resourceList =  s.allocate(*std::get<0>(**min_elem),
+                                    std::get<0>(**min_elem)->getMax(),
+                                    std::get<0>(**min_elem)->getMax()); 
+
+   aloc->addJobResourcePair(*min_elem,resourceList);
+
+   nend = remove(job_window.begin(),nend,*min_elem);
    min_elem =  std::min_element(job_window.begin(), nend, sortByMin);   
     
-  }*/
+  }
   return aloc;
 }
 
-Allocations ManagedMode(Scheduler &s) {
+Allocations* ManagedMode(Scheduler &s) {
   auto av = s.getAlgVecPtr();
-  std::deque<Allocations> allocations;
+  std::deque<Allocations*> allocations;
+
   std::cout << "**Scheduling using the managed mode**\n"
-            << "Res[" <<s.resPoolSize() << "]\t" 
-            << "RQ[" << s.readyQSize() << "]\n";
+            << "Resource Pool Size [" <<s.resPoolSize() << "]\t" 
+            << "# Waiting Jobs [" << s.readyQSize() << "]\n";
+  /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
-    allocations.push_back( std::move(s.schedule(i,true)));
-    s.returnResources(allocations.back());
+    allocations.push_back( s.schedule(i,true) );
+    /* This means that we don't actually allocate the resources for each job */
+    allocations.back()->returnResources(s);
   }
-  std::deque<Allocations>::iterator a = allocations.begin();
-  for (;a < allocations.end(); a++) {
-    score(*a,s);
+
+  /* Score each allocation */
+  std::deque<Allocations* >::iterator a = allocations.begin();
+  for (;a != allocations.end(); a++) {
+    score(**a,s);
   }
-  Allocations mChoice = selectMaxScore(allocations);
-  auto j = mChoice.jobs.begin();
-  for (;j != mChoice.jobs.end(); j++) {
-    *j = move(s.realloc(move(*j)));
-  }
-  return *mChoice;
-  return allocations.front();
+
+  /* Find the allocation with the highest score */
+  Allocations *mChoice = selectMaxScore(allocations);
+  //TODO: Delete the ones we don't end up using...
+  return mChoice;
 }
 
 
@@ -184,14 +205,14 @@ void score(Allocations &a, Scheduler &s) {
   std::cout << "Score: " << a.getScore() << "\n";
 }
 
-Allocations selectMaxScore(std::deque<Allocations> &a) {
-  float maxScore = a[0].getScore();
+Allocations* selectMaxScore(std::deque<Allocations *> &a) {
+  float maxScore = a[0]->getScore();
   int index = 0;
   for (unsigned int i = 0; i < a.size() ; i++ ) {
-    std::cout << "a[" << i << "].score: " << a[i].getScore() 
+    std::cout << "a[" << i << "].score: " << a[i]->getScore() 
               << " maxScore: " << maxScore << "\n";
-    if (a[i].getScore() >= maxScore) {
-      maxScore = a[i].getScore();
+    if (a[i]->getScore() >= maxScore) {
+      maxScore = a[i]->getScore();
       index = i;
     }
   }
