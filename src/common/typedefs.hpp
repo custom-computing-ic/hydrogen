@@ -80,8 +80,9 @@ struct QInfo {
 
 struct JobInfo {
   bool finished;
+  bool started;
   boost::mutex jobInfoLock;
-
+  
   bool isFinished() { 
     boost::lock_guard<boost::mutex> l1(jobInfoLock);
     return finished;
@@ -90,7 +91,14 @@ struct JobInfo {
     boost::lock_guard<boost::mutex> l1(jobInfoLock);
     finished = p;
   }
-
+  bool isStarted() { 
+    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    return started;
+  }
+  void setStarted(bool p) {
+    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    started = p;
+  }
 };
 
 
