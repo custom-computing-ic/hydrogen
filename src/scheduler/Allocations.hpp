@@ -1,58 +1,39 @@
 #ifndef __ALLOCATIONS_H_
 #define __ALLOCATIONS_H_
 #include <Job.hpp>
-class Scheduler;
-
+#include <typedefs.hpp>
 class Allocations {
+ 
 
-  private:
-    std::deque<Job> jobs;
-    float score;
+
   public:
     Allocations() {
       score = 0;
+      jobs.clear();
     }
-
-  /*  Allocations(const Allocations& a) {
-      for ( auto& jobPtr : a.jobs) {
-        this->jobs.push_back(  std::unique_ptr<Job>(new Job(*jobPtr)  ));
-      }
-      this->score = a.score;
-    
-    };*/
-    /*
-    Allocations& operator=(const Allocations& a) {
-      //true deep coppy
-      for ( auto& jobPtr : a.jobs) {
-        this->jobs.push_back(  std::unique_ptr<Job>(new Job(*jobPtr)  ));
-      }
-      this->score = a.score;
-      return *this;
-
-    };
-   ~Allocations() = default;
-
-//    Allocations(Allocations&& a) : {
-*/
-
-  //  }
-
-    void addJob(Job &j) {
-      jobs.push_back(j);
+    void addJobResourcePair(JobTuplePtr j, ResourceList r) {
+      jobs.push_back(std::make_pair(j,r));
     }
 
     float makespan() { float sum = 0; 
                        auto it = jobs.begin();
                        for(;it != jobs.end();it++) 
                        {
-                          sum += it->cost();
+                          sum += std::get<0>(*std::get<0>(*it))->cost(*it);
                        } 
                        return sum;}
-   int noJobs() { return jobs.size();}
+
+
+   size_t noJobs() { return jobs.size();}
    int getScore() { return score;}
    void setScore(int a ) { score  = a; }
    void serviceAllocations(Scheduler &s);
    void returnResources(Scheduler &s);
+
+
+  private:
+    JobResPairQ jobs;
+    int score;
 };
 
 #endif
