@@ -1,10 +1,13 @@
 #include <Resource.hpp>
 
-virtual void Resource::start() { 
+void Resource::start() {
   Client::start();
 }
 
-virtual void Resource::stop() { 
-  Client::stop(); 
-
+void Resource::getResult(void *out) {
+  Client::getResult(out);
 }
+
+void Resource::stop() {
+  Client::stop();
+};

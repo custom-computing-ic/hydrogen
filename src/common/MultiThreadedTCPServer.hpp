@@ -56,7 +56,7 @@ public:
   explicit MultiThreadedTCPServer(const std::string& address, const std::string& port,
       std::size_t thread_pool_size);
 
-  virtual ~MultiThreadedTCPServer() {}
+  virtual ~MultiThreadedTCPServer();
 
   typedef MultiThreadedTCPServer super;
 

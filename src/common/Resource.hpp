@@ -13,20 +13,19 @@ class Resource : public Client {
     {
         rid = r.getId();
     }
-    Resource(int port,
-             const std::string& name,
+    Resource(int port_,
+             const std::string& name_,
              int id) :
-      Client::super(port,name)
+      Client::super(port_, name_)
     {
       rid = id;
-      this->port = port;
-      this->name = name;
     }
     ~Resource() {
     }
-    virtual void start() { Client::start();};
-    virtual void getResult(void *out) { Client::getResult(out); };
-    virtual void stop() { Client::stop(); };
+
+    virtual void start();
+    virtual void getResult(void *out);
+    virtual void stop();
     virtual int getId() const { return rid; }
     virtual int getPort() const {return port;}
     virtual std::string getName() const  {return name;}

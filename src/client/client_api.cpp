@@ -9,21 +9,17 @@
 
 using namespace std;
 
-void movingAverage(int n, int size, int* data, int* out) {
+void movingAverage(size_t n, size_t size, int* data, int* out) {
   cout << "client - Send job :: movingAverage" << endl;
 
-  int sizeBytes = sizeof(msg_t) + (n + 1) * sizeof(int);
-  cout << "Size bytes " << sizeBytes << endl;
+  size_t sizeBytes = sizeof(msg_t) + (n + 1) * sizeof(int);
   msg_t *msg = (msg_t *)calloc(sizeBytes, 1);
 
   msg->msgId = MSG_MOVING_AVG;
   msg->dataSize = n;
   msg->paramsSize = 1;
   memcpy(msg->data, data, sizeof(int) * n);
-  *(msg->data + sizeof(int) * n) = size;
-
-  for (int i = 0; i < n; i++)
-    cout << data[i] << endl;
+  memcpy(msg->data + sizeof(int) * n, (char *)size, sizeof(int));
 
   const string& name = "localhost";
   int portNumber = 8111;
@@ -33,4 +29,6 @@ void movingAverage(int n, int size, int* data, int* out) {
   c.send(msg);
   c.getResult(out);
   c.stop();
+
+  free(msg);
 }

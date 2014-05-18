@@ -15,7 +15,7 @@ public:
     super(address, name, thread_pool_size)
   {}
 
-  void movingAverage(int n, int size, int *data, int *out);
+  void movingAverage(size_t n, size_t size, int *data, int *out);
 
   msg_t* handle_request(msg_t* request);
 };

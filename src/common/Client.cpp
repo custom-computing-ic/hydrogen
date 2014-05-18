@@ -52,7 +52,7 @@ void Client::getResult(void* out) {
   //   cout << "Waiting for result..." << endl;
   char buf[1024];
   boost::system::error_code error;
-  size_t reply_len = socket_->read_some(boost::asio::buffer(buf), error);
+  socket_->read_some(boost::asio::buffer(buf), error);
   msg_t* rsp = (msg_t*)buf;
   memcpy(out, rsp->data, rsp->dataBytes());
   // if (error == boost::asio::error::eof)
@@ -62,20 +62,13 @@ void Client::getResult(void* out) {
   //  }
 }
 
-int Client::read(char* buffer, int sizeBytes) {
+int Client::read(char* buffer, size_t sizeBytes) {
   // TODO[paul-g]: this is not safe, not some blocking IO
-  char buf[sizeBytes];
-  memset(buf, 0, sizeBytes);
+  char* buf = (char *)calloc(sizeBytes, 1);
   std::cout << "Client.read::Waiting for result..." << std::endl;
   std::cout << sizeBytes << std::endl;
-  boost::system::error_code error;
-  size_t reply_len = boost::asio::read(*socket_, boost::asio::buffer(buf, sizeBytes));
-  // if (error == boost::asio::error::eof)
-  //   break; // Connection closed cleanly by peer.
-  // else if (error)
-  //   throw boost::system::system_error(error); // Some other error.
-  //    }
+  boost::asio::read(*socket_, boost::asio::buffer(buf, sizeBytes));
   memcpy(buffer, buf, sizeBytes);
-  // XXX error code...
+  free(buf);
   return 0;
 }

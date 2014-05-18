@@ -36,7 +36,7 @@ class Job {
       issueTime = 0;
       dispatchTime = 0;
       finishTime = 0;
-  
+
       AllocatedResources = std::make_shared<ResourcePool>();
     }*/
     Job(int a,int b,std::function<float(Job&)> c);
@@ -44,10 +44,10 @@ class Job {
     /* getters */
     std::string str() const;
     inline int getStatus() const { return status; }
-    inline int noAllocdRes() const { return AllocatedResources->size();}
-    inline int getMin() const { return min;} 
-    inline int getMax() const { return max;} 
-    inline int getId() const { return jid;} 
+    inline size_t  noAllocdRes() const { return AllocatedResources->size();}
+    inline int getMin() const { return min;}
+    inline int getMax() const { return max;}
+    inline int getId() const { return jid;}
     inline int getPriority() const { return priority; }
     inline std::function<float(Job&)> getCostFunc() { return cost_func;}
     inline float getDispatchTime()const {return dispatchTime;}
@@ -72,14 +72,14 @@ class Job {
     inline float maxCost() const { return defaultJobTime / max;}
 
     inline void allocate(ResourcePtr a) { AllocatedResources->push_back(move(a)); }
-    
+
     friend bool operator ==(const Job& lhs, const Job& rhs) { return lhs.getId() == rhs.getId();}
     friend std::ostream & operator<<(std::ostream & s, Job const & j) {
       s << "Job["<<j.getId()<<"]";
       return s;
     }
     msg_t run();
-    void getResponse(char*,int);
+    void getResponse(char*,size_t);
   private:
   	int min;
 		int max;
