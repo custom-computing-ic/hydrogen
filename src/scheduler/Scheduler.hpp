@@ -10,7 +10,8 @@
 #include <MultiThreadedTCPServer.hpp>
 #include <Resource.hpp>
 #include <Job.hpp>
-#include<Allocations.hpp>
+#include <typedefs.hpp>
+#include <Allocations.hpp>
 class Scheduler;
 
 #include <algs.hpp>
@@ -24,88 +25,8 @@ class ContainerPtr {
   public:
     typedef std::shared_ptr< std::deque < T > >  deque;
 };
-/*
-template <typename T>
-class JobContainerPtr {
-  public:
-    typedef std::shared_ptr<std::deque<std::tuple<std::unique_ptr<T>, > >  deque;
-
-};*/
-
-// Simple data structure to indicate which Q an event occured on with atomic 
-// get/set methods.
-struct QInfo {
-  bool readyQEvent;
-  bool runQEvent;
-  bool finishedQEvent;
-
-  boost::mutex readyQStatusLock;
-  boost::mutex runQStatusLock;
-  boost::mutex finishedQStatusLock;
-
-  bool getReadyQStatus() {
-    boost::lock_guard<boost::mutex> l1(readyQStatusLock);
-    return readyQEvent;
-  }
-
-  bool getRunQStatus() {
-    boost::lock_guard<boost::mutex> l2(runQStatusLock);
-    return runQEvent;
-  }
-
-  bool getFinishedQStatus() {
-    boost::lock_guard<boost::mutex> l3(finishedQStatusLock);
-    return finishedQEvent;
-  }
-
-  void setReadyQStatus(bool p) {
-    boost::lock_guard<boost::mutex> l1(readyQStatusLock);
-    readyQEvent = p;
-  }
-  void setRunQStatus(bool p) {
-    boost::lock_guard<boost::mutex> l2(runQStatusLock);
-    runQEvent = p;
-  }
-
-  void setFinishedQStatus(bool p) {
-    boost::lock_guard<boost::mutex> l3(finishedQStatusLock);
-    finishedQEvent = p;
-  }
-
-};
-
-
-struct JobInfo {
-  bool finished;
-  boost::mutex jobInfoLock;
-
-  bool isFinished() { 
-    boost::lock_guard<boost::mutex> l1(jobInfoLock);
-    return finished;
-  }
-  void setFinished(bool p) {
-    boost::lock_guard<boost::mutex> l1(jobInfoLock);
-    finished = p;
-  }
-
-};
 
 class Scheduler : public MultiThreadedTCPServer {
-  /* Algorithm Base and Collection Types */
-  typedef std::function<Allocations(Scheduler &)> AlgType;
-  typedef std::vector<AlgType> AlgVecType;
-  /* Base Types */
-  typedef std::unique_ptr<Job> JobPtr;
-  typedef std::tuple<JobPtr, struct JobInfo&, boost::condition_variable&> JobTuple;
-  typedef std::unique_ptr<Resource> ResourcePtr;
-  typedef JobTuple* JobTuplePtr;
-  /* Collections of Bases */
-  typedef std::deque<ResourcePtr> ResourcePool;
-  typedef std::deque<JobTuplePtr> JobQueue;
-  /* Pointers to Collections */
-  typedef std::shared_ptr<JobQueue> JobQueuePtr;
-  typedef std::shared_ptr<ResourcePool> ResourcePoolPtr;
-
 
 public:
   ~Scheduler() {
@@ -119,17 +40,16 @@ public:
 	    int dispatcherPortNumber,
 	    const std::string& dispatcherHostname) :
     MultiThreadedTCPServer::super(name, port, 5)
-
-
   {
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
-    runQ = JobQueuePtr(new JobQueue());
-    finishedJobs = JobQueuePtr(new JobQueue());
+    runQ = JobResPairQPtr(new JobResPairQ());
+    finishedQ = JobQueuePtr(new JobQueue());
     //TODO[mtottenh]: Change Resource so that it doesn't inherit from client
     addResource(dispatcherPortNumber,dispatcherHostname,1);
-
     nextJid = 1;
+    strat = "Completion Time";
+    window = 5;
   }
 
   template <typename T> void enqueue(typename ContainerPtr<T*>::deque container, 
@@ -139,7 +59,6 @@ public:
     boost::lock_guard<boost::mutex> guard(qMutex);
 
     container->push_back(elem);
-    //Change this to derive the name from Q ptri
     if (name == "readyQ")
       QStatus.setReadyQStatus(true);
     if (name == "runQ")
@@ -148,51 +67,59 @@ public:
       QStatus.setFinishedQStatus(true);
     std::cout << "Added element to " << name << ", calling notify_all().\n";
     QCondVar.notify_all();
-
   }
-
+  void addToRunQ(JobResPair &elem) {
+  //Check that this shouldn't be the lock passed in.
+    std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
+    boost::lock_guard<boost::mutex> guard(qMutex);
+    runQ->push_back(elem);
+    QStatus.setRunQStatus(true);
+    std::cout << "Added element to runQ, calling notify_all().\n";
+    QCondVar.notify_all();
+  }
   /* Server functions */
   //TODO[mtottenh]:add locks to this
   int getNextId() { return nextJid++;}
+
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
   msg_t* concurrentHandler(msg_t& request, msg_t& response, int responseSize);
+
+   
+  void notifyClientsOfResults();
+  /* Thread functions */
   void schedLoop();
   void dispatcherLoop();
-  virtual void start();
 
+  virtual void start();
   virtual void stop();
 
-  Job getJobFromQ(JobQueuePtr rq, int i)
-  {
-    auto j = *std::get<0>(*(rq->at(i)));
-    return j;
+  JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
+  { 
+    if (i > rq->size()) {
+      return nullptr;
+    }
+    auto j = *(rq->at(i));
+    JobTuplePtr nj = new JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j));
+    //std::make_tuple(std::get<0>(j),nullptr,nullptr);// = new JobTuple();
+//    std::get<0>(*nj) = std::get<0>(j);
+//    std::get<1>(*nj) = std::get<1>(j);
+//    std::get<2>(*nj) = std::get<2>(j);
+    return nj;
   }
   inline std::string getStrategy() const { return strat; }
-  inline int  readyQSize(){return readyQ->size();}
-  inline int  resPoolSize(){return resPool->size();}
+  inline size_t readyQSize(){return readyQ->size();}
+  inline size_t resPoolSize(){return resPool->size();}
   inline int    getWindow() const { return window;}
   /* Scheduling Strategies */
-  void schedule();
-  void schedule(int);
-  Allocations schedule(int,bool);
+  Allocations* schedule(int,bool);
   void returnResources(Allocations &a);
-
-  inline  JobQueuePtr getQueuePointer(std::string s)
-  {
-    if (s.compare("readyQ") == 0)
-        return readyQ;
-    if (s.compare("runQ") == 0)
-        return runQ;
-    if (s.compare("finishedJobs") == 0)
-        return finishedJobs;
-    return nullptr;
-  }
-  Job  allocate(Job &j, int m, int n);
-  inline  AlgVecType* getAlgVecPtr() { return &algVec;}
+  
+  std::deque<Resource>  allocate(Job &j, int m, int n);
   JobPtr realloc(JobPtr j);
+
+  inline  AlgVecType* getAlgVecPtr() { return &algVec;}
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
-  void addToRunQ(JobPtr j);
 
   Job removeJobFromQ(JobQueuePtr jq, Job& j) {
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
@@ -205,7 +132,18 @@ public:
     jq = std::move(preserve_list);
     return j;
   }
-
+  JobResPair removeJobFromReadyQ(JobResPair& j) {
+    std::cout << "Removing job " << *std::get<0>(*std::get<0>(j) ) << "from readyQ\n";
+    JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
+    auto a = readyQ->begin();
+    for(;a != readyQ->end(); a++) {
+      if (std::get<0>(**a)->getId() != std::get<0>(*(std::get<0>(j)))->getId()) {
+        preserve_list->push_back(*a);
+      }
+    }
+    readyQ = preserve_list;
+    return j;
+  }
   template <typename T> T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
     typename ContainerPtr<T>::deque preserve_list;
     auto a = jq->begin();
@@ -217,19 +155,29 @@ public:
     jq = preserve_list;
     return j;
   }
+  JobQueuePtr getReadyQPtr() { return readyQ;};
+  JobQueuePtr getFinishedQPtr() { return finishedQ; };
+  JobResPairQPtr getRunQPtr() { return runQ;};
 
 
 
 
 
+  inline void addResource(Resource& r){
+    int portNo = r.getPort(); 
+    std::string hostName = r.getName();
+    int Rid = r.getId();
+    resPool->push_back(std::unique_ptr<Resource>(new Resource(portNo,hostName,Rid)));
+  }
 private:
+  JobPtr deallocate(JobPtr j);
   /* Setters */
   inline void setReadyQ(JobQueuePtr rq) {readyQ = rq;}
-  inline void setRunQ(JobQueuePtr rq) {runQ = rq;}
+  inline void setRunQ(JobResPairQPtr rq) {runQ = rq;}
   inline void setResPool(ResourcePoolPtr r) {resPool=r;}
+
   inline void setWindow(int w) {window = w;}
-  inline void setMaxTime(float m) {maxTime = m;}
-  inline void setNextJobTime(float njt) { nextJobTime = njt;}
+
 
   inline void addResource(int PortNo, const std::string& Hostname, int Rid)
   {
@@ -238,13 +186,9 @@ private:
 
 
   /* Getters */
-
   inline float  getCurTime() const {return curTime;}
-  inline float  getNextJobTime() const {return nextJobTime;}
-
-  inline  AlgType getAlg(int i) { return algVec[i];}
-  inline  int noAlgs() {return algVec.size();}
-
+  inline  AlgType getAlg(size_t i) { return algVec[i];}
+  inline  size_t noAlgs() {return algVec.size();}
   inline  JobTuplePtr getFirstReadyProc()
   {
     JobTuplePtr j = std::move( readyQ->front() ) ;
@@ -252,56 +196,52 @@ private:
     return j;
   }
 
-
   /* Helper Functions */
   int addToReadyQ(msg_t& request);
 
-  void kickStartRunQ();
   int getJobStatus(int jobID);
   msg_t getJobResponse(int);
+
   void returnToReadyQ(JobPtr j,int pos);
+  
   JobPtr estimateFinishTime(JobPtr j);
   int numLateJobs();
   void updateState();
   void dumpInfo();
   void printQInfo(const char*, JobQueuePtr, bool);
   void reclaimResources();
-
-
-
   /* Attempts to allocate a least n resources to job j
    * up to a maximum of m resources
    * returns # resources allocated or -1 on failure
    */
   /* Helper functions for resource managment */
 
-  JobPtr deallocate(JobPtr j);
+
 
   void serviceAllocations(Allocations &a);
 
-  /* used for signaling scheduler&dispatcher threads */
+  /* Signaling Structs */
   boost::mutex qMutex;
   boost::condition_variable QCondVar;
   struct QInfo QStatus;
   /* used for locking Q's */
-  
   boost::mutex readyQMtx;
   boost::mutex runQMtx;
   boost::mutex finishedQMtx;
-
+  /* Worker threads */
   boost::thread *schedulerThread;
   boost::thread *dispatcherThread;
 
   /*Private Data Members */
   ResourcePoolPtr resPool;
   JobQueuePtr readyQ;
-  JobQueuePtr runQ;
-  JobQueuePtr finishedJobs;
+  JobResPairQPtr runQ;
+  JobQueuePtr finishedQ;
+
   AlgVecType algVec;
+  /* tuning variables */
   int window;
-  float maxTime;
   float curTime;
-  float nextJobTime;
   std::string strat;
   int nextJid;
 };
