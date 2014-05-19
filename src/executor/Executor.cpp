@@ -1,8 +1,5 @@
 #include <Executor.hpp>
 
-Executor::Executor() {
-
-}
  
     /* 
      * Manipulate the Resources list

@@ -8,7 +8,7 @@
 #include <Task.hpp>
 #include <PerfModel.hpp>
 #include <Implementation.hpp>
-
+#include <MultiThreadedTCPServer.hpp>
 
 /*#include "../resource/resource.h"
 #include "../task/task.h"
@@ -16,9 +16,16 @@
 #include "../implementation/implementation.h"
 */
 
-class Executor {
+class Executor : public MultiThreadedTCPServer {
   public:
-    Executor();
+    Executor(const std::string& port,
+             const std::string& name,
+             int schedulerPortNumber,
+             const std::string& schedulerHostname) :
+      MultiThreadedTCPServer::super(name,port,5)
+    {
+      //MISC 
+    }
  
     /* 
      * Manipulate the Resources list
@@ -41,6 +48,11 @@ class Executor {
     int AddImp(Task *tsk,Implementation *imp);
     int DelImp(Task *tsk,Implementation *imp);
     std::list<Implementation *> GetImplementations(Task *tsk);
+    //TODO[mtottenh]: Implement this..
+    virtual msg_t* handle_request(msg_t* request) { return request;}
+    virtual void start(){};
+    virtual void stop(){};
+
 
     int CreatePerfomanceModels();
     Implementation SelectImplementation(Task *tsk, void* input);
