@@ -2,17 +2,18 @@ dfe-cloud
 ========
 
 A cloud for heterogeneous architectures:
-
-1. Scheduler - a job scheduler, ```src/scheduler```
-2. Dispatcher - a job executor, ```src/dispatcher```
-3. The client API - available in ```src/client/```.
+1. Executor - uses performance data to determine a Resource to run an implementaiton on., ```src/executor```
+2. Scheduler - a job scheduler, ```src/scheduler```
+3. Dispatcher - a job executor, ```src/dispatcher```
+4. The client API - available in ```src/client/```.
 
 The startup action sequence is:
 
 1. start dispatcher (```./build/dispatcher <dispPort>```)
 2. start scheduler (```./build/scheduler <schedPort> <dispPort>```)
-3. run a client application (which submits jobs to the scheduler,
-e.g. ```build/MovingAverageOneDfe)
+3. start executor (```./build/executor <executorPort> <schedPort>```)
+3. run a client application (which submits jobs to the executor service,
+e.g. ```./build/MovingAverageOneDfe```)
 
 __Note__ To enable DFE implementations, the dispatcher must be started
 on a machine with DFEs and Hardware MaxelerOS installed. The hardware
@@ -91,9 +92,12 @@ int main() {
 This requests a moving average task to be performed.
 The sequence of actions would then be:
 
-1. client API (on behalf of user program) creates a client to connect to the scheduler
-2. client API sends job description and data to the scheduler
-3. scheduler sends job description to the dispatcher
-4. dispatcher executes job and sends result to scheduler
-5. scheduler sends result to client
-6. client closes scheduler connection
+1. client API (on behalf of user program) creates a client to connect to the executor
+2. client API sends job description and data to the executor.
+3. Executor determines an efficent resource to run the job on using a heuristic.
+4. Executor sends the job description to the scheduler.
+5. scheduler sends job description to the dispatcher
+6. dispatcher executes job and sends result to scheduler
+7. scheduler sends result to the executor
+8. executor sends result to the client
+9. client closes executor connection
