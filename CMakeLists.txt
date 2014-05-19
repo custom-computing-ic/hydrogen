@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (elastic-dfe)
 SET (BOOST_MIN_VERSION "1.49.0")
-
+SET (TCLAPDIR "/vol/bitbucket/mt3410/tclap/include")
 
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
@@ -36,6 +36,8 @@ if (EXISTS ${BITSTREAM_DIR} AND IS_DIRECTORY ${BITSTREAM_DIR})
 else()
   message (STATUS "No bitstreams found, compiling with DFE implementations disabled.")
 endif ()
+
+include_directories("${TCLAPDIR}")
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)
