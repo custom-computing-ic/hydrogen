@@ -24,7 +24,7 @@ class Job {
     Job(int a, int b, CostFunctionType c, float d);
     /* getters */
     std::string str() const;
-    msg_t getReq() { return req;}
+    msg_t& getReq() { return req;}
     inline int getStatus() const { return status; }
     inline int getMin() const { return min;}
     inline int getMax() const { return max;}
