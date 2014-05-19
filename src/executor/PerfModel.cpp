@@ -1,5 +1,7 @@
 #include <PerfModel.hpp>
 #include <iomanip>
+#include <sstream>
+#include <fstream>
 PerfModel::PerfModel(Implementation *param)
 {
   this->imp = param;
@@ -112,3 +114,54 @@ double PerfModel::QueryModel(double input) {
   std::cout << "\t = ";
   return projectedCost;
 }
+
+
+int PerfModel::SaveToDisk(const std::string& name) {
+  std::cout << "Saving this model to: " << name << "_" 
+            << imp->getLibName() << "_" << imp->getFuncName() <<".mdl\n";
+  //TODO: Serialize relevant data to disk.
+
+  return 0;
+}
+
+int PerfModel::SaveToDisk() {
+  std::string libName = imp->getLibName();
+  std::string funcName = imp->getFuncName();
+  std::cout << "Saving this model to: "  << libName 
+            << "_" << funcName <<".mdl\n";
+  
+  //TODO: Serialize relevant data to disk.
+  std::ofstream saveFile;
+  saveFile.open(libName+"_"+funcName+".mdl",std::ofstream::out);
+  boost::archive::text_oarchive output(saveFile);
+  output << *this;
+  saveFile.close();
+  return 0;
+}
+
+
+
+
+
+int PerfModel::LoadFromDisk(const std::string& name) {
+  std::cout << "Loading this model from: " << name << "_" 
+            << imp->getLibName() << "_" << imp->getFuncName() <<".mdl\n";
+  //TODO: Serialize relevant data to disk.
+
+  return 0;
+}
+
+int PerfModel::LoadFromDisk() {
+  std::string libName = imp->getLibName();
+  std::string funcName = imp->getFuncName();
+  std::cout << "Loading this model from: "  << imp->getLibName() 
+            << "_" << imp->getFuncName() <<".mdl\n";
+  //TODO: Serialize relevant data to disk.
+  std::ifstream saveFile;
+  saveFile.open(libName+"_"+funcName+".mdl",std::ofstream::in);
+  boost::archive::text_iarchive output(saveFile);
+  output >> *this;
+  saveFile.close(); 
+  return 0;
+}
+
