@@ -6,11 +6,11 @@
 #include <boost/asio.hpp>
 class Resource;
 class Client {
-
 protected:
   int port;
   const std::string& name;
   boost::asio::ip::tcp::socket* socket_;
+
 
 public:
 
@@ -18,8 +18,8 @@ public:
 
   /** Construct a client to connect to the given port of the given host */
   Client(int portNumber_, const std::string& name_) :
-    port(portNumber_),
-    name(name_)
+    name(name_),
+    port(portNumber_)
   {}
   Client(Resource& r);
 
