@@ -15,13 +15,15 @@ class Allocations {
       jobs.push_back(std::make_pair(j,r));
     }
 
-    float makespan() { float sum = 0; 
-                       auto it = jobs.begin();
-                       for(;it != jobs.end();it++) 
-                       {
-                          sum += std::get<0>(*std::get<0>(*it))->cost(*it);
-                       } 
-                       return sum;}
+    float makespan() {
+      float sum = 0; 
+      JobResPairQ::iterator it = jobs.begin();
+      for(;it != jobs.end();it++) 
+      {
+        sum += std::get<0>(*std::get<0>(*it))->cost(*it);
+      } 
+      return sum;
+    }
 
 
    size_t noJobs() { return jobs.size();}
