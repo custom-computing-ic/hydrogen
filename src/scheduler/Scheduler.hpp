@@ -83,7 +83,7 @@ public:
 
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
-  msg_t* concurrentHandler(msg_t& request, msg_t& response, int responseSize);
+  msg_t* concurrentHandler(msg_t& request, msg_t& response, unsigned long responseSize);
 
    
   void notifyClientsOfResults();
@@ -99,7 +99,7 @@ public:
     if (i > rq->size()) {
       return nullptr;
     }
-    auto j = *(rq->at(i));
+    JobTuple j = *(rq->at(i));
     JobTuplePtr nj = new JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j));
     //std::make_tuple(std::get<0>(j),nullptr,nullptr);// = new JobTuple();
 //    std::get<0>(*nj) = std::get<0>(j);
@@ -110,12 +110,12 @@ public:
   inline std::string getStrategy() const { return strat; }
   inline size_t readyQSize(){return readyQ->size();}
   inline size_t resPoolSize(){return resPool->size();}
-  inline int    getWindow() const { return window;}
+  inline size_t    getWindow() const { return window;}
   /* Scheduling Strategies */
-  Allocations* schedule(int,bool);
+  Allocations* schedule(size_t,bool);
   void returnResources(Allocations &a);
   
-  std::deque<Resource>  allocate(Job &j, int m, int n);
+  std::deque<Resource>  allocate(Job &j, size_t m, size_t n);
   JobPtr realloc(JobPtr j);
 
   inline  AlgVecType* getAlgVecPtr() { return &algVec;}
@@ -124,7 +124,7 @@ public:
   void runJob(JobResPair& j);
   Job removeJobFromQ(JobQueuePtr jq, Job& j) {
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
-    auto a = jq->begin();
+    JobQueue::iterator a = jq->begin();
     for(;a != jq->end(); a++) {
       if (std::get<0>(**a)->getId() != j.getId()) {
         preserve_list->push_back(*a);
@@ -136,7 +136,7 @@ public:
   JobResPair removeJobFromReadyQ(JobResPair& j) {
     std::cout << "Removing job " << *std::get<0>(*std::get<0>(j) ) << "from readyQ\n";
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
-    auto a = readyQ->begin();
+    JobQueue::iterator a = readyQ->begin();
     for(;a != readyQ->end(); a++) {
       if (std::get<0>(**a)->getId() != std::get<0>(*(std::get<0>(j)))->getId()) {
         preserve_list->push_back(*a);
@@ -147,7 +147,7 @@ public:
   }
   template <typename T> T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
     typename ContainerPtr<T>::deque preserve_list;
-    auto a = jq->begin();
+    typename ContainerPtr<T>::deque::iterator a = jq->begin();
     for(;a != jq->end(); a++) {
       if ((*a)->getId() != j->getId()) {
         preserve_list->push_back( move(*a) );
@@ -156,9 +156,9 @@ public:
     jq = preserve_list;
     return j;
   }
-  JobQueuePtr getReadyQPtr() { return readyQ;};
-  JobQueuePtr getFinishedQPtr() { return finishedQ; };
-  JobResPairQPtr getRunQPtr() { return runQ;};
+  JobQueuePtr getReadyQPtr() { return readyQ;}
+  JobQueuePtr getFinishedQPtr() { return finishedQ; }
+  JobResPairQPtr getRunQPtr() { return runQ;}
 
 
 
@@ -177,7 +177,7 @@ private:
   inline void setRunQ(JobResPairQPtr rq) {runQ = rq;}
   inline void setResPool(ResourcePoolPtr r) {resPool=r;}
 
-  inline void setWindow(int w) {window = w;}
+  inline void setWindow(size_t w) {window = w;}
 
 
   inline void addResource(int PortNo, const std::string& Hostname, int Rid)
@@ -241,7 +241,7 @@ private:
 
   AlgVecType algVec;
   /* tuning variables */
-  int window;
+  size_t window;
   float curTime;
   std::string strat;
   int nextJid;
