@@ -6,8 +6,6 @@
 
 class Resource {
   public:
-    //TODO[mtottenh] : This is so bad.. Every time we copy a resouce
-    // we end up invoking a new client connection!
     Resource(Resource const & r) 
     {
         rid = r.getId();
@@ -17,28 +15,28 @@ class Resource {
     }
 
     Resource(int port_, const std::string& name_, int id) 
-        : name (name_),
-          rid (id),
-          port (port_)
+        : rid (id),
+          port (port_),
+          name (name_) 
     {
-      rid = id;
+      utilization = 0.0;
+      idle_time = 0.0;
     }
 
     virtual ~Resource() {
     }
 
-//    virtual void getResult(void *out);
-    virtual int getId() const { return rid; }
-    virtual int getPort() const {return port;}
-    virtual std::string getName() const  {return name;}
+    int getId() const { return rid; }
+    int getPort() const {return port;}
+    std::string getName() const  {return name;}
 
   private:
 
     int rid;
+    int port;
     float utilization;
     float idle_time;
     std::string name;
-    int port;
 };
 
 #endif
