@@ -206,6 +206,7 @@ void Scheduler::schedLoop() {
     } 
   } catch (std::exception e) {
     std::cout << e.what() << std::endl;
+    this->stop();
   }
 }
 void Scheduler::runJobs() {
@@ -255,6 +256,7 @@ void Scheduler::dispatcherLoop() {
     }
   } catch (std::exception e) {
     std::cout << e.what() << std::endl;
+    this->stop();
   }
 }
 
@@ -299,10 +301,7 @@ void Scheduler::start() {
   schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
   dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
   run();
+//  schedulerThread->join();
+//  dispatcherThread->join();
 }
 
-void Scheduler::stop() {
-//  for (auto it = resPool->begin(); it != resPool->end(); it++)
-//    (*it)->start();
-
-}

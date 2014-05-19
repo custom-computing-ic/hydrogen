@@ -30,7 +30,9 @@ class Scheduler : public MultiThreadedTCPServer {
 
 public:
   ~Scheduler() {
+    schedulerThread->interrupt();
     schedulerThread->join();
+    dispatcherThread->interrupt();
     dispatcherThread->join();
     delete schedulerThread;
     delete dispatcherThread;
@@ -92,7 +94,7 @@ public:
   void dispatcherLoop();
 
   virtual void start();
-  virtual void stop();
+  void stop() {} ;
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
   { 
