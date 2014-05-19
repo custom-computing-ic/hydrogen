@@ -32,8 +32,8 @@ template<typename Rettype, typename... Args> Rettype run(Args... args) {
 
   bool load();
   bool unload();
-
-  
+  std::string getFuncName() { return funcName;}
+  std::string getLibName() { return libraryName;}  
 
 private:
   template<typename Func> std::function<Func> getFunction();
