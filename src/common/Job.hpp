@@ -8,26 +8,27 @@
 #include <vector>
 #include <typedefs.hpp>
 #include <Resource.hpp>
+float defaultCostFunction(JobResPair& p);
 
 class Job {
 
 	public:
     /* Constructors */
-    Job(){
-       issueTime = 0;
-       dispatchTime = 0;
-       finishTime = 0;
-       AllocatedResources = ResourcePoolPtr(new ResourcePool());
-    }
+//    Job(){
+//       issueTime = 0;
+//       dispatchTime = 0;
+//       finishTime = 0;
+//       AllocatedResources = ResourcePoolPtr(new ResourcePool());
+//   }
     Job(msg_t& request,int);
-    Job(int a,int b,CostFunctionType c);
-    Job(int a, int b, CostFunctionType c, float d);
+//    Job(int a,int b,CostFunctionType c);
+//    Job(int a, int b, CostFunctionType c, float d);
     /* getters */
     std::string str() const;
     msg_t& getReq() { return req;}
     inline int getStatus() const { return status; }
-    inline int getMin() const { return min;}
-    inline int getMax() const { return max;}
+    inline size_t getMin() const { return min;}
+    inline size_t getMax() const { return max;}
     inline int getId() const { return jid;}
     inline int getPriority() const { return priority; }
 
@@ -51,9 +52,10 @@ class Job {
 //      finishTime = dispatchTime + this->cost(); 
 //      std::cout << *this << "Will finish at: " << finishTime << "\n";
 //    }
-    inline void setMin(int a) {min = a;}
+    inline void setMax(size_t a) {max = a;}
+    inline void setMin(size_t a) {min = a;}
     inline void setUid(int a) {uid = a;}
-    inline void setMax(int a) {max = a;}
+
     inline void setJid(int a) {jid = a;}
     inline void setCostFunc(CostFunctionType f) {cost_func = f;}
     inline void setStatus(int a) { status = a;}
@@ -77,8 +79,8 @@ class Job {
     void getResponse(char*,size_t);
 
   private:
-  	int min;
-		int max;
+  	size_t min;
+	  size_t max;
     int jid;
     int uid;
     int status;
@@ -91,7 +93,11 @@ class Job {
 
     CostFunctionType cost_func;
     ResourcePoolPtr AllocatedResources;
-    msg_t req;
+    //TODO[paul-g]: What is the best way of copying over a msg_t ?
+    //Assigning it to a ref (e.g. msg_t& req and assigning in the constructor)
+    //seems to lead to data corruption (probably because the pointer data
+    //isn't a fixed size.
+    msg_t& req;
 
 };
 #endif

@@ -7,7 +7,7 @@ float defaultCostFunction(JobResPair& p) {
 
 
 
-Job::Job(int a, int b, CostFunctionType c) {
+/*Job::Job(int a, int b, CostFunctionType c) {
   min = a;
   max = b;
   cost_func = c;
@@ -26,9 +26,9 @@ Job::Job(int a, int b, CostFunctionType c, float d) {
   defaultJobTime = d;
   finishTime = 0;
   status = -1;
-}
+}*/
 /* for constructing a Job object from a message request */
-Job::Job(msg_t& request,int id) {
+Job::Job(msg_t& request,int id) :  req(request) {
   //TODO[mtottenh]: Replace this with metadata gained from executor
   min = 1;
   max = 2;
@@ -41,7 +41,9 @@ Job::Job(msg_t& request,int id) {
   dispatchTime = 0;
   finishTime = 0;
   status = 2;
-  req = request;
+//  realloc(&(req.data),request.dataBytes() * sizeof(char));
+//  memcpy(req.data,request.data,request.dataBytes());
+//  req = request;
   jid = id;
 }
 // TODO[mtottenh]: Change this... I dont think it needs to return a result anymore
@@ -58,5 +60,7 @@ std::string Job::str() const {
 }
 
 void Job::getResponse(char* buffer, size_t sizeBytes) {
-  std::cout << "In Job::getResponse: Needs Implementing\n";
+  std::cout << "In Job::getResponse: Needs Implementing";
+  std::cout << buffer[0] << sizeBytes << "\n";
+
 }
