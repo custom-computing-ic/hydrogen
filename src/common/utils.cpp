@@ -56,7 +56,7 @@ int parse_cmd(int argc, char **argv, cmd_args_t *a) {
  
    a->alpha = new TCLAP::ValueArg<double> ("a",
                                            "alpha",
-                                           "learning rate",
+                                           "Learning rate",
                                            false,
                                            0,
                                            "double",
@@ -64,7 +64,7 @@ int parse_cmd(int argc, char **argv, cmd_args_t *a) {
 
    a->it = new TCLAP::ValueArg<uint64_t>("i",
                                       "num_iterations",
-                                      "Number of iterations for linear regression",
+                                      "Number of iterations for linear regression.",
                                       false,
                                       1e6,
                                       "uint64_t",
@@ -72,11 +72,34 @@ int parse_cmd(int argc, char **argv, cmd_args_t *a) {
 
    a->feat = new TCLAP::ValueArg<int>("f",
                                       "no_features",
-                                      "Number of features to add",
+                                      "Number of features to add.",
                                       false,
                                       4,
                                       "int",
                                       cmd);
+   a->execPort = new TCLAP::ValueArg<std::string>("p",
+                                          "port",
+                                          "Port to listen on for client requests.",
+                                          true,
+                                          "8111",
+                                          "string ",
+                                          cmd);
+
+   a->schedPort = new TCLAP::ValueArg<int>("s",
+                                          "scheduler_port",
+                                          "Port to connect to dfe Scheduler.",
+                                          true,
+                                          8112,
+                                          "int",
+                                          cmd);
+   a->hostName = new TCLAP::ValueArg<std::string> ("n",
+                                                   "hostname",
+                                                   "Hostname to connect to for dfe Scheduler.",
+                                                   true,
+                                                   "localhost",
+                                                   "string",
+                                                   cmd);
+
    cmd.parse(argc,argv);
 
   } catch(TCLAP::ArgException &e) {
