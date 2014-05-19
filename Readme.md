@@ -2,6 +2,7 @@ dfe-cloud
 ========
 
 A cloud for heterogeneous architectures:
+
 1. Executor - uses performance data to determine a Resource to run an implementaiton on., ```src/executor```
 2. Scheduler - a job scheduler, ```src/scheduler```
 3. Dispatcher - a job executor, ```src/dispatcher```
