@@ -52,3 +52,32 @@ The sequence of actions would then be:
 4. dispatcher executes job and sends result to scheduler
 5. scheduler sends result to client
 6. client closes scheduler connection
+
+# Bitstreams
+
+A bitstream (.max) is a compiled dataflow design which can run on
+DFEs. We store bitstreams in a separate submodule, to avoid cluttering
+up the main repository.
+
+You can get this with
+
+```
+git submodule init && git submodule update
+```
+
+The resulting directory should look like this:
+```
+src/bitstreams/
+  DfeLib.h
+  MovingAverage.h
+  MovingAverage.c
+  MovingAverage.max
+  .....
+```
+
+DfeLib.h is a convenience header with all the functions exposed
+by the various maxfiles.
+
+Each bitstream exposes a set of functions for the Dispatcher to call
+when running on a machine with access to DFEs. Compiling the CPU code
+for bitstreams requires the MaxelerOS library and headers.
