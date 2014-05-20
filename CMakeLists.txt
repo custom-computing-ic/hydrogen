@@ -10,6 +10,7 @@ endif (NOT Boost_FOUND)
 
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 SET(CMAKE_CXX_COMPILER  "/usr/bin/clang++")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -g")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -std=c++0x -Weverything -g")
 
 SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
@@ -66,7 +67,7 @@ target_link_libraries (scheduler Scheduler)
 
 # Executor Executable
 add_executable  (executor src/executor/main.cxx)
-target_link_libraries (executor Executor)
+target_link_libraries (executor Executor )
 
 # Tests - Can use these as client executables
 add_executable (MovingAverageOneDfe test/integration/movingAverageOneDfe/main.cpp)

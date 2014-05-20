@@ -7,6 +7,9 @@
 #include <SimpleTimer.hpp>
 #include <Executor.hpp>
 #include <Implementation.hpp>
+#include <boost/timer/timer.hpp>
+#include <random>
+#include <sstream>
 //#include "build/gen/control.pb.h"
 #define MSIZE 2
 
@@ -53,13 +56,17 @@ int main(int argc, char** argv) {
   double alpha = args.alpha->getValue();
   uint64_t it = args.it->getValue();
   int feat = args.feat->getValue();
-  PerfModel perf(imp,alpha,it,feat,3);
+  PerfModel perf(imp);
 
 
 /* Passing in a lambda which times the perf model on test data */
   perf.CreateModel(500,[&](const int size) -> double {
+                    //create some random test data
+                    std::default_random_engine gen;
+                    std::uniform_real_distribution<double> dist(0.0,10000.0);
+//                    SimpleTimer data_t;
+//                    data_t.start();
                     //start timer
-                     SimpleTimer test_t;
                      if (size == 0)
                       return 0.0;
                      auto a1 = (double*) malloc(size*size*sizeof(double));
@@ -67,21 +74,51 @@ int main(int argc, char** argv) {
                      auto c1 = (double*) malloc(size*size*sizeof(double));
                      for (int i = 0; i < size; i++) {
                        for (int j = 0; j < size; j++) {
-                         a1[i*size + j] = (double)(i+1);
-                         b1[i*size + j] = (double)(j+1);
+                         a1[i*size + j] = dist(gen);
+                         b1[i*size + j] = dist(gen);
                        }
-                     }                    
+                     }              
+  //                   long datams = data_t.end();      
+    //                 std::cout << "Generating data for input size[" << size 
+      //                         << "] took: " << datams << "ms\n";
+//                     boost::timer::cpu_timer test_t2;
+                     SimpleTimer test_t;
                      test_t.start();
                      perf.imp->run<double>(size,a1,b1,c1);
-                     int ms = test_t.end();
+  //                   test_t.stop();
+                     uint64_t ms = test_t.end();
+//                     boost::timer::cpu_times cput = test_t.elapsed(); 
+                     std::stringstream ss;
+                     ss << ms;
+  //                   ss << format(cput,3,"%w");
                      delete a1;
                      delete b1;
                      delete c1;
                     //end timer
-
-                    return ms;
+                    double msd;
+                    ss >> msd;
+//                    ms = cput.wall / 1000000.0;
+                    return msd;
                   });
+  std::cout << perf << "\n";
+
+/* dumping out the perf model */
+  for ( int i = 0; i < 550; i+= 20) {
+    std::cout << "Projected Cost of [" <<  i  << "] : ";
+    fflush(stdout);
+    std::cout << perf.QueryModel(i) << "\n";
+
+  }
   perf.SaveToDisk();
+  PerfModel p(imp);
+  p.LoadFromDisk(p);
+  std::cout << p << "\n";
+  std::cout << "Comparing for Equality: ";
+  if (p == perf) {
+    std::cout << "SUCCESS\n";
+  } else {
+    std::cout << "FAIL\n";
+  }
   delete a;
   delete b;
   delete c;
@@ -118,11 +155,5 @@ int main(int argc, char** argv) {
 
 
 
-/* dumping out the perf model */
-/*  for ( int i = 0; i < 550; i+= 20) {
-    std::cout << "Projected Cost of [" <<  i  << "] : ";
-    fflush(stdout);
-    std::cout << perf.QueryModel(i) << "\n";
 
-  }*/
 

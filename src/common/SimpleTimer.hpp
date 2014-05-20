@@ -1,28 +1,33 @@
 #ifndef __SIMPLE_TIMER_CLASS_H__
 #define __SIMPLE_TIMER_CLASS_H__
-#include <chrono>
+//#include <chrono>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <utility>
 
-typedef std::chrono::time_point<std::chrono::system_clock> ticktock;
 
 
-
+using namespace boost::posix_time;
 class SimpleTimer
 {
 private:
-  ticktock c;
-  
+
+/*  typedef std::chrono::milliseconds Milliseconds;
+  typedef std::chrono::system_clock sysclock;
+  typedef std::chrono::steady_clock sysclock;    
+  typedef std::chrono::time_point<sysclock> timePoint; 
+  timePoint c;*/
+
+  ptime c;
 public:
   
   void start() {
-    c = std::chrono::system_clock::now();
+    c = microsec_clock::universal_time();
   }
   
-  int end() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - c).count(); 
+  long end() {
+    return   (microsec_clock::universal_time() - c).total_milliseconds(); 
   }
   
   
 };
-
 #endif

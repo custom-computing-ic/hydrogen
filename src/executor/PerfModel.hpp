@@ -33,7 +33,37 @@ class PerfModel {
         int SaveToDisk(const std::string& fname);
         int SaveToDisk();
         int LoadFromDisk(const std::string& fname);
-        int LoadFromDisk();
+        int LoadFromDisk(PerfModel& pm);
+        friend std::ostream& operator<<(std::ostream& os, const PerfModel& pm) {
+          double projectedCost = 0.0;
+          std::vector<double> input_data;
+          os << std::setprecision(3);
+          for (int i = 0; i <= pm.order; i++) {
+            input_data.push_back(pow(2.0,i));
+          }
+          for (int i = 0; i < pm.numberOfFeatures; i++) {
+            os << pm.weights[i];
+            if ( i > 0)
+              os  << "x^" << i;
+            if (i < pm.numberOfFeatures -1)
+              os << " + ";
+            projectedCost += pm.weights[i] * input_data[i];
+          }
+          os << "\t = " << projectedCost;
+          return os;
+        }
+        friend bool operator== (const PerfModel& lhs, const PerfModel& rhs) {
+          bool result = true;
+          result &= lhs.alpha == rhs.alpha;
+          result &= lhs.iterations == rhs.iterations;
+          result &= lhs.numberOfFeatures == rhs.numberOfFeatures;
+          result &= lhs.numberOfDataPoints == rhs.numberOfDataPoints;
+          result &= lhs.order == rhs.order;
+          result &= lhs.features == rhs.features;
+          result &= lhs.weights == rhs.weights; 
+          result &= lhs.milliseconds == rhs.milliseconds;
+          return result;
+        }
         template <class Archive> 
         void serialize(Archive& ar, const unsigned int version) {
           if (imp == nullptr) {

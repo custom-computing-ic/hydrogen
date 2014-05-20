@@ -38,12 +38,17 @@ int PerfModel::CreateModel(int maxsize,std::function<double(int)> f) {
         tmp.push_back(pow(i,j));
        }
        features.push_back(tmp);
-       milliseconds.push_back(f(i));    
-
+       double cache_warm_up = f(i);
+       double test1 = f(i);
+       double test2 = f(i);
+       double test3 = f(i);
+       double ave = (test1 + test2 + test3) / 3.0;
+       milliseconds.push_back(ave);    
      }
      if ( i % (maxsize/10) == 0 ) {
        std::cout << ".";
        fflush(stdout);
+//       std::cout << "\nInput of size [" << i << "] Took: " << milliseconds.back() << "ms\n";
      }
   }
   std::cout << "]\n";
@@ -57,6 +62,7 @@ int PerfModel::CreateModel(int maxsize,std::function<double(int)> f) {
 
 void PerfModel::LinearRegression() {
   this->numberOfDataPoints = milliseconds.size();
+  //initialize weights set to 0;
   for (int i = 0; i < numberOfFeatures; i++) {
     weights.push_back(0.0f);
   }
@@ -151,7 +157,7 @@ int PerfModel::LoadFromDisk(const std::string& name) {
   return 0;
 }
 
-int PerfModel::LoadFromDisk() {
+int PerfModel::LoadFromDisk(PerfModel& pm) {
   std::string libName = imp->getLibName();
   std::string funcName = imp->getFuncName();
   std::cout << "Loading this model from: "  << imp->getLibName() 
@@ -159,8 +165,8 @@ int PerfModel::LoadFromDisk() {
   //TODO: Serialize relevant data to disk.
   std::ifstream saveFile;
   saveFile.open(libName+"_"+funcName+".mdl",std::ofstream::in);
-  boost::archive::text_iarchive output(saveFile);
-  output >> *this;
+  boost::archive::text_iarchive input(saveFile);
+  input >> pm;
   saveFile.close(); 
   return 0;
 }
