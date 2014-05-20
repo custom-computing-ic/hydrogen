@@ -24,6 +24,7 @@ public:
     std::cout << "Starting Dispatcher Server using DFE implementations" << std::endl;
     useDfe = true;
 #else
+    std::cout << "Starting Dispatcher Server without DFE implementations" << std::endl;
     useDfe = false;
 #endif
   }

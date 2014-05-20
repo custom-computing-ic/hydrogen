@@ -12,6 +12,14 @@ endif (NOT Boost_FOUND)
 SET(CMAKE_CXX_COMPILER  "/usr/bin/clang++")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -std=c++0x -Weverything")
 
+# --- Bitstream libraries ---
+if (EXISTS "${PROJECT_SOURCE_DIR}/src/bitstreams" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/src/bitstreams")
+  message (STATUS "Found bitstreams, compiling with DFE implementations enabled.")
+  add_definitions("-DUSEDFE")
+else()
+  message (STATUS "No bitstreams bitstreams found, compiling with DFE implementations disabled.")
+endif ()
+
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)
 
@@ -25,11 +33,6 @@ include_directories ("${PROJECT_SOURCE_DIR}/src/client")
 add_subdirectory (src/client)
 
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client)
-
-# --- Bitstream libraries ---
-if (EXISTS "${PROJECT_SOURCE_DIR}/src/bitstreams" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/src/bitstreams")
-  add_definitions(-DUSEDFE)
-endif ()
 
 # Dispatcher Executable
 add_executable (dispatcher src/dispatcher/main.cxx)
