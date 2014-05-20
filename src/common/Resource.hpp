@@ -20,7 +20,8 @@ class Resource : public Client {
     {
       rid = id;
     }
-    ~Resource() {
+
+    virtual ~Resource() {
     }
 
     virtual void start();
@@ -30,13 +31,10 @@ class Resource : public Client {
     virtual int getPort() const {return port;}
     virtual std::string getName() const  {return name;}
 
-
-
   private:
     int rid;
     float utilization;
     float idle_time;
-    std::string name;
     int port;
 };
 
