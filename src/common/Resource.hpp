@@ -28,7 +28,7 @@ class Resource {
 
     int getId() const { return rid; }
     int getPort() const {return port;}
-    std::string getName() const  {return name;}
+    const std::string& getName() const  {return name;}
 
   private:
 

@@ -216,7 +216,7 @@ void Scheduler::runJobs() {
       //if not, start it running
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
-        runJob(*it);
+        runJob(*it); // spawn this into a separate thread?
       }
     }
 }
@@ -225,16 +225,32 @@ void Scheduler::runJob(JobResPair& j) {
   JobTuplePtr jobTuplePtr = std::get<0>(j);
   JobPtr jobPtr = std::get<0>(*jobTuplePtr);
  //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O 
-  Client c(ResourceList.front());
+  Resource r = ResourceList.front();
+  const string& name = r.getName().c_str();
+  int portNumber = r.getPort();
+  Client c(portNumber,name);
+  c.start();
   msg_t& req = jobPtr->getReq();
   req.print();
+
   c.send(&req);
-  char buff[1024];
+  char* buff = new char[1024];
   memset(buff,0,1024);
-  /*
-  c.getResult(buff);
+  int sizeBytes = sizeof(msg_t) + sizeof(int) * req.dataSize;
   msg_t* rsp = (msg_t*)buff;
-  rsp->print();*/
+  do {
+    c.read(buff,sizeBytes);
+    rsp->print();
+  }  while ( rsp->msgId != MSG_RESULT);
+  c.stop();
+//  c.read(buff,sizeBytes);
+  std::cout << "client::read() finished\n";
+
+//  msg_t* rsp = (msg_t*)buff;
+  rsp->print();
+  jobPtr->setRsp(rsp);
+  std::get<1>(*jobTuplePtr).setFinished(true);
+  std::get<2>(*jobTuplePtr).notify_all();
 }
 void Scheduler::dispatcherLoop() {
   try {
@@ -283,7 +299,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request, msg_t &response, unsigned 
   std::cout << "Job finished\n" << std::endl;
   
   //dequeue(finishedQ,(job,condvar));
-  return &response;
+  return std::get<0>(t)->getRsp();
 }
 
 

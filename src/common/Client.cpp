@@ -11,7 +11,7 @@ using namespace std;
 using namespace boost::asio::ip;
 namespace ba = boost::asio;
 Client::Client(Resource &r) :
-  name(r.getName())
+  name(std::string(r.getName().c_str()))
 {
   port = r.getPort();
 }

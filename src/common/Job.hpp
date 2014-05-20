@@ -26,6 +26,7 @@ class Job {
     /* getters */
     std::string str() const;
     msg_t& getReq() { return req;}
+    void   setRsp(msg_t* rsp) { this->rsp = rsp; }
     inline int getStatus() const { return status; }
     inline size_t getMin() const { return min;}
     inline size_t getMax() const { return max;}
@@ -76,6 +77,7 @@ class Job {
     }
     /* Helper Functions */
     msg_t run();
+    msg_t* getRsp() { return rsp;}
     void getResponse(char*,size_t);
 
   private:
@@ -98,6 +100,6 @@ class Job {
     //seems to lead to data corruption (probably because the pointer data
     //isn't a fixed size.
     msg_t& req;
-
+    msg_t* rsp;
 };
 #endif
