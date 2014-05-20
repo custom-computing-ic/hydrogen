@@ -20,7 +20,8 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
 }
 
 void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
-  cout << "Running Moving average on DFE" << endl;
+  char* dfeIds[] = {"1", "2", "3", "4"};
+  MovingAverageDFE(size, n, data, out, 2, dfeIds, false);
 }
 
 msg_t* DispatcherServer::handle_request(msg_t* request) {

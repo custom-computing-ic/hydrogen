@@ -8,16 +8,31 @@ if (NOT Boost_FOUND)
   message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.\n")
 endif (NOT Boost_FOUND)
 
-
 SET(CMAKE_CXX_COMPILER  "/usr/bin/clang++")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -std=c++0x -Weverything")
 
+SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
+
 # --- Bitstream libraries ---
-if (EXISTS "${PROJECT_SOURCE_DIR}/src/bitstreams" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/src/bitstreams")
-  message (STATUS "Found bitstreams, compiling with DFE implementations enabled.")
-  add_definitions("-DUSEDFE")
+if (EXISTS ${BITSTREAM_DIR} AND IS_DIRECTORY ${BITSTREAM_DIR})
+  message (STATUS "Found bitstreams, checking for required compilers...")
+  if (DEFINED ENV{MAXCOMPILERDIR} AND DEFINED ENV{MAXELEROSDIR})
+      message(STATUS "MAXCOMPILERDIR and MAXELEROSDIR are set, adding includes!")
+      include_directories (${BITSTREAM_DIR})
+      include_directories ($ENV{MAXCOMPILERDIR}/include)
+      include_directories ($ENV{MAXCOMPILERDIR}/include/slic)
+      include_directories ($ENV{MAXELEROSDIR}/include)
+      link_directories($ENV{MAXCOMPILERDIR}/lib)
+      link_directories($ENV{MAXELEROSDIR}/lib)
+      add_subdirectory (src/bitstreams)
+      add_definitions("-DUSEDFE")
+      SET(USE_BITSTREAMS "true")
+  else()
+    message(STATUS "MAXCOMPILERDIR not set!")
+  endif()
+
 else()
-  message (STATUS "No bitstreams bitstreams found, compiling with DFE implementations disabled.")
+  message (STATUS "No bitstreams found, compiling with DFE implementations disabled.")
 endif ()
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
