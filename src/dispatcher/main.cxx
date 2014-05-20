@@ -15,8 +15,8 @@ int main(int argc, char** argv) {
   }
 
   int portnumber = atoi(argv[1]);
-  const string& name = string("Dispatcher");
-  Dispatcher d(portnumber, name);
+  const string& localhost = string("localhost");
+  Dispatcher d(portnumber, localhost);
   //  d->start();
   return 0;
 }

@@ -7,10 +7,9 @@
 
 class Client {
 
+protected:
   int port;
   const std::string& name;
-
-protected:
   boost::asio::ip::tcp::socket* socket_;
 
 public:

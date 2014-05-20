@@ -16,7 +16,8 @@ int main(int argc, char** argv) {
 
   int dispatcherPortNumber = atoi(argv[2]);
 
-  Scheduler s(argv[1], "localhost", dispatcherPortNumber, "localhost");
+  const string& localhost = string("localhost");
+  Scheduler s(argv[1], localhost, dispatcherPortNumber, localhost);
 
   /* Add some scheduling algorithms */
   /* 0 */

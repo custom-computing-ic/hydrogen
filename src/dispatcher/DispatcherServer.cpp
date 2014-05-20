@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void DispatcherServer::movingAverage(size_t n, size_t size, int *data, int *out) {
+void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
   cout << "Dispatcher::MovingAverage" << endl;
   cout << " n:    " << n << endl;
   cout << " size: " << size << endl;
@@ -19,6 +19,10 @@ void DispatcherServer::movingAverage(size_t n, size_t size, int *data, int *out)
   }
 }
 
+void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
+  cout << "Running Moving average on DFE" << endl;
+}
+
 msg_t* DispatcherServer::handle_request(msg_t* request) {
   std::cout << "Dispatcher:: do work" << std::endl;
 
@@ -30,8 +34,18 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     int* data_in = (int*)malloc(nBytes);
     memcpy(data_in, request->data, nBytes);
 
+    std::cout << useDfe << std::endl;
     // do computation
-    movingAverage(n, (size_t)request->firstParam(), data_in, out);
+    // TODO check resource type
+    if (/*request->resourceType == "DFE" &&*/ useDfe) {
+      // TODO pass in other arguments (e.g. nDfes, dfeIDs)
+      movingAverage_dfe(n, request->firstParam(), data_in, out);
+    } else
+      movingAverage_cpu(n, (size_t)request->firstParam(), data_in, out);
+
+    cout << "Data out " << endl;
+    for (int i = 0; i < n; i++)
+      cout << out[i] << endl;
 
     // write the response
     size_t sizeBytes = sizeof(msg_t) + request->dataSize * sizeof(int);

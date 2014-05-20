@@ -26,6 +26,11 @@ add_subdirectory (src/client)
 
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client)
 
+# --- Bitstream libraries ---
+if (EXISTS "${PROJECT_SOURCE_DIR}/src/bitstreams" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/src/bitstreams")
+  add_definitions(-DUSEDFE)
+endif ()
+
 # Dispatcher Executable
 add_executable (dispatcher src/dispatcher/main.cxx)
 target_link_libraries (dispatcher Dispatcher pthread boost_system boost_thread)
