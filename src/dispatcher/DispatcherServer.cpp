@@ -1,17 +1,5 @@
 #include <DispatcherServer.hpp>
 
-/* By default we don't want to use dfe libs.*/
-#ifndef USEDFE
-#define USEDFEB (false)
-#else
-#define USEDFEB (true)
-#endif
-
-/** If we are using DFEs include the DFE lib. */
-#ifdef USEDFE
-#include <DfeLib.hpp>
-#endif
-
 using namespace std;
 
 void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
@@ -33,9 +21,6 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
 
 void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
   cout << "Running Moving average on DFE" << endl;
-#ifdef USEDFE
-  //  ParallelMovingAverage(....);
-#endif
 }
 
 msg_t* DispatcherServer::handle_request(msg_t* request) {
@@ -49,9 +34,10 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     int* data_in = (int*)malloc(nBytes);
     memcpy(data_in, request->data, nBytes);
 
+    std::cout << useDfe << std::endl;
     // do computation
     // TODO check resource type
-    if (/*request->resourceType == "DFE" &&*/ USEDFEB) {
+    if (/*request->resourceType == "DFE" &&*/ useDfe) {
       // TODO pass in other arguments (e.g. nDfes, dfeIDs)
       movingAverage_dfe(n, request->firstParam(), data_in, out);
     } else

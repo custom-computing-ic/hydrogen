@@ -5,7 +5,13 @@
 #include <message.hpp>
 #include <string>
 
+#ifdef USEDFE
+#include <DfeLib.hpp>
+#endif
+
 class DispatcherServer : public MultiThreadedTCPServer {
+
+  bool useDfe;
 
 public:
 
@@ -13,7 +19,14 @@ public:
                    const std::string& name,
                    std::size_t thread_pool_size) :
     super(address, name, thread_pool_size)
-  {}
+  {
+#ifdef USEDFE
+    std::cout << "Starting Dispatcher Server using DFE implementations" << std::endl;
+    useDfe = true;
+#else
+    useDfe = false;
+#endif
+  }
 
   void movingAverage_cpu(size_t n, size_t size, int *data, int *out);
   void movingAverage_dfe(int n, int size, int *data, int *out);
