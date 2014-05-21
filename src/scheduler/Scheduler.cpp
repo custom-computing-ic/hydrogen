@@ -219,6 +219,20 @@ void Scheduler::runJobs() {
         runJob(*it); // spawn this into a separate thread?
       }
     }
+    it = runQ->begin();
+    JobResPairQPtr preserve_list(new JobResPairQ());
+    for (;it != runQ->end(); it++) {
+      //for each job in the runQ check if it is finished.
+      JobTuplePtr jobTuplePtr = std::get<0>(*it);
+      if (!std::get<1>(*jobTuplePtr).isFinished()){
+        //remove from runQ.
+        preserve_list->push_back(*it);
+      } else {
+        std::get<2>(*jobTuplePtr).notify_all();
+      }
+    }
+    runQ = preserve_list;
+
 }
 void Scheduler::runJob(JobResPair& j) {
   ResourceList ResourceList = std::get<1>(j);
@@ -250,7 +264,8 @@ void Scheduler::runJob(JobResPair& j) {
   rsp->print();
   jobPtr->setRsp(rsp);
   std::get<1>(*jobTuplePtr).setFinished(true);
-  std::get<2>(*jobTuplePtr).notify_all();
+  //
+
 }
 void Scheduler::dispatcherLoop() {
   try {
@@ -268,6 +283,7 @@ void Scheduler::dispatcherLoop() {
         std::cout << "Event on Run Q, itterating overQ and starting any"
                   << "Jobs \n";
         runJobs(); 
+        QStatus.setRunQStatus(false);
       } 
     }
   } catch (std::exception e) {
