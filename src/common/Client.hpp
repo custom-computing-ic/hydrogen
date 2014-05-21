@@ -13,7 +13,7 @@ private:
   boost::shared_ptr<boost::asio::ip::tcp::socket> socket_;
 
 //  boost::asio::ip::tcp::resolver::query q;
-//  boost::asio::ip::tcp::resolver::iterator endpoint_it; 
+//  boost::asio::ip::tcp::resolver::iterator endpoint_it;
 
 public:
 
@@ -42,7 +42,7 @@ public:
   /** Closes connection to taret host **/
   virtual void stop();
 
-  virtual void getResult(void* out);
+  virtual void getResult(void* out, int sizeBytes);
 };
 
 #endif /* _CLIENT_H_ */

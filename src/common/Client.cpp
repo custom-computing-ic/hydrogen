@@ -51,14 +51,21 @@ void Client::stop() {
   socket_->shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
 }
 
-void Client::getResult(void* out) {
+void Client::getResult(void* out, int sizeBytes) {
   // TODO[paul-g]: this is not safe, not some blocking IO
   // for (;;) {
   //   cout << "Waiting for result..." << endl;
-  char buf[1024];
+  int size = sizeBytes + sizeof(msg_t);
+  char buf[size];
   boost::system::error_code error;
-  socket_->read_some(boost::asio::buffer(buf), error);
+  socket_->read_some(boost::asio::buffer(buf, size), error);
   msg_t* rsp = (msg_t*)buf;
+
+  if (sizeBytes != rsp->dataBytes()) {
+    cerr << "Error: reply size different than expected! ";
+    cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes();
+  }
+
   memcpy(out, rsp->data, rsp->dataBytes());
   // if (error == boost::asio::error::eof)
   //   break; // Connection closed cleanly by peer.

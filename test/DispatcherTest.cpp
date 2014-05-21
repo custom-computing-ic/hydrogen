@@ -28,7 +28,7 @@ int main() {
     memcpy(buf, msg, msg->sizeBytes());
 
     c.send(msg);
-    c.getResult(out);
+    c.getResult(out, n * sizeof(int));
     c.stop();
 
   } catch (const exception& e) {
