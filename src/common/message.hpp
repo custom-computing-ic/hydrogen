@@ -25,7 +25,9 @@ typedef struct msg {
 } msg_t;
 #pragma pack(0)
 
+/** Utility functions for constructing various types of messages */
 msg_t* msg_empty();
 msg_t* msg_ack();
+msg_t* msg_moving_avg(int n, size_t width, int* dataIn);
 
 #endif /* _MESSAGE_H_ */

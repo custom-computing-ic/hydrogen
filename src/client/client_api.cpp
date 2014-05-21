@@ -12,14 +12,7 @@ using namespace std;
 void movingAverage(size_t n, size_t size, int* data, int* out) {
   cout << "client - Send job :: movingAverage" << endl;
 
-  size_t sizeBytes = sizeof(msg_t) + n * sizeof(int) + sizeof(size_t);
-  msg_t *msg = (msg_t *)calloc(sizeBytes, 1);
-
-  msg->msgId = MSG_MOVING_AVG;
-  msg->dataSize = n;
-  msg->paramsSize = 1;
-  memcpy(msg->data, data, sizeof(int) * n);
-  memcpy(msg->data + sizeof(int) * n, (char *)&size, sizeof(size_t));
+  msg_t *msg = msg_moving_avg(n, size, data);
 
   const string& name = "localhost";
   int portNumber = 8111;
