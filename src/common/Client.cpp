@@ -18,10 +18,9 @@ Client::Client(Resource &r) :
 }
 
 void Client::send(msg_t *message) {
-  boost::system::error_code error;
-  socket_->write_some(ba::buffer((char *)message,
-                                 message->sizeBytes()),
-                      error);
+  ba::write(*socket_, ba::buffer((char *)message,
+                                 message->sizeBytes())
+            );
 }
 
 void Client::start() {
@@ -57,8 +56,7 @@ void Client::getResult(void* out, int sizeBytes) {
   //   cout << "Waiting for result..." << endl;
   int size = sizeBytes + sizeof(msg_t);
   char buf[size];
-  boost::system::error_code error;
-  socket_->read_some(boost::asio::buffer(buf, size), error);
+  ba::read(*socket_, boost::asio::buffer(buf, size));
   msg_t* rsp = (msg_t*)buf;
 
   if (sizeBytes != rsp->dataBytes()) {
