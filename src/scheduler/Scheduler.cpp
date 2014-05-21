@@ -197,7 +197,7 @@ void Scheduler::schedLoop() {
             QStatus.setRunQStatus(true);
             a->serviceAllocations(*this);
             std::cout << "ReadyQ now contains [" << readyQ->size() 
-                      << "] Jobs\n";
+                      << "] Jobs, ResourcePool[" << resPool->size() <<"]\n";
             if (readyQ->size() == 0)
               QStatus.setReadyQStatus(false);
             delete a;
@@ -240,6 +240,7 @@ void Scheduler::runJobs() {
         //remove from runQ.
         preserve_list->push_back(*it);
       } else {
+//        std::get<0>(*jobTuplePtr).returnResources();
         std::get<2>(*jobTuplePtr).notify_all();
       }
     }

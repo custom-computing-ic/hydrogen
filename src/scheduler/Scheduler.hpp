@@ -94,7 +94,14 @@ public:
   void dispatcherLoop();
 
   virtual void start();
-  void stop() {} ;
+  void stop() {   
+    schedulerThread->interrupt();
+    schedulerThread->join();
+    dispatcherThread->interrupt();
+    dispatcherThread->join();
+    delete schedulerThread;
+    delete dispatcherThread;
+  } ;
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
   { 
