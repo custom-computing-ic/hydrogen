@@ -1,17 +1,16 @@
 cmake_minimum_required (VERSION 2.6)
 project (elastic-dfe)
 SET (BOOST_MIN_VERSION "1.49.0")
-SET (TCLAPDIR "/vol/bitbucket/mt3410/tclap/include")
+
+# XXX This is a really bad hack...
+SET (TCLAPDIR "/homes/mt3410/elasticcloud-api/src/include")
 
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
   message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.\n")
 endif (NOT Boost_FOUND)
 
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-SET(CMAKE_CXX_COMPILER  "/usr/bin/clang++")
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -g")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -std=c++0x -Weverything -g")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
 SET(USE_BITSTREAMS "false")
