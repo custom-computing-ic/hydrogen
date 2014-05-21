@@ -1,0 +1,3 @@
+[submodule "src/bitstreams"]
+	path = src/bitstreams
+	url = https://github.com/paul-g/elastic-dfe-lib.git
