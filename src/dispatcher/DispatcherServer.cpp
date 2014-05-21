@@ -21,8 +21,10 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
 
 void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
   cout << "Dispatcher::MovingAverageDFE" << endl;
-  char* dfeIds[] = {"1", "2", "3", "4"};
+  const char* dfeIds[] = {"1", "2", "3", "4"};
+#ifdef USEDFE
   MovingAverageDFE(size, n, data, out, 2, dfeIds, false);
+#endif
 }
 
 msg_t* DispatcherServer::handle_request(msg_t* request) {
