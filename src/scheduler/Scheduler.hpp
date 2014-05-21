@@ -13,7 +13,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-
+#define NUM_THREADS 1
 #include <algs.hpp>
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
@@ -41,7 +41,7 @@ public:
 	    const std::string& name,
 	    int dispatcherPortNumber,
 	    const std::string& dispatcherHostname) :
-    MultiThreadedTCPServer::super(name, port, 5)
+    MultiThreadedTCPServer::super(name, port, NUM_THREADS)
   {
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
