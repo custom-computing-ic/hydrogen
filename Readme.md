@@ -14,6 +14,15 @@ The startup action sequence is:
 3. run a client application (which submits jobs to the scheduler,
 e.g. ```build/MovingAverageOneDfe)
 
+__Note__ To enable DFE implementations, the dispatcher must be started
+on a machine with DFEs and Hardware MaxelerOS installed. The hardware
+MaxelerOS library must be preloaded, so the startup command for the
+dispatcher becomes:
+
+```
+LD_PRELOAD=/opt/maxeler/maxeleros/lib/libmaxeleros.so ./dispatcher 8111
+```
+
 # Build
 
 Run cmake, which will create a Makefile:
