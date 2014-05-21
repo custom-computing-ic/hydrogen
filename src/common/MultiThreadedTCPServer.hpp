@@ -30,7 +30,8 @@ public:
 
 private:
   /// Handle completion of a read operation.
-  void handle_read();
+  void handle_read(const boost::system::error_code& e,
+		   std::size_t bytes_transferred);
 
   /// Handle completion of a write operation.
   void handle_write(const boost::system::error_code& e);
@@ -42,7 +43,7 @@ private:
   boost::asio::ip::tcp::socket socket_;
 
   /// Buffer for incoming data.
-  boost::array<char, 8192> buffer_;
+  boost::array<char, 16 * 1024 * 1024 > buffer_;
 
   MultiThreadedTCPServer& server_;
 };

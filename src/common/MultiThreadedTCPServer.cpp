@@ -89,21 +89,59 @@ ba::ip::tcp::socket& connection::socket() {
 }
 
 void connection::start() {
+  // XXX This doesn't wait for a specific number of bytes; a simple
+  // solution is to wait for sizeof(msg_t) so that we are sure we read
+  // all the fields of the struct correctly
   socket_.async_read_some(ba::buffer(buffer_),
                           strand_.wrap(
-                                       boost::bind(&connection::handle_read, shared_from_this())));
+                                       boost::bind(&connection::handle_read, shared_from_this(),
+						   ba::placeholders::error,
+						   ba::placeholders::bytes_transferred)));
 }
 
-void connection::handle_read() {
-
+void connection::handle_read(const boost::system::error_code& e,
+			     std::size_t bytes_transferred)
+{
+  cout << "TCPServer::Bytes transferred: ";
+  cout << bytes_transferred << endl;
   // XXX TODO[paul-g]: Need to do this async
   msg_t* request = NULL;
   do {
     // unpack request
     request = (msg_t*)buffer_.data();
 
+    // first check we read all data; we have to do this since we don't
+    // know the size a priori and read_some does not guarantee to read
+    // all bytes before it returns. NOTE that we rely on reading at
+    // least the first few bytes storing the msg size (a bit of a hack
+    // for now)
+
+    int expectedBytes = request->sizeBytes();
+
+    msg_t* fullRequest;
+    bool resized = false;
+    if (expectedBytes > bytes_transferred) {
+      int size = expectedBytes - bytes_transferred;
+      cout << "Waiting for rest of data: ";
+      cout << "Bytes: " << size << endl;;
+      fullRequest = (msg_t*)malloc(expectedBytes);
+      memcpy((char *)fullRequest, (char *)request, bytes_transferred);
+
+      char buff[size];
+      ba::read(socket_, ba::buffer(buff, size));
+      cout << "Read second part of message" << endl;
+      memcpy(((char *)fullRequest) + bytes_transferred, buff, size);
+      resized = true;
+    } else {
+      fullRequest = request;
+    }
+
+    cout << "Handle request" << endl;
     // do work and generate reply
-    msg_t* reply = server_.handle_request(request);
+    msg_t* reply = server_.handle_request(fullRequest);
+
+    if (resized)
+      free(fullRequest);
 
     // write reply back
     char buffer[reply->sizeBytes()];
