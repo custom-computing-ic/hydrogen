@@ -23,12 +23,13 @@ int* mavg_threept_exp(int n, int* a) {
 }
 
 bool mavg_check(int n, int* out, int* exp) {
-  int status = true;
+  int correct = true;
   for (int i = 1; i < n - 1; i++) {
     if (out[i] != exp[i]) {
       cout << "Error " << i << " expected: " << exp[i] << " got: " << out[i];
-      status = false;
+      cout << endl;
+      correct = false;
     }
   }
-  return status;
+  return correct;
 }
