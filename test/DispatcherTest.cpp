@@ -37,5 +37,5 @@ int main() {
     return 1;
   }
 
-  return mavg_check(n, out, exp) == true ? 0 : 1;
+  return mavg_check(n, out, exp)? 0 : 1;
 }
