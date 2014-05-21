@@ -106,16 +106,13 @@ void connection::handle_read() {
     msg_t* reply = server_.handle_request(request);
 
     // write reply back
-    char buffer[1024];
+    char buffer[reply->sizeBytes()];
     memcpy(buffer, reply, reply->sizeBytes());
-    ba::write(socket_,
-              ba::buffer(buffer, reply->sizeBytes()));
-
-
+    ba::write(socket_, ba::buffer(buffer, reply->sizeBytes()));
 
     // wait for new request
     // XXX this may not read all the bytes...
-    socket_.read_some(boost::asio::buffer(buffer_));
+    socket_.read_some(ba::buffer(buffer_));
     // ba::read(socket_,
     // 	     ba::buffer(buffer_, 1024));
   } while (request != NULL && request->msgId != MSG_DONE);
