@@ -20,20 +20,20 @@ int main(int argc, char** argv) {
 
   Executor e(args.execPort->getValue(),"localhost",args.schedPort->getValue(),args.hostName->getValue());
   /*loading implementations from libraries */
-  Implementation *imp = new Implementation("./libMM.so","mmult");
+//  Implementation *imp = new Implementation("./libMM.so","mmult");
   /* Checking for error loading the library */
-  if (imp->load() == NULL) {
-    std::cout << "Exiting" << std::endl;
-    return 1;
-  }
-  Implementation *print_matrix = new Implementation("./libMM.so","print_matrix");
-  if (print_matrix->load() == NULL) {
-    std::cout << "Exiting" << std::endl;
-    return 1;
-  }
+//  if (imp->load() == NULL) {
+//    std::cout << "Exiting" << std::endl;
+//    return 1;
+//  }
+//  Implementation *print_matrix = new Implementation("./libMM.so","print_matrix");
+//  if (print_matrix->load() == NULL) {
+//    std::cout << "Exiting" << std::endl;
+//    return 1;
+//  }
 
 
-
+/*
   auto a =  new double[MSIZE][MSIZE]();
   auto b =  new double[MSIZE][MSIZE]();
   auto c =  new double[MSIZE][MSIZE]();
@@ -42,25 +42,25 @@ int main(int argc, char** argv) {
       a[i][j] = (double)(i+1);
       b[i][j] = (double)(j+1);
     }
-  }
+  }*/
   /* Running the implementation on test data */
-  print_matrix->run<int>(MSIZE,c,"c");
+/*  print_matrix->run<int>(MSIZE,c,"c");
   print_matrix->run<int>(MSIZE,a,"a"); 
   print_matrix->run<int>(MSIZE,b,"b"); 
   imp->run<double>(MSIZE,a, b,c);
   print_matrix->run<int>(MSIZE,c,"c"); 
 
 
- 
+ */
 /* creating a performance model from the implementation */
-  double alpha = args.alpha->getValue();
-  uint64_t it = args.it->getValue();
-  int feat = args.feat->getValue();
-  PerfModel perf(imp);
+//  double alpha = args.alpha->getValue();
+//  uint64_t it = args.it->getValue();
+//  int feat = args.feat->getValue();
+//  PerfModel perf(imp);
 
 
 /* Passing in a lambda which times the perf model on test data */
-  perf.CreateModel(500,[&](const int size) -> double {
+/*  perf.CreateModel(500,[&](const int size) -> double {
                     //create some random test data
                     std::default_random_engine gen;
                     std::uniform_real_distribution<double> dist(0.0,10000.0);
@@ -101,9 +101,9 @@ int main(int argc, char** argv) {
                     return msd;
                   });
   std::cout << perf << "\n";
-
+*/
 /* dumping out the perf model */
-  for ( int i = 0; i < 550; i+= 20) {
+ /* for ( int i = 0; i < 550; i+= 20) {
     std::cout << "Projected Cost of [" <<  i  << "] : ";
     fflush(stdout);
     std::cout << perf.QueryModel(i) << "\n";
@@ -118,12 +118,14 @@ int main(int argc, char** argv) {
     std::cout << "SUCCESS\n";
   } else {
     std::cout << "FAIL\n";
-  }
-  delete a;
-  delete b;
-  delete c;
-  delete print_matrix;
-  delete imp;
+  }*/
+
+  e.start();
+//  delete a;
+//  delete b;
+//  delete c;
+//  delete print_matrix;
+//  delete imp;
   return 0;
 }
 

@@ -22,9 +22,12 @@ class Executor : public MultiThreadedTCPServer {
              const std::string& name,
              int schedulerPortNumber,
              const std::string& schedulerHostname) :
-      MultiThreadedTCPServer::super(name,port,5)
+      MultiThreadedTCPServer::super(name,port,5),
+      schedName(schedulerHostname)
     {
       //MISC 
+      schedPort = schedulerPortNumber;
+      
     }
  
     /* 
@@ -49,9 +52,9 @@ class Executor : public MultiThreadedTCPServer {
     int DelImp(Task *tsk,Implementation *imp);
     std::list<Implementation *> GetImplementations(Task *tsk);
     //TODO[mtottenh]: Implement this..
-    virtual msg_t* handle_request(msg_t* request) { return request;}
-    virtual void start(){};
-    virtual void stop(){};
+    virtual msg_t* handle_request(msg_t* request);
+    virtual void start(){ run(); }
+    virtual void stop(){}
 
 
     int CreatePerfomanceModels();
@@ -68,7 +71,8 @@ class Executor : public MultiThreadedTCPServer {
     std::list<Resource *> AvailableRes;
     std::list<Task *> Tasks;
 //    std::list<PerfModel<std::map<Implementation,int>,int>> PerfModels;
-
+    int schedPort;
+    std::string schedName;
 };
 
 #endif

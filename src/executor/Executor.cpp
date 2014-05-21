@@ -1,5 +1,5 @@
 #include <Executor.hpp>
-
+#include <message.hpp>
  
     /* 
      * Manipulate the Resources list
@@ -87,3 +87,24 @@ std::list<Task *> Executor::GetTasks()
         return this->Tasks;
 }
 
+msg_t* Executor::handle_request(msg_t* request) {
+  std::cout << "Executor::handle_request()\n";
+  request->print();
+  switch (request->msgId) {
+    case MSG_DONE:
+    case MSG_ACK:
+    case MSG_MOVING_AVG:
+    default:
+      //For the moment just act as a proxy.
+      char* buff = new char[1024];
+      Client c(schedPort,schedName);
+      c.start();
+      c.send(request);
+      c.getResult(buff);
+      c.stop();
+      return (msg_t*) buff;
+  }
+
+  //Just return a nullPtr for now so we segfault :D
+  return (msg_t*)NULL;
+}
