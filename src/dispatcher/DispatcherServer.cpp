@@ -3,7 +3,7 @@
 using namespace std;
 
 void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
-  cout << "Dispatcher::MovingAverage" << endl;
+  cout << "Dispatcher::MovingAverageCPU" << endl;
   cout << " n:    " << n << endl;
   cout << " size: " << size << endl;
 
@@ -20,6 +20,7 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
 }
 
 void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
+  cout << "Dispatcher::MovingAverageDFE" << endl;
   char* dfeIds[] = {"1", "2", "3", "4"};
   MovingAverageDFE(size, n, data, out, 2, dfeIds, false);
 }
