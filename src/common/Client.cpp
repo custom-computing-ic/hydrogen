@@ -68,12 +68,6 @@ void Client::getResult(void* out) {
 }
 
 int Client::read(char* buffer, size_t sizeBytes) {
-  // TODO[paul-g]: this is not safe, not some blocking IO
-  char* buf = (char *)calloc(sizeBytes, 1);
-  std::cout << "Client.read::Waiting for result..." << std::endl;
-  std::cout << sizeBytes << std::endl;
-  boost::asio::read(*socket_, boost::asio::buffer(buf, sizeBytes));
-  memcpy(buffer, buf, sizeBytes);
-  free(buf);
+  ba::read(*socket_, ba::buffer(buffer, sizeBytes));
   return 0;
 }
