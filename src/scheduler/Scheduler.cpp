@@ -10,8 +10,8 @@ using namespace std;
 
 
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
-void Scheduler::defaultHandler(msg_t& request, 
-                               msg_t& response, 
+void Scheduler::defaultHandler(msg_t& request,
+                               msg_t& response,
                                int responseSize) {
   /*
   resPool->front()->send(&request);
@@ -50,8 +50,8 @@ JobPtr Scheduler::estimateFinishTime(JobPtr j) {
 
 
 /*
- * TODO[mtottenh]: Check implementations of getDispatchTime/IssueTime 
- *  with timevals in the minites/seconds range not just random 
+ * TODO[mtottenh]: Check implementations of getDispatchTime/IssueTime
+ *  with timevals in the minites/seconds range not just random
  *  floats.. Also add Q locks
  */
 
@@ -80,7 +80,7 @@ void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
 
 }
 //TODO[mtottenh]: Add this to the header file. This could be
-// dangerous.. it seems to remove all the resources in the runQ and 
+// dangerous.. it seems to remove all the resources in the runQ and
 // return them to the pool... use with extreme caution
 void Scheduler::reclaimResources() {
   cout << "Scheduler::reclaimResources(): Not Implemented\n";
@@ -97,7 +97,7 @@ void Scheduler::reclaimResources() {
 
 
 
-//TODO[mtottenh]: Collapse the below back into 1 function. 
+//TODO[mtottenh]: Collapse the below back into 1 function.
 // needless code duplication here.
 Allocations* Scheduler::schedule(size_t choice, bool flag) {
   flag = false;
@@ -122,7 +122,7 @@ ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
   return allocatedResources;
 }
 
-//TODO[mtottenh]:Check this functions as intended. 
+//TODO[mtottenh]:Check this functions as intended.
 //I'm not sure about getAllocdRes()->***/
 JobPtr Scheduler::deallocate(JobPtr j) {
   std::cout << "De-allocating (NOT IMPLEMENTED) " << *j << "\n";
@@ -149,7 +149,7 @@ msg_t Scheduler::getJobResponse(int jobID) {
 msg_t* Scheduler::handle_request(msg_t* request) {
   cout << "Scheduler recieved request msgID[" <<  request->msgId << "]" << endl;
   request->print();
-  //TODO: Lookup requestID/Implementation ID in a map and return error if not 
+  //TODO: Lookup requestID/Implementation ID in a map and return error if not
   //found
   msg_t* response;
   response = msg_ack();
@@ -178,13 +178,13 @@ void Scheduler::schedLoop() {
       while ( !QStatus.getReadyQStatus() && !QStatus.getFinishedQStatus() ) {
         QCondVar.wait(lock);
         std::cout << "Scheduler Thread woke up\n";
-      } 
+      }
       //A job was deposited in the readyQ
 //TODO[mtottenh]: modify schedule to lock all Q's for now.
       if (QStatus.getReadyQStatus() == true) {
         std::cout << "Event happened: readyQ\n";
         std::cout << "Scheduling\n";
-        Allocations* a = schedule(MODE_MANAGED,true);  
+        Allocations* a = schedule(MODE_MANAGED,true);
         lock.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
@@ -196,26 +196,26 @@ void Scheduler::schedLoop() {
             std::cout << "Allocated Resources\n";
             QStatus.setRunQStatus(true);
             a->serviceAllocations(*this);
-            std::cout << "ReadyQ now contains [" << readyQ->size() 
+            std::cout << "ReadyQ now contains [" << readyQ->size()
                       << "] Jobs\n";
             if (readyQ->size() == 0)
               QStatus.setReadyQStatus(false);
             delete a;
-  
+
             QCondVar.notify_all();
           } else {
             std::cout << "Could not allocate any resources...\n";
           }
         }
-      } 
+      }
 
-      //A result was returned on the finishedQ -- This could be delegated to 
+      //A result was returned on the finishedQ -- This could be delegated to
       //a different thread
       if (QStatus.getFinishedQStatus() == true) {
         notifyClientsOfResults();
         QStatus.setFinishedQStatus(false);
       }
-    } 
+    }
   } catch (std::exception e) {
     std::cout << e.what() << std::endl;
     this->stop();
@@ -250,7 +250,7 @@ void Scheduler::runJob(JobResPair& j) {
   ResourceList ResourceList = std::get<1>(j);
   JobTuplePtr jobTuplePtr = std::get<0>(j);
   JobPtr jobPtr = std::get<0>(*jobTuplePtr);
- //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O 
+ //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
   Resource r = ResourceList.front();
   const string& name = r.getName().c_str();
   int portNumber = r.getPort();
@@ -260,10 +260,11 @@ void Scheduler::runJob(JobResPair& j) {
   req.print();
 
   c.send(&req);
-  char* buff = new char[1024];
-  memset(buff,0,1024);
+
   int sizeBytes = sizeof(msg_t) + sizeof(int) * req.dataSize;
+  char* buff = (char *)calloc(sizeBytes, 1);
   msg_t* rsp = (msg_t*)buff;
+
   do {
     c.read(buff,sizeBytes);
     rsp->print();
@@ -294,9 +295,9 @@ void Scheduler::dispatcherLoop() {
       if (QStatus.getRunQStatus()) {
         std::cout << "Event on Run Q, itterating overQ and starting any"
                   << "Jobs \n";
-        runJobs(); 
+        runJobs();
         QStatus.setRunQStatus(false);
-      } 
+      }
     }
   } catch (std::exception e) {
     std::cout << e.what() << std::endl;
@@ -304,8 +305,8 @@ void Scheduler::dispatcherLoop() {
   }
 }
 
-msg_t*  Scheduler::concurrentHandler( msg_t &request, 
-                                      msg_t &response, 
+msg_t*  Scheduler::concurrentHandler( msg_t &request,
+                                      msg_t &response,
                                       unsigned long sizeBytes) {
   //creat (job,condvar) pair
   //
@@ -313,17 +314,17 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   boost::mutex jobMutex;
   boost::unique_lock<boost::mutex> lock(jobMutex);
   struct JobInfo jInfo;
-  
+
   jInfo.setFinished(false);
 
-  std::cout << "In ConcurrentHandler - Recieved Job: DataSize" 
+  std::cout << "In ConcurrentHandler - Recieved Job: DataSize"
             << sizeBytes << "\n" << std::endl;
   request.print();
   JobTuple t = std::make_tuple( new Job(request,getNextId()),
                                 std::ref(jInfo),std::ref(jCondVar));
 
   enqueue(readyQ, &t, readyQMtx,"readyQ");
-  
+
 
   while (!jInfo.isFinished()) {
     jCondVar.wait(lock);
@@ -334,7 +335,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   response.dataSize = rsp->dataSize;
   response.paramsSize = 0;
 //  size_t dataBytes  = rsp->dataSize*sizeof(int);
-  memcpy(&response.data,rsp->data ,rsp->dataBytes()); 
+  memcpy(&response.data,rsp->data ,rsp->dataBytes());
   response.print();
   std::cout << "returning from concurrentHandler\n";
   //dequeue(finishedQ,(job,condvar));
@@ -359,4 +360,3 @@ void Scheduler::start() {
 //  schedulerThread->join();
 //  dispatcherThread->join();
 }
-
