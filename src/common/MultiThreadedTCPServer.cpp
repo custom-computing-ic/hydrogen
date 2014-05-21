@@ -111,9 +111,11 @@ void connection::handle_read() {
     ba::write(socket_,
               ba::buffer(buffer, reply->sizeBytes()));
 
+
+
     // wait for new request
     // XXX this may not read all the bytes...
-    socket_.read_some(boost::asio::buffer(buffer_, 1024));
+    socket_.read_some(boost::asio::buffer(buffer_));
     // ba::read(socket_,
     // 	     ba::buffer(buffer_, 1024));
   } while (request != NULL && request->msgId != MSG_DONE);
