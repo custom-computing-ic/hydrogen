@@ -16,11 +16,12 @@ Client::Client(Resource &r) :
 {
   port = r.getPort();
 }
+
 void Client::send(msg_t *message) {
-  char buf[1024];
-  memcpy(buf, message, message->sizeBytes());
   boost::system::error_code error;
-  socket_->write_some(boost::asio::buffer(buf), error);
+  socket_->write_some(ba::buffer((char *)message,
+                                 message->sizeBytes()),
+                      error);
 }
 
 void Client::start() {
