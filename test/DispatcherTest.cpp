@@ -14,7 +14,7 @@ using namespace std;
 
 int main() {
   msg_t* msg = NULL;
-  int n = 16;
+  int n = mavg_data_size;
   int *a = mavg_data(n);
   int *out = (int *)calloc(n, sizeof(int));
   int *exp = mavg_threept_exp(n, a);

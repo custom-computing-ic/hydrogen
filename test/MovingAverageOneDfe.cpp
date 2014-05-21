@@ -10,7 +10,7 @@ using namespace std;
 
 int main() {
 
-  int n = 16;
+  int n = mavg_data_size;
 
   int *data = mavg_data(n);
   int *exp = mavg_threept_exp(n, data);
