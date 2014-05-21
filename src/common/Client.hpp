@@ -6,11 +6,14 @@
 #include <boost/asio.hpp>
 class Resource;
 class Client {
-protected:
+private:
   int port;
   const std::string& name;
-  boost::asio::ip::tcp::socket* socket_;
+  boost::asio::io_service io_service;
+  boost::shared_ptr<boost::asio::ip::tcp::socket> socket_;
 
+//  boost::asio::ip::tcp::resolver::query q;
+//  boost::asio::ip::tcp::resolver::iterator endpoint_it; 
 
 public:
 
@@ -24,7 +27,7 @@ public:
   Client(Resource& r);
 
   virtual ~Client() {
-    delete socket_;
+//    delete socket_;
   }
 
   /** Send a message to target host. Must be connected. **/

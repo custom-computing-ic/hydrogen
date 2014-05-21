@@ -1,5 +1,6 @@
 #include <Client.hpp>
-
+#include <boost/ref.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 #include <cstdlib>
@@ -27,11 +28,10 @@ void Client::start() {
   cout << "Hostname: " << name << endl;
   cout << "Port: " << port << endl;
 
-  boost::asio::io_service io_service;
   tcp::resolver resolver(io_service);
   tcp::resolver::query q(name, boost::lexical_cast<string>(port));
   tcp::resolver::iterator endpoint_it = resolver.resolve(q);
-  socket_ = new tcp::socket(io_service);
+  socket_ = boost::make_shared<tcp::socket>(boost::ref(io_service));
   boost::asio::connect(*socket_, endpoint_it);
 }
 
