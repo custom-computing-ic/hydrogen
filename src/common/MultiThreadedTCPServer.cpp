@@ -36,38 +36,29 @@ MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const stri
 
   start_accept();
 }
-//Pretty sure we can replace this nasty vector with
-//a nice thread_group
+
 void MultiThreadedTCPServer::run() {
   cout << "Creating thread pool size " << thread_pool_size_ << endl;
   boost::thread_group worker_threads;
-
-  //vector<boost::shared_ptr<boost::thread> > threads;
   for (size_t i = 0; i < thread_pool_size_; ++i) {
-
-    //boost::shared_ptr<boost::thread> thread(new boost::thread(
-      //                                                        boost::bind(&boost::asio::io_service::run, &io_service_)));
-//    threads.push_back(thread);
-
     worker_threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service_));
-
   }
-
-  //for (size_t i = 0; i < threads.size(); ++i)
-  //  threads[i]->join();
-
   worker_threads.join_all();
 }
 
 void MultiThreadedTCPServer::start_accept() {
+#ifdef DEBUG
   cout << "Start accept\n";
+#endif
   new_connection_.reset(new connection(io_service_, *this));
   acceptor_.async_accept(new_connection_->socket(),
                          boost::bind(&MultiThreadedTCPServer::handle_accept, this));
 }
 
 void MultiThreadedTCPServer::handle_accept() {
+#ifdef DEBUG
   cout << "Server:: handle_accept" << endl;
+#endif
   new_connection_->start();
   start_accept();
 }
@@ -102,8 +93,11 @@ void connection::start() {
 void connection::handle_read(const boost::system::error_code& e,
 			     std::size_t bytes_transferred)
 {
+#ifdef DEBUG
   cout << "TCPServer::Bytes transferred: ";
   cout << bytes_transferred << endl;
+#endif
+
   // XXX TODO[paul-g]: Need to do this async
   msg_t* request = NULL;
   do {
@@ -122,21 +116,16 @@ void connection::handle_read(const boost::system::error_code& e,
     bool resized = false;
     if (expectedBytes > bytes_transferred) {
       int size = expectedBytes - bytes_transferred;
-      cout << "Waiting for rest of data: ";
-      cout << "Bytes: " << size << endl;;
       fullRequest = (msg_t*)malloc(expectedBytes);
       memcpy((char *)fullRequest, (char *)request, bytes_transferred);
-
       char buff[size];
       ba::read(socket_, ba::buffer(buff, size));
-      cout << "Read second part of message" << endl;
       memcpy(((char *)fullRequest) + bytes_transferred, buff, size);
       resized = true;
     } else {
       fullRequest = request;
     }
 
-    cout << "Handle request" << endl;
     // do work and generate reply
     msg_t* reply = server_.handle_request(fullRequest);
 
@@ -148,11 +137,7 @@ void connection::handle_read(const boost::system::error_code& e,
     memcpy(buffer, reply, reply->sizeBytes());
     ba::write(socket_, ba::buffer(buffer, reply->sizeBytes()));
 
-    // wait for new request
-    // XXX this may not read all the bytes...
     socket_.read_some(ba::buffer(buffer_));
-    // ba::read(socket_,
-    // 	     ba::buffer(buffer_, 1024));
   } while (request != NULL && request->msgId != MSG_DONE);
 
   boost::system::error_code ignored_ec;
@@ -161,7 +146,6 @@ void connection::handle_read(const boost::system::error_code& e,
 
 void connection::handle_write(const boost::system::error_code& e) {
   if (!e) {
-    // Initiate graceful connection closure.
     boost::system::error_code ignored_ec;
     socket_.shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
   }
