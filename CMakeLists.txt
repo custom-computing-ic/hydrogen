@@ -54,6 +54,9 @@ add_subdirectory (src/client)
 include_directories ("${PROJECT_SOURCE_DIR}/src/executor")
 add_subdirectory (src/executor)
 
+include_directories ("${PROJECT_SOURCE_DIR}/test")
+add_subdirectory (test)
+
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client)
 
 # Dispatcher Executable
@@ -70,13 +73,13 @@ target_link_libraries (executor Executor )
 
 # Tests - Can use these as client executables
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
-target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS})
+target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
 
 add_executable (MultiUserSingleJobType test/MultiUserSingleJobType.cpp)
-target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS})
+target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS} TestLib)
 
 add_executable (DispatcherTest test/DispatcherTest.cpp)
-target_link_libraries (DispatcherTest ${EXTRA_LIBS})
+target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
 
 enable_testing ()
 add_test ("DispatcherTest" DispatcherTest)
