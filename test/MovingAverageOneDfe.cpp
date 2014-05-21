@@ -1,4 +1,6 @@
 /** End to end test for moving average */
+#include "TestLib.hpp"
+
 #include <client_api.hpp>
 
 #include <iostream>
@@ -10,31 +12,19 @@ int main() {
 
   int n = 16;
 
-  int *data = (int *)calloc(n, sizeof(int));
-  for (int i = 0; i < n; i ++)
-    data[i] = i;
-
-  int *exp = (int *)calloc(n, sizeof(int));
-  for (int i = 1; i < n - 1; i ++)
-    exp[i] = (data[i - 1] + data[i] + data[i + 1]) / 3;
-
+  int *data = mavg_data(n);
+  int *exp = mavg_threept_exp(n, data);
 
   /** Ask for a simple moving average a few times */
-  int t = 1;
-  int out[n];
-  memset(out, 0, sizeof(int) * n);
+  int t = 10;
 
-  int status = 0;
+  bool status = true;
   for (int k = 0; k < t; k++) {
+    int out[n];
+    memset(out, 0, sizeof(int) * n);
     movingAverage(n, 3, data, out);
-    for (int i = 1; i < n - 1; i++) {
-      cout << "Checking data " << endl;
-      if (out[i] != exp[i]) {
-        cout << "Error " << i << " expected: " << exp[i] << " got: " << out[i];
-        status = -1;
-      }
-    }
+    status &= mavg_check(n, out, exp);
   }
 
-  return status;
+  return status ? 0 : 1;
 }

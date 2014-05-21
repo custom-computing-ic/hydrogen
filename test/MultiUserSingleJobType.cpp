@@ -1,3 +1,4 @@
+#include "TestLib.hpp"
 #include <client_api.hpp>
 
 #include <cstdlib>
@@ -10,41 +11,36 @@ using namespace std;
 
 int main() {
 
+  int n = 16;
+  int *data = mavg_data(n);
+  int *exp = mavg_threept_exp(n, data);
+
   int p = 10;
   for (int i = 0; i < p; i++) {
     int pid = fork();
+
     if (pid == 0) {
-
-      int n = 16;
-
-      int *data = (int *)calloc(n, sizeof(int));
-      for (int i = 0; i < n; i ++)
-	data[i] = i;
-
-      int *exp = (int *)calloc(n, sizeof(int));
-      for (int i = 1; i < n - 1; i ++)
-	exp[i] = (data[i - 1] + data[i] + data[i + 1]) / 3;
-
+      // child process
       int out[n];
       memset(out, 0, sizeof(int) * n);
-
-      int status = 0;
       movingAverage(n, 3, data, out);
-      for (int i = 1; i < n - 1; i++) {
-        if (out[i] != exp[i]) {
-          cout << "Error " << i << " expected: " << exp[i] << " got: " << out[i];
-          status = -1;
-        }
-      }
-      cout << "Checked result" << endl;
-      exit(0);
+
+      exit(mavg_check(n, out, exp)? 0 : 1);
     } else if (pid < 0) {
+      // parent process
       cout << "Failed to fork" << endl;
     }
   }
 
-  // wait for all children to finish
+  // wait for all children to finish and check status
+  int status = 0;
   for (int i = 0; i < p; i++ ) {
-    wait(NULL);
+    int st = 0;
+    wait(&st);
+    std::cout << "Process status:" << std::endl;
+    cout << st << endl;
+    status = status || st;
   }
+
+  return status;
 }
