@@ -69,10 +69,10 @@ add_executable  (executor src/executor/main.cxx)
 target_link_libraries (executor Executor )
 
 # Tests - Can use these as client executables
-add_executable (MovingAverageOneDfe test/integration/movingAverageOneDfe/main.cpp)
+add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS})
 
-add_executable (MultiUserSingleJobType test/integration/MultiUserSingleJobType.cpp)
+add_executable (MultiUserSingleJobType test/MultiUserSingleJobType.cpp)
 target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS})
 
 add_executable (DispatcherTest test/DispatcherTest.cpp)
