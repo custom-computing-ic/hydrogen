@@ -47,5 +47,14 @@ int main() {
     return 1;
   }
 
-  return msg && (memcmp(exp, out, n * sizeof(int)) == 0) ? 0 : 1;
+  int status = 0;
+  for (int i = 1; i < n - 1; i++) {
+    cout << "Checking data " << endl;
+    if (out[i] != exp[i]) {
+      cout << "Error " << i << " expected: " << exp[i] << " got: " << out[i];
+      status = -1;
+    }
+  }
+
+  return status;
 }
