@@ -11,6 +11,7 @@ endif (NOT Boost_FOUND)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
+SET(USE_BITSTREAMS "false")
 
 # --- Bitstream libraries ---
 if (EXISTS ${BITSTREAM_DIR} AND IS_DIRECTORY ${BITSTREAM_DIR})
