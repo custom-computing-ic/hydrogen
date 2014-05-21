@@ -47,6 +47,5 @@ int main() {
     return 1;
   }
 
-
-  return msg && (memcmp(exp, out, 4 * sizeof(int)) == 0) ? 0 : 1;
+  return msg && (memcmp(exp, out, n * sizeof(int)) == 0) ? 0 : 1;
 }
