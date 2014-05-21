@@ -34,11 +34,14 @@ int main() {
     c.send(msg);
     c.getResult(out);
     c.stop();
-  } catch (exception& e) {
+    msg->print();
+
+  } catch (const exception& e) {
+    cerr << "Caught exception" << endl;
     cerr << e.what() << endl;
+    return 1;
   }
 
-  msg->print();
-
+ 
   return msg && (memcmp(exp, out, 4 * sizeof(int)) == 0) ? 0 : 1;
 }
