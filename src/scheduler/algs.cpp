@@ -204,8 +204,8 @@ Allocations* ManagedMode(Scheduler &s) {
   AlgVecType* av = s.getAlgVecPtr();
   std::deque<Allocations*> allocations;
 
-  std::cout << "**Scheduling using the managed mode**\n"
-            << "Resource Pool Size [" <<s.resPoolSize() << "]\t" 
+  std::cout << "***Scheduling using the managed mode***\n"
+            << "\t\tResource Pool Size [" <<s.resPoolSize() << "]\t" 
             << "# Waiting Jobs [" << s.readyQSize() << "]\n";
   /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
@@ -213,7 +213,7 @@ Allocations* ManagedMode(Scheduler &s) {
     /* This means that we don't actually allocate the resources for each job */
     allocations.back()->returnResources(s);
   }
-
+  std::cout << "\t\tScoring Allocations\n";
   /* Score each allocation */
   std::deque<Allocations* >::iterator a = allocations.begin();
   for (;a != allocations.end(); a++) {
