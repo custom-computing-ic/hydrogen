@@ -25,3 +25,21 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
 
   free(msg);
 }
+
+
+void movingAverage(size_t n, size_t size, int* data, int* out, int pNum) {
+  cout << "client - Send job :: movingAverage" << endl;
+
+  msg_t *msg = msg_moving_avg(n, size, data);
+
+  const string& name = "localhost";
+  int portNumber = 8110 + pNum;
+  msg->clientId = pNum;
+  Client c(portNumber, name);
+  c.start();
+  c.send(msg);
+  c.getResult(out, n * sizeof(int));
+  c.stop();
+
+  free(msg);
+}
