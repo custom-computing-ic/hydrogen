@@ -58,6 +58,7 @@ public:
                                       T* elem, boost::mutex &lock, const std::string& name)
   {
     //Check that this shouldn't be the lock passed in.
+    std::cout << "Scheduler::enqueue()\n";
     boost::lock_guard<boost::mutex> guard(qMutex);
 
     container->push_back(elem);
@@ -169,8 +170,8 @@ public:
   JobQueuePtr getFinishedQPtr() { return finishedQ; }
   JobResPairQPtr getRunQPtr() { return runQ;}
 
-
-
+  void claimResources(JobResPair& elem);
+  void returnResources(ResourceList& res);
 
 
   inline void addResource(Resource& r){

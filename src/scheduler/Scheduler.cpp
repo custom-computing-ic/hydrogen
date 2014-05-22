@@ -1,9 +1,39 @@
 #include <Scheduler.hpp>
 #include <iostream>
+#include <boost/make_shared.hpp>
 #include <cstring>
 #include <unistd.h>
 #define MODE_MANAGED 4
 using namespace std;
+void Scheduler::claimResources(JobResPair &elem) {
+  std::cout << "Scheduler::claimResources()\n";
+  ResourceList r = std::get<1>(elem);
+  auto it = resPool->begin();
+  ResourcePoolPtr preserveList = ResourcePoolPtr(new ResourcePool());
+
+  for (; it != resPool->end(); it++) {
+    ResourceList::iterator rit = r.begin();
+    for (;rit != r.end(); rit++) {
+      
+      if ( **it != *rit) {
+        preserveList->push_back(std::move(*it));
+      }
+    }
+  }
+  resPool = preserveList;
+}
+
+void Scheduler::returnResources(ResourceList& res) {
+  std::cout << "Scheduler::returnResources()\n";
+  std::cout << "{ ";
+  ResourceList::iterator r = res.begin();
+  for (; r != res.end(); r++) {
+    std::cout << *r << ",";
+    addResource(*r);
+  }
+  std::cout << "}\n";
+  std::cout << "resPool[" << resPool->size() << "]\n";
+}
 
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
 void Scheduler::defaultHandler(msg_t& request,
@@ -181,10 +211,10 @@ void Scheduler::schedLoop() {
       //A job was deposited in the readyQ
 //TODO[mtottenh]: modify schedule to lock all Q's for now.
       if (QStatus.getReadyQStatus() == true) {
-        std::cout << "Event happened: readyQ\n";
-        std::cout << "Scheduling\n";
+        std::cout << "Event on readyQ, readyQ now contains [" << readyQ->size()
+                  << "] Jobs\n";
         Allocations* a = schedule(MODE_MANAGED,true);
-        lock.unlock();
+//        lock.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
           std::cout << "Could not allocate any resources..\n";
@@ -193,8 +223,10 @@ void Scheduler::schedLoop() {
           size_t numJobsScheduled = a->noJobs();
           if ( numJobsScheduled > 0) {
             std::cout << "Allocated Resources\n";
-            QStatus.setRunQStatus(true);
+            lock.unlock();
             a->serviceAllocations(*this);
+            lock.lock();
+            QStatus.setRunQStatus(true);
             std::cout << "ReadyQ now contains [" << readyQ->size() 
                       << "] Jobs, ResourcePool[" << resPool->size() <<"]\n";
             if (readyQ->size() == 0)
@@ -221,12 +253,14 @@ void Scheduler::schedLoop() {
   }
 }
 void Scheduler::runJobs() {
+    std::cout << "Scheduler::runJobs()\n";
     JobResPairQ::iterator it = runQ->begin();
     for (;it != runQ->end(); it++) {
       //for each job in the runQ check if it is started.
       //if not, start it running
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
+
         runJob(*it); // spawn this into a separate thread?
       }
     }
@@ -247,12 +281,13 @@ void Scheduler::runJobs() {
 
 }
 void Scheduler::runJob(JobResPair& j) {
-  ResourceList ResourceList = std::get<1>(j);
+  std::cout << "Scheduler::runJob()\n";
+  ResourceList resourceList = std::get<1>(j);
   JobTuplePtr jobTuplePtr = std::get<0>(j);
   JobPtr jobPtr = std::get<0>(*jobTuplePtr);
 
  //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
-  Resource r = ResourceList.front();
+  Resource r = resourceList.front();
   const string& name = r.getName().c_str();
   int portNumber = r.getPort();
   Client c(portNumber,name);
@@ -284,6 +319,7 @@ void Scheduler::runJob(JobResPair& j) {
 #endif
 
   jobPtr->setRsp(rsp);
+  returnResources(resourceList);
   std::get<1>(*jobTuplePtr).setFinished(true);
 }
 
@@ -300,8 +336,8 @@ void Scheduler::dispatcherLoop() {
         std::cout << "Dispatcher thread woke up\n";
       }
       if (QStatus.getRunQStatus()) {
-        std::cout << "Event on Run Q, itterating overQ and starting any"
-                  << "Jobs \n";
+        std::cout << "Event on Run Q, runQ contains [" << runQ->size()
+                  << "] Jobs \n";
         runJobs();
         QStatus.setRunQStatus(false);
       }
@@ -323,16 +359,14 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   struct JobInfo jInfo;
 
   jInfo.setFinished(false);
-
-  std::cout << "In ConcurrentHandler - Recieved Job: DataSize"
-            << sizeBytes << "\n" << std::endl;
+  jInfo.setStarted(false);
+  std::cout << "Scheduler::concurrentHandler()\n";
 
 #ifdef DEBUG
   request.print();
 #endif
   JobTuple t = std::make_tuple( new Job(request,getNextId()),
                                 std::ref(jInfo),std::ref(jCondVar));
-
   enqueue(readyQ, &t, readyQMtx,"readyQ");
 
 
