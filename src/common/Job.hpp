@@ -3,6 +3,9 @@
 #include <iostream>
 #include <sstream>
 #include <functional>
+
+#include <boost/chrono.hpp>
+
 #include <memory>
 #include <deque>
 #include <vector>
@@ -11,7 +14,6 @@
 float defaultCostFunction(JobResPair& p);
 
 class Job {
-
 	public:
     /* Constructors */
 //    Job(){
@@ -35,24 +37,24 @@ class Job {
 
     inline CostFunctionType getCostFunc() { return cost_func;}
 
-    inline float getDispatchTime()const {return dispatchTime;}
-    inline float getIssueTime() const {return issueTime;}
-    inline float getFinishTime() const {return finishTime;}
+    inline boost::chrono::system_clock::time_point getDispatchTime()const {return dispatchTime;}
+    inline boost::chrono::system_clock::time_point getIssueTime() const {return issueTime;}
+    inline boost::chrono::system_clock::time_point getFinishTime() const {return finishTime;}
     inline float getDefaultJobTime() const {return defaultJobTime;}
     
     /* setters */
-    inline void setIssueTime(float a) { 
+    inline void setIssueTime(boost::chrono::system_clock::time_point a) { 
       std::cout << *this << " issued at: " << a << "\n"; 
       issueTime = a;
     }
-    inline void setDispatchTime(float a) { 
+    inline void setDispatchTime(boost::chrono::system_clock::time_point a) { 
       std::cout << *this << " dispatched at: " << a << "\n"; 
       dispatchTime = a;
     }
-//    inline void setFinishTime() { 
-//      finishTime = dispatchTime + this->cost(); 
-//      std::cout << *this << "Will finish at: " << finishTime << "\n";
-//    }
+    inline void setFinishTime(boost::chrono::system_clock::time_point a) { 
+      std::cout << *this << "Will finished at: " << finishTime << "\n";
+      finishTime = a; 
+    }
     inline void setMax(size_t a) {max = a;}
     inline void setMin(size_t a) {min = a;}
     inline void setUid(int a) {uid = a;}
@@ -88,9 +90,12 @@ class Job {
     int status;
     int priority;
     float defaultJobTime;
-    float issueTime;
-    float dispatchTime;
-    float finishTime;
+    
+    
+    boost::chrono::system_clock::time_point issueTime;
+    boost::chrono::system_clock::time_point dispatchTime;
+    boost::chrono::system_clock::time_point finishTime;
+
 
 
     CostFunctionType cost_func;
