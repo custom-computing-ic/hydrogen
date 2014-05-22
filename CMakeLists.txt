@@ -7,8 +7,15 @@ SET (TCLAPDIR "/homes/mt3410/elasticcloud-api/src/include")
 
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
-  message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.\n")
+  message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.")
 endif (NOT Boost_FOUND)
+
+find_package(OpenMP)
+if (OPENMP_FOUND)
+  message(STATUS "OpenMP supported, compiling parllel bitstreams!")
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
