@@ -21,12 +21,14 @@ class Executor : public MultiThreadedTCPServer {
     Executor(const std::string& port,
              const std::string& name,
              int schedulerPortNumber,
-             const std::string& schedulerHostname) :
-      MultiThreadedTCPServer::super(name,port,5),
+             const std::string& schedulerHostname,
+             const std::string& clientId) :
+      MultiThreadedTCPServer::super(name,"811"+clientId,5),
       schedName(schedulerHostname)
     {
       //MISC 
       schedPort = schedulerPortNumber;
+      cid = clientId;
       
     }
  
@@ -72,6 +74,7 @@ class Executor : public MultiThreadedTCPServer {
     std::list<Task *> Tasks;
 //    std::list<PerfModel<std::map<Implementation,int>,int>> PerfModels;
     int schedPort;
+    std::string cid;
     std::string schedName;
 };
 

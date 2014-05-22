@@ -18,7 +18,11 @@ int main(int argc, char** argv) {
   cmd_args_t args;
   parse_cmd(argc,argv,&args); 
 
-  Executor e(args.execPort->getValue(),"localhost",args.schedPort->getValue(),args.hostName->getValue());
+  Executor e(args.execPort->getValue(),
+             "localhost",
+             args.schedPort->getValue(),
+             args.hostName->getValue(),
+             args.clientId->getValue());
   /*loading implementations from libraries */
 //  Implementation *imp = new Implementation("./libMM.so","mmult");
   /* Checking for error loading the library */

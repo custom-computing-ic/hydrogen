@@ -89,6 +89,11 @@ std::list<Task *> Executor::GetTasks()
 
 msg_t* Executor::handle_request(msg_t* request) {
   std::cout << "Executor::handle_request()\n";
+  if (request->clientId != atoi(cid.c_str())) {
+    std::cout << "Error: Got a request from incorrect clientId[" 
+              << request->clientId << "]\n";
+      return msg_ack();
+  }
   request->print();
   switch (request->msgId) {
     case MSG_DONE:
@@ -96,13 +101,22 @@ msg_t* Executor::handle_request(msg_t* request) {
     case MSG_MOVING_AVG:
     default:
       //For the moment just act as a proxy.
-      char* buff = new char[1024];
+      int sizeBytes = sizeof(msg_t) + sizeof(int) * (request->dataSize);
+      char* buff = (char *)calloc(sizeBytes, 1);
+      msg_t* rsp = (msg_t *) buff;
+      std::cout << "Sending request to client\n";
       Client c(schedPort,schedName);
       c.start();
       c.send(request);
-      c.getResult(buff);
+
+      std::cout << "Getting result\n";
+      do {
+        c.read(buff,sizeBytes);
+        rsp->print();
+      } while ( rsp->msgId != MSG_RESULT);
+      std::cout << "Shutting down\n";
       c.stop();
-      return (msg_t*) buff;
+      return rsp;
   }
 
   //Just return a nullPtr for now so we segfault :D

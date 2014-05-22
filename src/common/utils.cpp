@@ -77,10 +77,18 @@ int parse_cmd(int argc, char **argv, cmd_args_t *a) {
                                       4,
                                       "int",
                                       cmd);
+   a->clientId = new TCLAP::ValueArg<std::string>("c",
+                                          "client_id",
+                                          "Client id that this executor service will serve, by default this service will listen on 811<client_id>",
+                                      true,
+                                      "4",
+                                      "int",
+                                      cmd);
+
    a->execPort = new TCLAP::ValueArg<std::string>("p",
                                           "port",
                                           "Port to listen on for client requests.",
-                                          true,
+                                          false,
                                           "8111",
                                           "string ",
                                           cmd);

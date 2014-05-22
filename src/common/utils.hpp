@@ -11,6 +11,7 @@ typedef struct cmd_args {
   TCLAP::ValueArg<std::string> *execPort;
   TCLAP::ValueArg<int> *schedPort;
   TCLAP::ValueArg<std::string> *hostName;
+  TCLAP::ValueArg<std::string> *clientId;
 } cmd_args_t;
 /* Command line parser */
 int parse_cmd(int argc, char **argv, cmd_args_t *a);
