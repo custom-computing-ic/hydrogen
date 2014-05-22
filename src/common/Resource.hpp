@@ -1,6 +1,7 @@
 #ifndef _RESOURCE_H_
 #define _RESOURCE_H_
 #include <Client.hpp>
+#include <iostream>
 //typedef std::deque<Resource> ResourcePool;
 
 
@@ -29,7 +30,16 @@ class Resource {
     int getId() const { return rid; }
     int getPort() const {return port;}
     const std::string& getName() const  {return name;}
-
+    friend std::ostream& operator<< (std::ostream& os, const Resource& r) {
+      os << r.rid;
+      return os;
+    }
+    friend bool operator==(const Resource& lhs, const Resource& rhs) {
+      return lhs.rid == rhs.rid;
+    }
+    friend bool operator!=(const Resource& lhs, const Resource& rhs) {
+      return !(lhs==rhs);
+    }
   private:
 
     int rid;
