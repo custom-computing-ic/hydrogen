@@ -8,7 +8,9 @@
 Allocations* FCFSMin(Scheduler &s) {
   Allocations* a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
+#ifdef DEBUG
   std::cout << "Using FCFSMin" << "\n";
+#endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
     JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
@@ -23,10 +25,11 @@ Allocations* FCFSMin(Scheduler &s) {
     //TODO: make allocate leave resources in the pool?
     if (resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      std::cout << "Allocated " << resourceList.size() << " resources to job\n";
       a->addJobResourcePair(j,resourceList);
     } else {
+#ifdef DEBUG
       std::cout << "FCFSMin Can't allocate resources to job\n";
+#endif
       break;
       /* if we can't allocate then just stop */
     }
@@ -37,7 +40,10 @@ Allocations* FCFSMin(Scheduler &s) {
 Allocations* FCFSAsManyAsPos(Scheduler &s) {
   Allocations *a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
+
+#ifdef DEBUG
   std::cout << "Using FCFSAMAP" << "\n";
+#endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
     JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
@@ -59,7 +65,9 @@ Allocations* FCFSAsManyAsPos(Scheduler &s) {
 Allocations* FCFSMax(Scheduler &s) {
   Allocations *a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
+#ifdef DEBUG
   std::cout << "Using FCFS Max" << "\n";
+#endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
     JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
@@ -81,7 +89,37 @@ Allocations* FCFSMax(Scheduler &s) {
 //  return nullptr;
 //}
 
+Allocations* Priority(Scheduler &s) {
+  Allocations *alloc = new Allocations();
+  JobQueue job_window;
+  JobQueuePtr rq = s.getReadyQPtr();
 
+  size_t w_size = s.getWindow();
+  for (size_t i = 0; i < w_size && i < rq->size(); i++) {
+    job_window.push_back(s.copyJobFromQ(rq,i));
+  }
+
+
+  std::sort(job_window.begin(), job_window.end(), sortByPriority);
+  auto max_elem = std::max_element(job_window.begin(), job_window.end(), sortByPriority); 
+  JobQueue::iterator nend = job_window.end();
+
+  while(*max_elem != nullptr && 
+       (std::get<0>(**max_elem))->getMax() < s.resPoolSize() && 
+       max_elem != nend) {
+
+   ResourceList resourceList =  s.allocate(*std::get<0>(**max_elem),
+                                    std::get<0>(**max_elem)->getMax(),
+                                    std::get<0>(**max_elem)->getMax()); 
+
+   alloc->addJobResourcePair(*max_elem,resourceList);
+
+   nend = remove(job_window.begin(),nend,*max_elem);
+   max_elem =  std::max_element(job_window.begin(), nend, sortByPriority);   
+    
+  }
+  return alloc;
+}
 
 /***** Priority Scheduler with Backfill *****/
 /*Allocations PBackfill(Scheduler &s) {
@@ -110,7 +148,10 @@ Allocations* FCFSMax(Scheduler &s) {
 
   return (Allocations)nullptr;
 }*/
-
+bool sortByPriority(const JobTuplePtr i, const JobTuplePtr j)
+{
+  return    (std::get<0>(*i))->getPriority() < (std::get<0>(*j))->getPriority(); 
+}
 bool sortByTime(const JobTuplePtr i, const JobTuplePtr j)
 {
   return    (std::get<0>(*i))->minCost() < (std::get<0>(*j))->minCost(); 
@@ -200,6 +241,7 @@ void score(Allocations &a, Scheduler &s) {
     }
   }
   if (!strat.compare("Fairness")) {
+    a.setScore(a.totalPriorities());
 
   } 
   std::cout << "Score: " << a.getScore() << "\n";

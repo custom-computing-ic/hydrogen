@@ -7,9 +7,11 @@ Allocations* FCFSMax(Scheduler &s);
 Allocations* FCFSAsManyAsPos(Scheduler &s);
 Allocations* SJTF(Scheduler &s);
 Allocations* CB(Scheduler &s);
+Allocations* Priority(Scheduler &s);
 Allocations* ManagedMode(Scheduler &s);
 
 /* Scoring algorithms */
+bool sortByPriority(const JobTuplePtr i, const JobTuplePtr j);
 bool sortByTime(const JobTuplePtr i, const JobTuplePtr j);
 bool sortByMin(const JobTuplePtr i, const JobTuplePtr j);
 void score(Allocations &a, Scheduler &s);
