@@ -82,6 +82,9 @@ target_link_libraries (executor Executor )
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
 
+add_executable (MovingAverageOneDfePriority test/MovingAverageOneDfePriority.cpp)
+target_link_libraries (MovingAverageOneDfePriority ${EXTRA_LIBS} TestLib)
+
 add_executable (MultiUserSingleJobType test/MultiUserSingleJobType.cpp)
 target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS} TestLib)
 
