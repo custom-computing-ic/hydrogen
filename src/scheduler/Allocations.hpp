@@ -25,7 +25,10 @@ class Allocations {
       return sum;
     }
 
+    float totalPriorities() {
 
+      return 1.0;
+    }
    size_t noJobs() { return jobs.size();}
    int getScore() { return score;}
    void setScore(int a ) { score  = a; }
