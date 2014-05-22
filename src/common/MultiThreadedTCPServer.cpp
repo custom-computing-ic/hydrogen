@@ -98,6 +98,7 @@ void connection::handle_read(const boost::system::error_code& e,
   cout << bytes_transferred << endl;
 #endif
 
+
   // XXX TODO[paul-g]: Need to do this async
   msg_t* request = NULL;
   do {
@@ -118,9 +119,10 @@ void connection::handle_read(const boost::system::error_code& e,
       int size = expectedBytes - bytes_transferred;
       fullRequest = (msg_t*)malloc(expectedBytes);
       memcpy((char *)fullRequest, (char *)request, bytes_transferred);
-      char buff[size];
+      char* buff = (char *)calloc(size, 1);
       ba::read(socket_, ba::buffer(buff, size));
       memcpy(((char *)fullRequest) + bytes_transferred, buff, size);
+      free(buff);
       resized = true;
     } else {
       fullRequest = request;
@@ -133,9 +135,7 @@ void connection::handle_read(const boost::system::error_code& e,
       free(fullRequest);
 
     // write reply back
-    char buffer[reply->sizeBytes()];
-    memcpy(buffer, reply, reply->sizeBytes());
-    ba::write(socket_, ba::buffer(buffer, reply->sizeBytes()));
+    ba::write(socket_, ba::buffer((char *)reply, reply->sizeBytes()));
 
     socket_.read_some(ba::buffer(buffer_));
   } while (request != NULL && request->msgId != MSG_DONE);

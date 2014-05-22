@@ -18,6 +18,7 @@ Client::Client(Resource &r) :
 }
 
 void Client::send(msg_t *message) {
+  cout << "Client::Sending " << message->sizeBytes() << " bytes" << endl;
   ba::write(*socket_, ba::buffer((char *)message,
                                  message->sizeBytes())
             );
@@ -45,31 +46,21 @@ void Client::stop() {
   msg.paramsSize = 0;
   send(&msg);
 
-  // XXX close socket?
   boost::system::error_code ignored_ec;
   socket_->shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
 }
 
 void Client::getResult(void* out, int sizeBytes) {
-  // TODO[paul-g]: this is not safe, not some blocking IO
-  // for (;;) {
-  //   cout << "Waiting for result..." << endl;
   int size = sizeBytes + sizeof(msg_t);
-  char buf[size];
+  char *buf = (char *)calloc(size, 1);
   ba::read(*socket_, boost::asio::buffer(buf, size));
   msg_t* rsp = (msg_t*)buf;
-
   if (sizeBytes != rsp->dataBytes()) {
     cerr << "Error: reply size different than expected! ";
     cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes();
   }
-
   memcpy(out, rsp->data, rsp->dataBytes());
-  // if (error == boost::asio::error::eof)
-  //   break; // Connection closed cleanly by peer.
-  // else if (error)
-  //   throw boost::system::system_error(error); // Some other error.
-  //  }
+  free(buf);
 }
 
 int Client::read(char* buffer, size_t sizeBytes) {

@@ -24,13 +24,12 @@ int main() {
     c.start();
 
     msg_t* msg = msg_moving_avg(n, 3, a);
-    char buf[msg->sizeBytes()];
+    char* buf = (char* )calloc(msg->sizeBytes(), 1);
     memcpy(buf, msg, msg->sizeBytes());
-
     c.send(msg);
     c.getResult(out, n * sizeof(int));
     c.stop();
-
+    free(buf);
   } catch (const exception& e) {
     cerr << "Caught exception" << endl;
     cerr << e.what() << endl;

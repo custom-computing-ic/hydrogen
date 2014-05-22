@@ -43,7 +43,7 @@ private:
   boost::asio::ip::tcp::socket socket_;
 
   /// Buffer for incoming data.
-  boost::array<char, 16 * 1024 * 1024 > buffer_;
+  boost::array<char, 192 * 1024 * 1024 > buffer_;
 
   MultiThreadedTCPServer& server_;
 };
