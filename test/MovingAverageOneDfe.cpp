@@ -20,10 +20,11 @@ int main() {
 
   bool status = true;
   for (int k = 0; k < t; k++) {
-    int out[n];
+    int* out = (int *)calloc(n, sizeof(int));
     memset(out, 0, sizeof(int) * n);
     movingAverage(n, 3, data, out);
     status &= mavg_check(n, out, exp);
+    free(out);
   }
 
   return status ? 0 : 1;
