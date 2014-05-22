@@ -84,9 +84,9 @@ int Scheduler::numLateJobs() {
   int sum = 0;
   JobQueue::iterator it = finishedQ->begin();
   for(;it != finishedQ->end(); it++) {
-    float disp_t = (std::get<0>(**it))->getDispatchTime();
-    float issue_t = (std::get<0>(**it))->getIssueTime();
-    sum = (disp_t - issue_t)  > 1 ? sum+1 : sum;
+    boost::chrono::system_clock::time_point disp_t = (std::get<0>(**it))->getDispatchTime();
+    boost::chrono::system_clock::time_point issue_t = (std::get<0>(**it))->getIssueTime();
+    sum = (disp_t - issue_t)  > boost::chrono::seconds(1) ? sum+1 : sum;
   }
   return sum;
 }
@@ -101,6 +101,10 @@ void Scheduler::dumpInfo() {
 
 void Scheduler::notifyClientsOfResults() {
   std::cout << "NotifyClients Of Results: Needs implementing\n";
+  auto j = finishedQ->front();
+  finishedQ->pop_front();
+  std::cout << "Mean waiting time: " << meanWaitTime << "\n";
+  std::get<2>(*j).notify_all();
 }
 
 void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
@@ -243,7 +247,9 @@ void Scheduler::schedLoop() {
       //A result was returned on the finishedQ -- This could be delegated to
       //a different thread
       if (QStatus.getFinishedQStatus() == true) {
-        notifyClientsOfResults();
+        while (finishedQ->size() > 0) {
+          notifyClientsOfResults();
+        }
         QStatus.setFinishedQStatus(false);
       }
     }
@@ -260,8 +266,8 @@ void Scheduler::runJobs() {
       //if not, start it running
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
-
-        runJob(*it); // spawn this into a separate thread?
+        
+        boost::thread t(&Scheduler::runJob,this,*it); // spawn this into a separate thread?
       }
     }
     it = runQ->begin();
@@ -314,13 +320,23 @@ void Scheduler::runJob(JobResPair& j) {
 
   std::cout << "client::read() finished\n";
 
-#ifdef DEBUG
+//#ifdef DEBUG
   rsp->print();
-#endif
+//#endif
 
   jobPtr->setRsp(rsp);
   returnResources(resourceList);
+  std::get<0>(*jobTuplePtr)->setFinishTime(boost::chrono::system_clock::now());
+  updateMeanWaitTime(std::get<0>(*jobTuplePtr));
+
   std::get<1>(*jobTuplePtr).setFinished(true);
+  auto it = runQ->begin();
+  while (it != runQ->end() &&  std::get<0>(*std::get<0>(*it))->getId() != jobPtr->getId()) {
+   it++; 
+  }
+  runQ->erase(it);
+
+  enqueue(finishedQ,jobTuplePtr, qMutex,   "finishedQ");
 }
 
 void Scheduler::dispatcherLoop() {
@@ -339,6 +355,7 @@ void Scheduler::dispatcherLoop() {
         std::cout << "Event on Run Q, runQ contains [" << runQ->size()
                   << "] Jobs \n";
         runJobs();
+        lock.unlock();
         QStatus.setRunQStatus(false);
       }
     }

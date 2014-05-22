@@ -7,6 +7,9 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/chrono.hpp>
+
+#include <unordered_map>
 #include <MultiThreadedTCPServer.hpp>
 #include <Resource.hpp>
 #include <Job.hpp>
@@ -52,6 +55,12 @@ public:
     nextJid = 1;
     strat = "Completion Time";
     window = 5;
+    totalJobs = 0;
+    clientPriorities[1] = 1;
+    clientPriorities[2] = 2;
+    clientPriorities[3] = 3;
+    clientPriorities[4] = 4;
+    meanWaitTime = boost::chrono::seconds(0); 
   }
 
   template <typename T> void enqueue(typename ContainerPtr<T*>::deque container, 
@@ -62,12 +71,16 @@ public:
     boost::lock_guard<boost::mutex> guard(qMutex);
 
     container->push_back(elem);
-    if (name == "readyQ")
+    if (name == "readyQ") {
+      std::get<0>(*elem)->setIssueTime( boost::chrono::system_clock::now());
       QStatus.setReadyQStatus(true);
+    }
     if (name == "runQ")
       QStatus.setRunQStatus(true);
-    if (name == "finishedQ")
+    if (name == "finishedQ") {
+      std::get<0>(*elem)->setFinishTime( boost::chrono::system_clock::now());
       QStatus.setFinishedQStatus(true);
+    }
     std::cout << "Added element to " << name << ", calling notify_all().\n";
     QCondVar.notify_all();
   }
@@ -75,7 +88,10 @@ public:
   //Check that this shouldn't be the lock passed in.
     std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
     boost::lock_guard<boost::mutex> guard(qMutex);
+
     runQ->push_back(elem);
+    std::get<0>(*std::get<0>(elem))->setDispatchTime(boost::chrono::system_clock::now());
+
     QStatus.setRunQStatus(true);
     std::cout << "Added element to runQ, calling notify_all().\n";
     QCondVar.notify_all();
@@ -111,10 +127,6 @@ public:
     }
     JobTuple j = *(rq->at(i));
     JobTuplePtr nj = new JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j));
-    //std::make_tuple(std::get<0>(j),nullptr,nullptr);// = new JobTuple();
-//    std::get<0>(*nj) = std::get<0>(j);
-//    std::get<1>(*nj) = std::get<1>(j);
-//    std::get<2>(*nj) = std::get<2>(j);
     return nj;
   }
   inline std::string getStrategy() const { return strat; }
@@ -173,7 +185,14 @@ public:
   void claimResources(JobResPair& elem);
   void returnResources(ResourceList& res);
 
+  void updateMeanWaitTime(Job* j) {
+    totalJobs++;
+    meanWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
+    meanWaitTime /=  totalJobs;  
+    
 
+
+   }
   inline void addResource(Resource& r){
     int portNo = r.getPort(); 
     std::string hostName = r.getName();
@@ -197,7 +216,7 @@ private:
 
 
   /* Getters */
-  inline float  getCurTime() const {return curTime;}
+  //inline float  getCurTime() const {return curTime;}
   inline  AlgType getAlg(size_t i) { return algVec[i];}
   inline  size_t noAlgs() {return algVec.size();}
   inline  JobTuplePtr getFirstReadyProc()
@@ -252,9 +271,11 @@ private:
   AlgVecType algVec;
   /* tuning variables */
   size_t window;
-  float curTime;
+  boost::chrono::duration<double> meanWaitTime;
   std::string strat;
   int nextJid;
+  uint64_t totalJobs;
+  std::unordered_map<int,int> clientPriorities;
 };
 
 #endif /* _SCHEDULER_H_ */
