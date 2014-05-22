@@ -100,7 +100,7 @@ void Scheduler::dumpInfo() {
 }
 
 void Scheduler::notifyClientsOfResults() {
-  std::cout << "NotifyClients Of Results: Needs implementing\n";
+//  std::cout << "NotifyClients Of Results: Needs implementing\n";
   auto j = finishedQ->front();
   finishedQ->pop_front();
   std::cout << "Mean waiting time: " << meanWaitTime << "\n";
@@ -129,6 +129,7 @@ void Scheduler::reclaimResources() {
 //TODO[mtottenh]: Collapse the below back into 1 function.
 // needless code duplication here.
 Allocations* Scheduler::schedule(size_t choice, bool flag) {
+
   flag = false;
   Allocations *a = nullptr;
   if (resPool->size() > 0) {
@@ -176,8 +177,8 @@ msg_t Scheduler::getJobResponse(int jobID) {
 
 /* Server Handling */
 msg_t* Scheduler::handle_request(msg_t* request) {
-  cout << "Scheduler recieved request msgID[" <<  request->msgId << "]" << endl;
 #ifdef DEBUG
+  cout << "Scheduler recieved request msgID[" <<  request->msgId << "]" << endl;
   request->print();
 #endif
   //TODO: Lookup requestID/Implementation ID in a map and return error if not
@@ -196,8 +197,8 @@ msg_t* Scheduler::handle_request(msg_t* request) {
       concurrentHandler(*request, *response, sizeBytes);
 #ifdef DEBUG
       response->print();
-#endif
       cout << "Returning from Scheduler::handle_request()\n";
+#endif
       return response;
   }
 }
@@ -210,15 +211,18 @@ void Scheduler::schedLoop() {
       //If we have no results or nothing to try and schedule wait
       while ( !QStatus.getReadyQStatus() && !QStatus.getFinishedQStatus() ) {
         QCondVar.wait(lock);
-        std::cout << "Scheduler Thread woke up\n";
+      //  std::cout << "Scheduler Thread woke up\n";
       }
+      lock.unlock();
       //A job was deposited in the readyQ
 //TODO[mtottenh]: modify schedule to lock all Q's for now.
       if (QStatus.getReadyQStatus() == true) {
-        std::cout << "Event on readyQ, readyQ now contains [" << readyQ->size()
-                  << "] Jobs\n";
+        std::cout << "Event on readyQ\n";
+//                  << "] Jobs\n";
+//
+        boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
-//        lock.unlock();
+        rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
           std::cout << "Could not allocate any resources..\n";
@@ -226,13 +230,13 @@ void Scheduler::schedLoop() {
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
           if ( numJobsScheduled > 0) {
-            std::cout << "Allocated Resources\n";
-            lock.unlock();
+            std::cout << numJobsScheduled <<" Jobs Scheduled to run.\n";
+
             a->serviceAllocations(*this);
-            lock.lock();
+
             QStatus.setRunQStatus(true);
-            std::cout << "ReadyQ now contains [" << readyQ->size() 
-                      << "] Jobs, ResourcePool[" << resPool->size() <<"]\n";
+//            std::cout << "ReadyQ now contains [" << readyQ->size() 
+//                      << "] Jobs, ResourcePool[" << resPool->size() <<"]\n";
             if (readyQ->size() == 0)
               QStatus.setReadyQStatus(false);
             delete a;
@@ -247,13 +251,14 @@ void Scheduler::schedLoop() {
       //A result was returned on the finishedQ -- This could be delegated to
       //a different thread
       if (QStatus.getFinishedQStatus() == true) {
+        std::cout << "Event on finishedQ\n";
         while (finishedQ->size() > 0) {
           notifyClientsOfResults();
         }
         QStatus.setFinishedQStatus(false);
       }
     }
-  } catch (std::exception e) {
+  } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
     this->stop();
   }
@@ -262,15 +267,14 @@ void Scheduler::runJobs() {
     std::cout << "Scheduler::runJobs()\n";
     JobResPairQ::iterator it = runQ->begin();
     for (;it != runQ->end(); it++) {
-      //for each job in the runQ check if it is started.
-      //if not, start it running
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
-        
         boost::thread t(&Scheduler::runJob,this,*it); // spawn this into a separate thread?
       }
     }
-    it = runQ->begin();
+
+   /* 
+    * it = runQ->begin();
     JobResPairQPtr preserve_list(new JobResPairQ());
     for (;it != runQ->end(); it++) {
       //for each job in the runQ check if it is finished.
@@ -279,12 +283,11 @@ void Scheduler::runJobs() {
         //remove from runQ.
         preserve_list->push_back(*it);
       } else {
-//        std::get<0>(*jobTuplePtr).returnResources();
         std::get<2>(*jobTuplePtr).notify_all();
       }
     }
     runQ = preserve_list;
-
+    */
 }
 void Scheduler::runJob(JobResPair& j) {
   std::cout << "Scheduler::runJob()\n";
@@ -318,25 +321,30 @@ void Scheduler::runJob(JobResPair& j) {
   }  while ( rsp->msgId != MSG_RESULT);
   c.stop();
 
-  std::cout << "client::read() finished\n";
+//  std::cout << "client::read() finished\n";
 
-//#ifdef DEBUG
+#ifdef DEBUG
   rsp->print();
-//#endif
+#endif
 
   jobPtr->setRsp(rsp);
   returnResources(resourceList);
-  std::get<0>(*jobTuplePtr)->setFinishTime(boost::chrono::system_clock::now());
+//  std::get<0>(*jobTuplePtr)->setFinishTime(boost::chrono::system_clock::now());
+  
   updateMeanWaitTime(std::get<0>(*jobTuplePtr));
-
   std::get<1>(*jobTuplePtr).setFinished(true);
+
+  //LOCK runQ
+  boost::unique_lock<boost::mutex> lk(runQMtx);
+//  lk.lock();
   auto it = runQ->begin();
   while (it != runQ->end() &&  std::get<0>(*std::get<0>(*it))->getId() != jobPtr->getId()) {
    it++; 
   }
   runQ->erase(it);
-
-  enqueue(finishedQ,jobTuplePtr, qMutex,   "finishedQ");
+  lk.unlock();
+  //UNLOCK runQ
+  enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
 }
 
 void Scheduler::dispatcherLoop() {
@@ -351,15 +359,16 @@ void Scheduler::dispatcherLoop() {
         QCondVar.wait(lock);
         std::cout << "Dispatcher thread woke up\n";
       }
+      lock.unlock();
       if (QStatus.getRunQStatus()) {
-        std::cout << "Event on Run Q, runQ contains [" << runQ->size()
-                  << "] Jobs \n";
+        std::cout << "Event on Run Q\n";
+//        runQ contains [" << runQ->size()
+//                  << "] Jobs \n";
         runJobs();
-        lock.unlock();
         QStatus.setRunQStatus(false);
       }
     }
-  } catch (std::exception e) {
+  } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
     this->stop();
   }
@@ -401,7 +410,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #ifdef DEBUG
   response.print();
 #endif
-  std::cout << "returning from concurrentHandler\n";
+//  std::cout << "returning from concurrentHandler\n";
   //dequeue(finishedQ,(job,condvar));
   return &response;
 }
@@ -410,9 +419,6 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 
 
 void Scheduler::start() {
-  // Order matters, since the server blocks waiting for requests
-//  for (auto it = resPool->begin(); it != resPool->end(); it++)
-//    (*it)->start();
   //Fire up the Scheduling and dispatch threads.
   QStatus.setReadyQStatus(false);
   QStatus.setRunQStatus(false);
