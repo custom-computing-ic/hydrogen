@@ -5,10 +5,6 @@
 #define MODE_MANAGED 4
 using namespace std;
 
-
-
-
-
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
 void Scheduler::defaultHandler(msg_t& request,
                                msg_t& response,
@@ -35,12 +31,11 @@ void Scheduler::defaultHandler(msg_t& request,
   response.print();*/
 
   cout << "Default Handler: Not implemented\n" << responseSize;
+#ifdef DEBUG
   request.print();
   response.print();
+#endif
 }
-
-
-
 
 JobPtr Scheduler::estimateFinishTime(JobPtr j) {
   //TODO[mtottenh]:Add code to estimate a job finish time
@@ -73,9 +68,11 @@ void Scheduler::updateState() {
 void Scheduler::dumpInfo() {
 
 }
+
 void Scheduler::notifyClientsOfResults() {
   std::cout << "NotifyClients Of Results: Needs implementing\n";
 }
+
 void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
 
 }
@@ -94,8 +91,6 @@ void Scheduler::reclaimResources() {
   }
 */
 }
-
-
 
 //TODO[mtottenh]: Collapse the below back into 1 function.
 // needless code duplication here.
@@ -148,7 +143,9 @@ msg_t Scheduler::getJobResponse(int jobID) {
 /* Server Handling */
 msg_t* Scheduler::handle_request(msg_t* request) {
   cout << "Scheduler recieved request msgID[" <<  request->msgId << "]" << endl;
+#ifdef DEBUG
   request->print();
+#endif
   //TODO: Lookup requestID/Implementation ID in a map and return error if not
   //found
   msg_t* response;
@@ -163,7 +160,9 @@ msg_t* Scheduler::handle_request(msg_t* request) {
       unsigned long sizeBytes = sizeof(msg_t) + sizeof(int) * request->dataSize;
       response = (msg_t*)calloc(sizeBytes, 1);
       concurrentHandler(*request, *response, sizeBytes);
+#ifdef DEBUG
       response->print();
+#endif
       cout << "Returning from Scheduler::handle_request()\n";
       return response;
   }
@@ -250,6 +249,7 @@ void Scheduler::runJob(JobResPair& j) {
   ResourceList ResourceList = std::get<1>(j);
   JobTuplePtr jobTuplePtr = std::get<0>(j);
   JobPtr jobPtr = std::get<0>(*jobTuplePtr);
+
  //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
   Resource r = ResourceList.front();
   const string& name = r.getName().c_str();
@@ -257,7 +257,10 @@ void Scheduler::runJob(JobResPair& j) {
   Client c(portNumber,name);
   c.start();
   msg_t& req = jobPtr->getReq();
+
+#ifdef DEBUG
   req.print();
+#endif
 
   c.send(&req);
 
@@ -267,19 +270,22 @@ void Scheduler::runJob(JobResPair& j) {
 
   do {
     c.read(buff,sizeBytes);
+#ifdef DEBUG
     rsp->print();
+#endif
   }  while ( rsp->msgId != MSG_RESULT);
   c.stop();
-//  c.read(buff,sizeBytes);
+
   std::cout << "client::read() finished\n";
 
-//  msg_t* rsp = (msg_t*)buff;
+#ifdef DEBUG
   rsp->print();
+#endif
+
   jobPtr->setRsp(rsp);
   std::get<1>(*jobTuplePtr).setFinished(true);
-  //
-
 }
+
 void Scheduler::dispatcherLoop() {
   try {
     while (true) {
@@ -319,7 +325,10 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 
   std::cout << "In ConcurrentHandler - Recieved Job: DataSize"
             << sizeBytes << "\n" << std::endl;
+
+#ifdef DEBUG
   request.print();
+#endif
   JobTuple t = std::make_tuple( new Job(request,getNextId()),
                                 std::ref(jInfo),std::ref(jCondVar));
 
@@ -336,7 +345,10 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   response.paramsSize = 0;
 //  size_t dataBytes  = rsp->dataSize*sizeof(int);
   memcpy(&response.data,rsp->data ,rsp->dataBytes());
+
+#ifdef DEBUG
   response.print();
+#endif
   std::cout << "returning from concurrentHandler\n";
   //dequeue(finishedQ,(job,condvar));
   return &response;

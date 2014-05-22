@@ -28,7 +28,9 @@ void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
 }
 
 msg_t* DispatcherServer::handle_request(msg_t* request) {
-  std::cout << "Dispatcher:: do work" << std::endl;
+#ifdef DEBUG
+  std::cout << "Dispatcher::handle_request" << std::endl;
+#endif
 
   if (request->msgId == MSG_MOVING_AVG) {
     // unpack data
@@ -38,7 +40,6 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     int* data_in = (int*)malloc(nBytes);
     memcpy(data_in, request->data, nBytes);
 
-    std::cout << useDfe << std::endl;
     // do computation
     // TODO check resource type
     if (/*request->resourceType == "DFE" &&*/ useDfe) {
@@ -47,9 +48,11 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     } else
       movingAverage_cpu(n, (size_t)request->firstParam(), data_in, out);
 
+#ifdef DEBUG
     cout << "Data out " << endl;
     for (int i = 0; i < n; i++)
       cout << out[i] << endl;
+#endif
 
     // write the response
     size_t sizeBytes = sizeof(msg_t) + request->dataSize * sizeof(int);
