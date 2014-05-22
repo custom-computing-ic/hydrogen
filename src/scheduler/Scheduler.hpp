@@ -16,11 +16,10 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 1
+#define NUM_THREADS 5
 #include <algs.hpp>
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
-//TODO Include Allocations and Job classes...
 
 //TODO[mtottenh]: clean this up a bit
 template <typename T>
@@ -67,8 +66,8 @@ public:
                                       T* elem, boost::mutex &lock, const std::string& name)
   {
     //Check that this shouldn't be the lock passed in.
-    std::cout << "Scheduler::enqueue()\n";
-    boost::lock_guard<boost::mutex> guard(qMutex);
+  //  std::cout << "Scheduler::enqueue()\n";
+    boost::lock_guard<boost::mutex> guard(lock);
 
     container->push_back(elem);
     if (name == "readyQ") {
@@ -85,20 +84,19 @@ public:
     QCondVar.notify_all();
   }
   void addToRunQ(JobResPair &elem) {
-  //Check that this shouldn't be the lock passed in.
+    boost::lock_guard<boost::mutex> guard(runQMtx);
     std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
-    boost::lock_guard<boost::mutex> guard(qMutex);
-
     runQ->push_back(elem);
     std::get<0>(*std::get<0>(elem))->setDispatchTime(boost::chrono::system_clock::now());
-
     QStatus.setRunQStatus(true);
     std::cout << "Added element to runQ, calling notify_all().\n";
     QCondVar.notify_all();
   }
   /* Server functions */
-  //TODO[mtottenh]:add locks to this
-  int getNextId() { return nextJid++;}
+  int getNextId() { 
+    boost::lock_guard<boost::mutex> lk(jidMtx);
+    return nextJid++;
+  }
 
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
@@ -144,7 +142,8 @@ public:
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
   void runJobs();
   void runJob(JobResPair& j);
-  Job removeJobFromQ(JobQueuePtr jq, Job& j) {
+  
+  /*Job removeJobFromQ(JobQueuePtr jq, Job& j) {
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
     JobQueue::iterator a = jq->begin();
     for(;a != jq->end(); a++) {
@@ -154,9 +153,11 @@ public:
     }
     jq = std::move(preserve_list);
     return j;
-  }
+  }*/
+
   JobResPair removeJobFromReadyQ(JobResPair& j) {
-    std::cout << "Removing job " << *std::get<0>(*std::get<0>(j) ) << "from readyQ\n";
+   // std::cout << "Removing job " << *std::get<0>(*std::get<0>(j) ) << "from readyQ\n";
+    boost::lock_guard<boost::mutex> lk(readyQMtx);
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
     JobQueue::iterator a = readyQ->begin();
     for(;a != readyQ->end(); a++) {
@@ -167,7 +168,8 @@ public:
     readyQ = preserve_list;
     return j;
   }
-  template <typename T> T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
+
+  /*template <typename T> T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
     typename ContainerPtr<T>::deque preserve_list;
     typename ContainerPtr<T>::deque::iterator a = jq->begin();
     for(;a != jq->end(); a++) {
@@ -177,7 +179,11 @@ public:
     }
     jq = preserve_list;
     return j;
-  }
+  }*/
+
+  /* TODO[mtottenh]: Deprecate these. access to Ptrs of these Q's is bad 
+   * now that everything is multithreaded
+   */
   JobQueuePtr getReadyQPtr() { return readyQ;}
   JobQueuePtr getFinishedQPtr() { return finishedQ; }
   JobResPairQPtr getRunQPtr() { return runQ;}
@@ -186,14 +192,14 @@ public:
   void returnResources(ResourceList& res);
 
   void updateMeanWaitTime(Job* j) {
+    //LOCK
+    boost::lock_guard<boost::mutex> lk(waitTimeMtx);
     totalJobs++;
     meanWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
     meanWaitTime /=  totalJobs;  
-    
-
-
-   }
+  }
   inline void addResource(Resource& r){
+    boost::lock_guard<boost::mutex> lk(resPoolMtx);
     int portNo = r.getPort(); 
     std::string hostName = r.getName();
     int Rid = r.getId();
@@ -211,7 +217,8 @@ private:
 
   inline void addResource(int PortNo, const std::string& Hostname, int Rid)
   {
-        resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
+    boost::lock_guard<boost::mutex> lk(resPoolMtx);
+    resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
   }
 
 
@@ -221,6 +228,7 @@ private:
   inline  size_t noAlgs() {return algVec.size();}
   inline  JobTuplePtr getFirstReadyProc()
   {
+    boost::lock_guard<boost::mutex> lk(readyQMtx);
     JobTuplePtr j = std::move( readyQ->front() ) ;
     readyQ->pop_front();
     return j;
@@ -228,12 +236,9 @@ private:
 
   /* Helper Functions */
   int addToReadyQ(msg_t& request);
-
   int getJobStatus(int jobID);
   msg_t getJobResponse(int);
-
   void returnToReadyQ(JobPtr j,int pos);
-  
   JobPtr estimateFinishTime(JobPtr j);
   int numLateJobs();
   void updateState();
@@ -258,6 +263,10 @@ private:
   boost::mutex readyQMtx;
   boost::mutex runQMtx;
   boost::mutex finishedQMtx;
+  boost::mutex jidMtx;
+  boost::mutex waitTimeMtx;
+  boost::mutex resPoolMtx;
+
   /* Worker threads */
   boost::thread *schedulerThread;
   boost::thread *dispatcherThread;
