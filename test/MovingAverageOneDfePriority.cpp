@@ -28,10 +28,9 @@ int main(int argc, char** argv) {
 
   /** Ask for a simple moving average a few times */
   int t = 10;
-
+  int *out = (int*)malloc(n * sizeof(int));
   bool status = true;
   for (int k = 0; k < t; k++) {
-    int out[n];
     memset(out, 0, sizeof(int) * n);
     auto start = boost::chrono::system_clock::now();
     movingAverage(n, 3, data, out,cid);
