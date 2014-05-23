@@ -15,7 +15,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
   msg_t *msg = msg_moving_avg(n, size, data);
 
   const string& name = "localhost";
-  int portNumber = 8114;
+  int portNumber = 8111;
 
   Client c(portNumber, name);
   c.start();
