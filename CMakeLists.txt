@@ -3,7 +3,7 @@ project (elastic-dfe)
 SET (BOOST_MIN_VERSION "1.49.0")
 
 # XXX This is a really bad hack...
-SET (TCLAPDIR "/homes/mt3410/elasticcloud-api/src/include")
+#SET (TCLAPDIR "/homes/mt3410/elasticcloud-api/src/include")
 
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
@@ -44,7 +44,7 @@ else()
   message (STATUS "No bitstreams found, compiling with DFE implementations disabled.")
 endif ()
 
-include_directories("${TCLAPDIR}")
+#include_directories("${TCLAPDIR}")
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)

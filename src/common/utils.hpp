@@ -1,20 +1,18 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
 #include <iostream>
-#include <tclap/CmdLine.h>
+#include <sstream>
+//#include <tclap/CmdLine.h>
 
 /* Command line data structure */
-typedef struct cmd_args {
-  TCLAP::ValueArg<double> *alpha;
-  TCLAP::ValueArg<uint64_t> *it;
-  TCLAP::ValueArg<int> *feat;
-  TCLAP::ValueArg<std::string> *execPort;
-  TCLAP::ValueArg<int> *schedPort;
-  TCLAP::ValueArg<std::string> *hostName;
-  TCLAP::ValueArg<std::string> *clientId;
-} cmd_args_t;
+
+
 /* Command line parser */
-int parse_cmd(int argc, char **argv, cmd_args_t *a);
+//int parse_cmd(int argc, char **argv, cmd_args_t *a);
+
+
+
+
 /* String printing functions */
 std::string prd(const double x, const int decDigits, const int width);
 std::string prd(const double x, const int width);

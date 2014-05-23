@@ -10,20 +10,38 @@
 #include <boost/timer/timer.hpp>
 #include <random>
 #include <sstream>
+#include <boost/program_options.hpp>
 //#include "build/gen/control.pb.h"
 #define MSIZE 2
 
+namespace po = boost::program_options;
+
+
+
+
 
 int main(int argc, char** argv) {
-  cmd_args_t args;
-  parse_cmd(argc,argv,&args); 
+  po::options_description desc("Program options");
+  desc.add_options()
+     ("help,h", "produce help message")
+     ("client_id,c", po::value<std::string>(), "set client id")
+     ("scheduler_port,p", po::value<int>(), "scheduler port")
+     ("hostname,n", po::value<std::string>(), "scheduler hostname")
+  ;
 
-  Executor e(args.execPort->getValue(),
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc,argv,desc), vm);
+  po::notify(vm);
+  if (vm.count("help") || vm.size() < 3) {
+    std::cout << desc << "\n";
+    return 1;
+  }
+  Executor e( "NULL",
              "localhost",
-             args.schedPort->getValue(),
-             args.hostName->getValue(),
-             args.clientId->getValue());
-  /*loading implementations from libraries */
+             vm["scheduler_port"].as<int>(),
+             vm["hostname"].as<std::string>(),
+             vm["client_id"].as<std::string>());
+/*loading implementations from libraries */
 //  Implementation *imp = new Implementation("./libMM.so","mmult");
   /* Checking for error loading the library */
 //  if (imp->load() == NULL) {
