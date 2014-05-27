@@ -203,7 +203,8 @@ public:
     int portNo = r.getPort(); 
     std::string hostName = r.getName();
     int Rid = r.getId();
-    resPool->push_back(std::unique_ptr<Resource>(new Resource(portNo,hostName,Rid)));
+    std::string type = r.getType();
+    resPool->push_back(std::unique_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
   }
 private:
   JobPtr deallocate(JobPtr j);
@@ -218,7 +219,7 @@ private:
   inline void addResource(int PortNo, const std::string& Hostname, int Rid)
   {
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
-    resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
+//    resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
   }
 
 
