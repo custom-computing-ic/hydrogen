@@ -1,6 +1,25 @@
 #include <Executor.hpp>
 #include <message.hpp>
- 
+
+
+Executor::~Executor() {
+    size_t s = Tasks.size();
+    for (size_t i = 0; i < s; i++) {
+       Task* tsk = Tasks.front();
+       Tasks.pop_front();
+       delete tsk;
+    }
+    //TODO: delete implementaitons for a task
+    s = AvailableRes.size();
+    for (size_t i = 0; i < s; i++) {
+       Resource* res = AvailableRes.front();
+       AvailableRes.pop_front();
+       delete res;
+    }
+   //TODO delete performance models for a task.
+}
+
+
     /* 
      * Manipulate the Resources list
      */
@@ -36,11 +55,18 @@ int Executor::DelTask(Task *tsk) {
   return 0;
 }
 
+bool task_ptr_eq(Task* t, Task* t2) {
+ return *t == *t2;
+}
+
 Task* Executor::FindTask(std::string name) {
+  using namespace std::placeholders;
   Task *t1 = new Task(name);
   typedef std::list<Task *>::iterator it;
-  it found = std::find(Tasks.begin(), 
- 		                   Tasks.end(), t1);
+  it found = std::find_if(Tasks.begin(), 
+ 		                      Tasks.end(), 
+                          std::bind(task_ptr_eq,t1,_1)
+                       );
 	//	          [&] (Task *t) { return *t == *t1; } );
   delete(t1);
   return Tasks.end() != found ? *found : NULL;  
