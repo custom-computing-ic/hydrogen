@@ -13,8 +13,10 @@ std::list<Implementation *> Task::GetImplementations()
 
 
 Task::~Task() {
-  std::list<Implementation *>::iterator i = this->Implementations.begin();
-	for(;i != this->Implementations.end(); i++) {
-		delete(*i);
-	}
+  size_t s = Implementations.size();
+  for ( size_t i = 0; i < s; i++) {
+    auto t = Implementations.front();
+    Implementations.pop_front();
+      delete t;
+  }
 }
