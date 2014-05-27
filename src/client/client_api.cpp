@@ -43,3 +43,20 @@ void movingAverage(size_t n, size_t size, int* data, int* out, int pNum) {
 
   free(msg);
 }
+
+
+void addResource(std::string type, std::string host, std::string port, int clientId) {
+  cout << "client - Send Control :: addResource" << endl;
+  msg_t* msg = msg_control_add_res(type,host,port);
+  const string& name = "localhost";
+  int portNumber = 8110 + clientId;
+  msg->clientId = clientId;
+
+  Client c(portNumber,name);
+  c.start();
+  c.send(msg);
+  char buf[10];
+  c.getResult(buf, 1);
+  c.stop();
+//  free(msg);
+}
