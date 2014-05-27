@@ -17,7 +17,7 @@ if (OPENMP_FOUND)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
 
 SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
 SET(USE_BITSTREAMS "false")
@@ -44,10 +44,13 @@ else()
   message (STATUS "No bitstreams found, compiling with DFE implementations disabled.")
 endif ()
 
-#include_directories("${TCLAPDIR}")
+include_directories ("${PROJECT_SOURCE_DIR}/src/common/protobuf")
+add_subdirectory (src/common/protobuf)
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)
+
+
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/dispatcher")
 add_subdirectory (src/dispatcher)
@@ -81,6 +84,9 @@ target_link_libraries (executor Executor )
 # Tests - Can use these as client executables
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
+
+add_executable (AddResource test/AddResource.cpp)
+target_link_libraries(AddResource ${EXTRA_LIBS} TestLib)
 
 add_executable (MovingAverageOneDfePriority test/MovingAverageOneDfePriority.cpp)
 target_link_libraries (MovingAverageOneDfePriority ${EXTRA_LIBS} TestLib)
