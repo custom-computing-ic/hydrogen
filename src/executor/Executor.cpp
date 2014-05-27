@@ -29,6 +29,8 @@ int Executor::SetResources(std::list<Resource*> res) {
 
 
 int Executor::AddResource(Resource *res) {
+  std::cout << "Executor::AddResource() " << std::endl;
+  AvailableRes.push_back(res);
   return 0;
 }
 
@@ -112,9 +114,22 @@ std::list<Task *> Executor::GetTasks()
 {
         return this->Tasks;
 }
+void Executor::parse_protobuf(msg_t* request) {
+  std::cout << "Executor::parse_protobuf()" << std::endl;
+  ControlMSG c;
+  c.ParseFromArray(request->data, request->dataSize*sizeof(int));
+  if (c.command() == "ADD_RESOURCE") {
+    AddResource(new Resource(c.arg2(),c.arg1(),c.arg3()));
+    std::cout << "RESOURCE ADDED:\n" << *AvailableRes.back() << std::endl;
+  }
 
+
+}
 msg_t* Executor::handle_request(msg_t* request) {
   std::cout << "Executor::handle_request()\n";
+msg_t* done = msg_empty();
+         done->msgId = MSG_DONE;
+
   if (request->clientId != atoi(cid.c_str())) {
     std::cout << "Error: Got a request from incorrect clientId[" 
               << request->clientId << "]\n";
@@ -122,7 +137,13 @@ msg_t* Executor::handle_request(msg_t* request) {
   }
   request->print();
   switch (request->msgId) {
+    case MSG_CONTROL:
+         parse_protobuf(request);
+         //because I'm a bad person :)
+         return done;
+    break;
     case MSG_DONE:
+      return done;
     case MSG_ACK:
     case MSG_MOVING_AVG:
     default:

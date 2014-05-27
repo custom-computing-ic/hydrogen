@@ -17,14 +17,17 @@ typedef struct msg {
 
   size_t dataSize;
   size_t paramsSize;
-  char data[];
 
   size_t sizeBytes();
   size_t dataBytes();
   int firstParam();
   void print();
   void print_control();
-} msg_t;
+
+
+  char data[];
+
+  } msg_t;
 #pragma pack(0)
 
 /** Utility functions for constructing various types of messages */

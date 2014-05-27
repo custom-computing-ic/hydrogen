@@ -17,7 +17,7 @@ if (OPENMP_FOUND)
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  --std=c++11 -g")
 
 SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
 SET(USE_BITSTREAMS "false")
@@ -67,7 +67,7 @@ add_subdirectory (src/executor)
 include_directories ("${PROJECT_SOURCE_DIR}/test")
 add_subdirectory (test)
 
-set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client)
+set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client Common)
 
 # Dispatcher Executable
 add_executable (dispatcher src/dispatcher/main.cxx)

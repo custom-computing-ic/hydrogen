@@ -3,11 +3,12 @@
 
 void msg::print_control() {
    using namespace std;
+   cout << "ControlMSG\t";
    cout << "  Id: " << msgId;
 
-   for (size_t i = 0; i < dataSize; i++) {
-    char* c_data = reinterpret_cast<char *>(data);
-    cout << c_data[i] << " ";
+   for (size_t i = 0; i < dataSize*sizeof(int); i++) {
+//    char* c_data = reinterpret_cast<char *>(data);
+    cout << data[i];
    }
    cout << endl;
 
@@ -75,21 +76,21 @@ msg_t* msg_moving_avg(int n, size_t width, int* dataIn) {
 msg_t* msg_control_add_res(std::string type,
                            std::string host,
                            std::string port) {
-
+//  GOOGLE_PROTOBUF_VERIFY_VERSION;
   ControlMSG c;
   c.set_command("ADD_RESOURCE");
   c.set_arg1(host);
   c.set_arg2(port);
   c.set_arg3(type);
   int sizeBytes = c.ByteSize();      
-  std::cout << "msg_control_add_res(): Mallocing " << sizeBytes << " bytes\n";
-  void *buffer = malloc(sizeBytes);
-  c.SerializeToArray(buffer,sizeBytes);
-  std::cout << "Serialized data\n";
   msg_t* msg = (msg_t *)calloc(sizeBytes + sizeof(msg_t),0);
+  c.SerializeToArray(msg->data,sizeBytes);
+
   msg->msgId = MSG_CONTROL;
-  msg->dataSize = sizeBytes;
-  memcpy(msg->data,buffer,sizeBytes);
+  msg->dataSize = sizeBytes / sizeof(int); //MASSIVE HACK
+  msg->paramsSize = 0;
+//  google::protobuf::ShutdownProtobufLibrary();
+
   return msg;
 }
 

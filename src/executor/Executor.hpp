@@ -9,7 +9,7 @@
 #include <PerfModel.hpp>
 #include <Implementation.hpp>
 #include <MultiThreadedTCPServer.hpp>
-
+#include <packet.pb.h>
 /*#include "../resource/resource.h"
 #include "../task/task.h"
 #include "../perf_model/model.h"
@@ -56,9 +56,10 @@ class Executor : public MultiThreadedTCPServer {
 
     int CreatePerfomanceModels();
     void CreatePerfModelForTask(Task *tsk);
-
+    
     Implementation SelectImplementation(Task *tsk, void* input);
  private:
+    void parse_protobuf(msg_t* m);
     /* 
      * Given:
      *    - Set of Tasks

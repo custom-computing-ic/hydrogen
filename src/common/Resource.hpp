@@ -2,7 +2,7 @@
 #define _RESOURCE_H_
 #include <Client.hpp>
 #include <iostream>
-
+#include <sstream>
 
 class Resource {
   public:
@@ -28,7 +28,16 @@ class Resource {
       utilization = 0.0;
       idle_time = 0.0;
     }
-
+   Resource ( const std::string& port_, const std::string& name_,
+              const std::string& type_)
+    : name(name_),
+      type(type_)
+    {
+      rid = -1;
+      std::stringstream ss;
+      ss << port_;
+      ss >> port;
+    }
     virtual ~Resource() {
     }
 
@@ -37,7 +46,8 @@ class Resource {
     const std::string& getName() const  {return name;}
     const std::string& getType() const { return type;}
     friend std::ostream& operator<< (std::ostream& os, const Resource& r) {
-      os << r.rid;
+      os << "ID: " << r.rid << "\tTYPE: " << r.type;
+      os << "\nHOSTNAME: " << r.name << "\tPORT: " << r.port;
       return os;
     }
     friend bool operator==(const Resource& lhs, const Resource& rhs) {
