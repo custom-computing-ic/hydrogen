@@ -2,6 +2,7 @@
 #include <iostream>
 #include <boost/make_shared.hpp>
 #include <cstring>
+#include <boost/chrono.hpp>
 #include <unistd.h>
 #define MODE_MANAGED 4
 using namespace std;
@@ -217,15 +218,16 @@ void Scheduler::schedLoop() {
       //A job was deposited in the readyQ
 //TODO[mtottenh]: modify schedule to lock all Q's for now.
       if (QStatus.getReadyQStatus() == true) {
+        //start boost  timer
+        auto start = boost::chrono::system_clock::now();
+
         std::cout << "Event on readyQ\n";
-//                  << "] Jobs\n";
-//
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
-          std::cout << "Could not allocate any resources..\n";
+          std::cout << "Allocation returned nullptr, something horible happened\n";
         } else {
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
@@ -235,12 +237,14 @@ void Scheduler::schedLoop() {
             a->serviceAllocations(*this);
 
             QStatus.setRunQStatus(true);
-//            std::cout << "ReadyQ now contains [" << readyQ->size() 
-//                      << "] Jobs, ResourcePool[" << resPool->size() <<"]\n";
+
             if (readyQ->size() == 0)
               QStatus.setReadyQStatus(false);
             delete a;
-
+            auto end = boost::chrono::system_clock::now();
+            auto duration = boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+            std::cout << "Scheduling took: " << duration.count() << "us" << std::endl;
+            //end timer
             QCondVar.notify_all();
           } else {
             std::cout << "Could not allocate any resources...\n";

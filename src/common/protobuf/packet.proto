@@ -3,5 +3,6 @@ message ControlMSG {
     optional string arg1 = 2;
     optional string arg2 = 3;
     optional string arg3 = 4;
+    optional string arg4 = 5;
 }
 

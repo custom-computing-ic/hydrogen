@@ -219,7 +219,8 @@ private:
   inline void addResource(int PortNo, const std::string& Hostname, int Rid)
   {
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
-//    resPool->push_back(std::unique_ptr<Resource>(new Resource(PortNo,Hostname,Rid)));
+    const std::string& type = std::string("DFE");
+    resPool->push_back(std::unique_ptr<Resource>(new Resource(Rid,PortNo,Hostname,type)));
   }
 
 
