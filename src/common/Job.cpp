@@ -47,6 +47,7 @@ Job::Job(msg_t& request,int id) :  req(request) {
 //  memcpy(req.data,request.data,request.dataBytes());
 //  req = request;
   jid = id;
+  rsp = nullptr;
 }
 // TODO[mtottenh]: Change this... I dont think it needs to return a result anymore
 msg_t Job::run() {

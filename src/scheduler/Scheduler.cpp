@@ -333,6 +333,13 @@ void Scheduler::runJob(JobResPair& j) {
 
   int sizeBytes = sizeof(msg_t) + sizeof(int) * req.dataSize;
   char* buff = (char *)calloc(sizeBytes, 1);
+
+  if (buff == NULL) {
+    std::cout << "ERROR: Unable to allocate result buffer\n";
+    c.stop();
+    return;
+  }
+
   msg_t* rsp = (msg_t*)buff;
 
   do {
@@ -348,13 +355,13 @@ void Scheduler::runJob(JobResPair& j) {
 #ifdef DEBUG
   rsp->print();
 #endif
-
+  
   jobPtr->setRsp(rsp);
   returnResources(resourceList);
 //  std::get<0>(*jobTuplePtr)->setFinishTime(boost::chrono::system_clock::now());
   
   updateMeanWaitTime(std::get<0>(*jobTuplePtr));
-  std::get<1>(*jobTuplePtr).setFinished(true);
+
 
   //LOCK runQ
   boost::unique_lock<boost::mutex> lk(runQMtx);
@@ -364,6 +371,7 @@ void Scheduler::runJob(JobResPair& j) {
    it++; 
   }
   runQ->erase(it);
+  std::get<1>(*jobTuplePtr).setFinished(true);
   lk.unlock();
   //UNLOCK runQ
   enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
