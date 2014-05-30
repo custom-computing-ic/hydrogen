@@ -164,14 +164,18 @@ bool sortByMin(const JobTuplePtr i, const JobTuplePtr j) {
 Allocations* SJTF(Scheduler &s) {
   Allocations *aloc = new Allocations();
   size_t w_size = s.getWindow();
+#ifdef DEBUG
   std::cout << "Using SJTF\n";
+#endif
   JobQueuePtr rq = s.getReadyQPtr();
   if (rq == nullptr) {
     std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
     return aloc;
   }
   if (rq->size() == 0) {
+#ifdef DEBUG
     std::cout << "No items to process\n";
+#endif
     return aloc;
   }
   // Get the minimum Job size (min number of req resources) 
@@ -229,9 +233,9 @@ Allocations* ManagedMode(Scheduler &s) {
 
 void score(Allocations &a, Scheduler &s) {
   std::string strat = s.getStrategy();
-  std::cout << "starting score: " << a.getScore() << "\n"; 
+//  std::cout << "starting score: " << a.getScore() << "\n"; 
   if (!strat.compare("Completion Time")) {
-    std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
+//    std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
     if (a.noJobs() == 0 || a.makespan() < 0) {
       a.setScore(0);
     } else {
@@ -244,22 +248,22 @@ void score(Allocations &a, Scheduler &s) {
     a.setScore(a.totalPriorities());
 
   } 
-  std::cout << "Score: " << a.getScore() << "\n";
+//  std::cout << "Score: " << a.getScore() << "\n";
 }
 
 Allocations* selectMaxScore(std::deque<Allocations *> &a) {
   float maxScore = a[0]->getScore();
   unsigned int index = 0;
   for (unsigned int i = 0; i < a.size() ; i++ ) {
-    std::cout << "a[" << i << "].score: " << a[i]->getScore() 
-              << " maxScore: " << maxScore << "\n";
+ //   std::cout << "a[" << i << "].score: " << a[i]->getScore() 
+//              << " maxScore: " << maxScore << "\n";
     if (a[i]->getScore() >= maxScore) {
       maxScore = a[i]->getScore();
       index = i;
     }
   }
 
-  std::cout << "Chose: ";
+  std::cout << "\t\tManaged mode chose: ";
   switch(index) {
     case 0:
       std::cout << "FCFS MAX\n";
