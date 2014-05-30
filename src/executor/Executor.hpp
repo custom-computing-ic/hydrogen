@@ -9,7 +9,7 @@
 #include <PerfModel.hpp>
 #include <Implementation.hpp>
 #include <MultiThreadedTCPServer.hpp>
-#include <packet.pb.h>
+//#include <packet.pb.h> needeed for protobuf control msgs.
 /*#include "../resource/resource.h"
 #include "../task/task.h"
 #include "../perf_model/model.h"

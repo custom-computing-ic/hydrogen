@@ -45,7 +45,8 @@ void movingAverage(size_t n, size_t size, int* data, int* out, int pNum) {
 }
 
 
-void addResource(std::string type, std::string host, std::string port, int clientId) {
+/*Control messages.... needs protobuf commenting out for now
+ * void addResource(std::string type, std::string host, std::string port, int clientId) {
   cout << "Client :: addResource" << endl;
   const string& name = "localhost";
   int portNumber = 8110 + clientId;
@@ -61,4 +62,4 @@ void addResource(std::string type, std::string host, std::string port, int clien
   c.stop();
 //  free(msg);
 //  free(buff);
-}
+}*/

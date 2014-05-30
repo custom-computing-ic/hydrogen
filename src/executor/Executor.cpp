@@ -114,21 +114,21 @@ std::list<Task *> Executor::GetTasks()
 {
         return this->Tasks;
 }
+
+//todo[mtottenh]: needed for control messages install protobuf
 void Executor::parse_protobuf(msg_t* request) {
   std::cout << "Executor::parse_protobuf()" << std::endl;
-  ControlMSG c;
+/*  ControlMSG c;
   c.ParseFromArray(request->data, request->dataSize*sizeof(int));
   if (c.command() == "ADD_RESOURCE") {
     AddResource(new Resource(c.arg2(),c.arg1(),c.arg3()));
     std::cout << "RESOURCE ADDED:\n" << *AvailableRes.back() << std::endl;
-  }
+  }*/
 
 
 }
 msg_t* Executor::handle_request(msg_t* request) {
   std::cout << "Executor::handle_request()\n";
-msg_t* done = msg_empty();
-         done->msgId = MSG_DONE;
 
   if (request->clientId != atoi(cid.c_str())) {
     std::cout << "Error: Got a request from incorrect clientId[" 
@@ -140,10 +140,11 @@ msg_t* done = msg_empty();
     case MSG_CONTROL:
          parse_protobuf(request);
          //because I'm a bad person :)
-         return done;
+         // TODO: fix this reutrn statement
+         return (msg_t*)NULL;
     break;
     case MSG_DONE:
-      return done;
+      return msg_empty();
     case MSG_ACK:
     case MSG_MOVING_AVG:
     default:
