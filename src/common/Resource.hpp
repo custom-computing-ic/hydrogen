@@ -46,8 +46,8 @@ class Resource {
     const std::string& getName() const  {return name;}
     const std::string& getType() const { return type;}
     friend std::ostream& operator<< (std::ostream& os, const Resource& r) {
-      os << "ID: " << r.rid << "\tTYPE: " << r.type;
-      os << "\nHOSTNAME: " << r.name << "\tPORT: " << r.port;
+      os << "{ID: " << r.rid << ",TYPE: " << r.type;
+      os << ",HOSTNAME: " << r.name << ",PORT: " << r.port << "}";
       return os;
     }
     friend bool operator==(const Resource& lhs, const Resource& rhs) {
