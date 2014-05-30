@@ -36,6 +36,7 @@ public:
     schedulerThread->join();
     dispatcherThread->interrupt();
     dispatcherThread->join();
+    jobThreads.join_all();
     delete schedulerThread;
     delete dispatcherThread;
   }
@@ -51,6 +52,10 @@ public:
     finishedQ = JobQueuePtr(new JobQueue());
     //TODO[mtottenh]: Change Resource so that it doesn't inherit from client
     addResource(dispatcherPortNumber,dispatcherHostname,1);
+    addResource(dispatcherPortNumber,dispatcherHostname,2);
+    addResource(dispatcherPortNumber,dispatcherHostname,3);
+    addResource(dispatcherPortNumber,dispatcherHostname,4);
+
     nextJid = 1;
     strat = "Completion Time";
     window = 5;
@@ -80,16 +85,22 @@ public:
       std::get<0>(*elem)->setFinishTime( boost::chrono::system_clock::now());
       QStatus.setFinishedQStatus(true);
     }
+#ifdef DEBUG
     std::cout << "Added element to " << name << ", calling notify_all().\n";
+#endif
     QCondVar.notify_all();
   }
   void addToRunQ(JobResPair &elem) {
     boost::lock_guard<boost::mutex> guard(runQMtx);
+#ifdef DEBUG
     std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
+#endif
     runQ->push_back(elem);
     std::get<0>(*std::get<0>(elem))->setDispatchTime(boost::chrono::system_clock::now());
     QStatus.setRunQStatus(true);
+#ifdef DEBUG
     std::cout << "Added element to runQ, calling notify_all().\n";
+#endif
     QCondVar.notify_all();
   }
   /* Server functions */
@@ -114,6 +125,7 @@ public:
     schedulerThread->join();
     dispatcherThread->interrupt();
     dispatcherThread->join();
+    jobThreads.join_all();
     delete schedulerThread;
     delete dispatcherThread;
   } ;
@@ -272,7 +284,7 @@ private:
   /* Worker threads */
   boost::thread *schedulerThread;
   boost::thread *dispatcherThread;
-
+  boost::thread_group jobThreads;
   /*Private Data Members */
   ResourcePoolPtr resPool;
   JobQueuePtr readyQ;

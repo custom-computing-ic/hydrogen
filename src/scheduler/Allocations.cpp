@@ -13,10 +13,9 @@ void Allocations::serviceAllocations(Scheduler &s) {
 
 
 void Allocations::returnResources(Scheduler& s) {
+  std::cout << "Allocations::returnResources()" << std::endl;
   auto it = jobs.begin();
   for ( ; it != jobs.end(); it++) {
-    for (auto r : std::get<1>(*it) ) {
-       s.addResource(r);
-    }
+       s.returnResources(std::get<1>(*it));
   }
 }

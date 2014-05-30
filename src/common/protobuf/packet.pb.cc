@@ -32,11 +32,12 @@ void protobuf_AssignDesc_packet_2eproto() {
       "packet.proto");
   GOOGLE_CHECK(file != NULL);
   ControlMSG_descriptor_ = file->message_type(0);
-  static const int ControlMSG_offsets_[4] = {
+  static const int ControlMSG_offsets_[5] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ControlMSG, command_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ControlMSG, arg1_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ControlMSG, arg2_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ControlMSG, arg3_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ControlMSG, arg4_),
   };
   ControlMSG_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -79,9 +80,9 @@ void protobuf_AddDesc_packet_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-    "\n\014packet.proto\"G\n\nControlMSG\022\017\n\007command\030"
+    "\n\014packet.proto\"U\n\nControlMSG\022\017\n\007command\030"
     "\001 \002(\t\022\014\n\004arg1\030\002 \001(\t\022\014\n\004arg2\030\003 \001(\t\022\014\n\004arg"
-    "3\030\004 \001(\t", 87);
+    "3\030\004 \001(\t\022\014\n\004arg4\030\005 \001(\t", 101);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "packet.proto", &protobuf_RegisterTypes);
   ControlMSG::default_instance_ = new ControlMSG();
@@ -103,6 +104,7 @@ const int ControlMSG::kCommandFieldNumber;
 const int ControlMSG::kArg1FieldNumber;
 const int ControlMSG::kArg2FieldNumber;
 const int ControlMSG::kArg3FieldNumber;
+const int ControlMSG::kArg4FieldNumber;
 #endif  // !_MSC_VER
 
 ControlMSG::ControlMSG()
@@ -125,6 +127,7 @@ void ControlMSG::SharedCtor() {
   arg1_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   arg2_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   arg3_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  arg4_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -144,6 +147,9 @@ void ControlMSG::SharedDtor() {
   }
   if (arg3_ != &::google::protobuf::internal::kEmptyString) {
     delete arg3_;
+  }
+  if (arg4_ != &::google::protobuf::internal::kEmptyString) {
+    delete arg4_;
   }
   if (this != default_instance_) {
   }
@@ -190,6 +196,11 @@ void ControlMSG::Clear() {
     if (has_arg3()) {
       if (arg3_ != &::google::protobuf::internal::kEmptyString) {
         arg3_->clear();
+      }
+    }
+    if (has_arg4()) {
+      if (arg4_ != &::google::protobuf::internal::kEmptyString) {
+        arg4_->clear();
       }
     }
   }
@@ -266,6 +277,23 @@ bool ControlMSG::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(42)) goto parse_arg4;
+        break;
+      }
+
+      // optional string arg4 = 5;
+      case 5: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_arg4:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_arg4()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->arg4().data(), this->arg4().length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -324,6 +352,15 @@ void ControlMSG::SerializeWithCachedSizes(
       4, this->arg3(), output);
   }
 
+  // optional string arg4 = 5;
+  if (has_arg4()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->arg4().data(), this->arg4().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      5, this->arg4(), output);
+  }
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -372,6 +409,16 @@ void ControlMSG::SerializeWithCachedSizes(
         4, this->arg3(), target);
   }
 
+  // optional string arg4 = 5;
+  if (has_arg4()) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->arg4().data(), this->arg4().length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        5, this->arg4(), target);
+  }
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -409,6 +456,13 @@ int ControlMSG::ByteSize() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->arg3());
+    }
+
+    // optional string arg4 = 5;
+    if (has_arg4()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::StringSize(
+          this->arg4());
     }
 
   }
@@ -450,6 +504,9 @@ void ControlMSG::MergeFrom(const ControlMSG& from) {
     if (from.has_arg3()) {
       set_arg3(from.arg3());
     }
+    if (from.has_arg4()) {
+      set_arg4(from.arg4());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -478,6 +535,7 @@ void ControlMSG::Swap(ControlMSG* other) {
     std::swap(arg1_, other->arg1_);
     std::swap(arg2_, other->arg2_);
     std::swap(arg3_, other->arg3_);
+    std::swap(arg4_, other->arg4_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);

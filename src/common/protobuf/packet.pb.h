@@ -137,6 +137,18 @@ class ControlMSG : public ::google::protobuf::Message {
   inline ::std::string* release_arg3();
   inline void set_allocated_arg3(::std::string* arg3);
 
+  // optional string arg4 = 5;
+  inline bool has_arg4() const;
+  inline void clear_arg4();
+  static const int kArg4FieldNumber = 5;
+  inline const ::std::string& arg4() const;
+  inline void set_arg4(const ::std::string& value);
+  inline void set_arg4(const char* value);
+  inline void set_arg4(const char* value, size_t size);
+  inline ::std::string* mutable_arg4();
+  inline ::std::string* release_arg4();
+  inline void set_allocated_arg4(::std::string* arg4);
+
   // @@protoc_insertion_point(class_scope:ControlMSG)
  private:
   inline void set_has_command();
@@ -147,6 +159,8 @@ class ControlMSG : public ::google::protobuf::Message {
   inline void clear_has_arg2();
   inline void set_has_arg3();
   inline void clear_has_arg3();
+  inline void set_has_arg4();
+  inline void clear_has_arg4();
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
@@ -154,9 +168,10 @@ class ControlMSG : public ::google::protobuf::Message {
   ::std::string* arg1_;
   ::std::string* arg2_;
   ::std::string* arg3_;
+  ::std::string* arg4_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
 
   friend void  protobuf_AddDesc_packet_2eproto();
   friend void protobuf_AssignDesc_packet_2eproto();
@@ -449,6 +464,76 @@ inline void ControlMSG::set_allocated_arg3(::std::string* arg3) {
   } else {
     clear_has_arg3();
     arg3_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+  }
+}
+
+// optional string arg4 = 5;
+inline bool ControlMSG::has_arg4() const {
+  return (_has_bits_[0] & 0x00000010u) != 0;
+}
+inline void ControlMSG::set_has_arg4() {
+  _has_bits_[0] |= 0x00000010u;
+}
+inline void ControlMSG::clear_has_arg4() {
+  _has_bits_[0] &= ~0x00000010u;
+}
+inline void ControlMSG::clear_arg4() {
+  if (arg4_ != &::google::protobuf::internal::kEmptyString) {
+    arg4_->clear();
+  }
+  clear_has_arg4();
+}
+inline const ::std::string& ControlMSG::arg4() const {
+  return *arg4_;
+}
+inline void ControlMSG::set_arg4(const ::std::string& value) {
+  set_has_arg4();
+  if (arg4_ == &::google::protobuf::internal::kEmptyString) {
+    arg4_ = new ::std::string;
+  }
+  arg4_->assign(value);
+}
+inline void ControlMSG::set_arg4(const char* value) {
+  set_has_arg4();
+  if (arg4_ == &::google::protobuf::internal::kEmptyString) {
+    arg4_ = new ::std::string;
+  }
+  arg4_->assign(value);
+}
+inline void ControlMSG::set_arg4(const char* value, size_t size) {
+  set_has_arg4();
+  if (arg4_ == &::google::protobuf::internal::kEmptyString) {
+    arg4_ = new ::std::string;
+  }
+  arg4_->assign(reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* ControlMSG::mutable_arg4() {
+  set_has_arg4();
+  if (arg4_ == &::google::protobuf::internal::kEmptyString) {
+    arg4_ = new ::std::string;
+  }
+  return arg4_;
+}
+inline ::std::string* ControlMSG::release_arg4() {
+  clear_has_arg4();
+  if (arg4_ == &::google::protobuf::internal::kEmptyString) {
+    return NULL;
+  } else {
+    ::std::string* temp = arg4_;
+    arg4_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
+    return temp;
+  }
+}
+inline void ControlMSG::set_allocated_arg4(::std::string* arg4) {
+  if (arg4_ != &::google::protobuf::internal::kEmptyString) {
+    delete arg4_;
+  }
+  if (arg4) {
+    set_has_arg4();
+    arg4_ = arg4;
+  } else {
+    clear_has_arg4();
+    arg4_ = const_cast< ::std::string*>(&::google::protobuf::internal::kEmptyString);
   }
 }
 

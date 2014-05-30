@@ -94,16 +94,69 @@ msg_t* msg_control_add_res(std::string type,
   return msg;
 }
 
-msg_t* msg_control_rm_res() {
-  return NULL;
+msg_t* msg_control_rm_res( std::string rid ) {
+  ControlMSG c;
+  c.set_command("RM_RESOURCE");
+  c.set_arg1(rid);
+  int sizeBytes = c.ByteSize();
+  msg_t* msg = (msg_t*) calloc(sizeBytes + sizeof(msg_t),0);
+  msg->msgId = MSG_CONTROL;
+  msg->dataSize = sizeBytes / sizeof(int);
+  msg->paramsSize = 0;
+  return msg;
 }
 
-msg_t* msg_control_add_imp() {
-  return NULL;
+msg_t* msg_control_add_imp(std::string imp_funcName,
+                           std::string imp_libName,
+                           std::string task_name,
+                           std::string imp_type) {
+  ControlMSG c;
+  c.set_command("ADD_IMPLEMENTATION");
+  c.set_arg1(task_name);
+  c.set_arg2(imp_funcName);
+  c.set_arg3(imp_libName);
+  c.set_arg4(imp_type);
+  int sizeBytes = c.ByteSize();
+  msg_t* msg = (msg_t*) calloc(sizeBytes + sizeof(msg_t),0);
+  msg->msgId = MSG_CONTROL;
+  msg->dataSize = sizeBytes / sizeof(int);
+  msg->paramsSize = 0;
+  return msg;
+
 }
 
-msg_t* msg_control_rm_imp() {
-  return NULL;
+msg_t* msg_control_rm_imp(std::string imp_id) {
+  ControlMSG c;
+  c.set_command("RM_IMPLEMENTATION");
+  c.set_arg1(imp_id);
+  int sizeBytes = c.ByteSize();
+  msg_t* msg = (msg_t*) calloc(sizeBytes + sizeof(msg_t),0);
+  msg->msgId = MSG_CONTROL;
+  msg->dataSize = sizeBytes / sizeof(int);
+  msg->paramsSize = 0;
+  return msg;
 }
 
+msg_t* msg_control_add_task(std::string task_name){
+  ControlMSG c;
+  c.set_command("ADD_TASK");
+  c.set_arg1(task_name);
+  int sizeBytes = c.ByteSize();
+  msg_t* msg = (msg_t*) calloc(sizeBytes + sizeof(msg_t),0);
+  msg->msgId = MSG_CONTROL;
+  msg->dataSize = sizeBytes / sizeof(int);
+  msg->paramsSize = 0;
+  return msg;
+}
+msg_t* msg_control_rm_task(std::string task_name) {
+  ControlMSG c;
+  c.set_command("RM_TASK");
+  c.set_arg1(task_name);
+  int sizeBytes = c.ByteSize();
+  msg_t* msg = (msg_t*) calloc(sizeBytes + sizeof(msg_t),0);
+  msg->msgId = MSG_CONTROL;
+  msg->dataSize = sizeBytes / sizeof(int);
+  msg->paramsSize = 0;
+  return msg;
+}
 

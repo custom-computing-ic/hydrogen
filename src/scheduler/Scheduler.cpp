@@ -6,26 +6,41 @@
 #include <unistd.h>
 #define MODE_MANAGED 4
 using namespace std;
+//Removes resources allocated to a job from the res pool....
+bool resPtrEQ(const Resource& lhs, const std::unique_ptr<Resource>& rhs) {
+  return lhs.getId() == rhs->getId();
+}
 void Scheduler::claimResources(JobResPair &elem) {
-  std::cout << "Scheduler::claimResources()\n";
-  ResourceList r = std::get<1>(elem);
-  auto it = resPool->begin();
-  ResourcePoolPtr preserveList = ResourcePoolPtr(new ResourcePool());
+  using namespace std::placeholders;
+  std::cout << "Scheduler::claimResources():\t";
+  std::cout << "resPool[" << resPool->size() << "]\t";
 
-  for (; it != resPool->end(); it++) {
+  ResourceList& r = std::get<1>(elem);
+  for (auto rit = r.begin(); rit != r.end(); rit++) {
+    auto remove = std::find_if(resPool->begin(), resPool->end(),std::bind(resPtrEQ,*rit,std::placeholders::_1));
+    resPool->erase(remove);
+  }
+//  auto it = resPool->begin();
+//  ResourcePoolPtr preserveList = ResourcePoolPtr(new ResourcePool());
+
+ /* for (auto it = resPool->begin(); it != resPool->end(); it++) {
     ResourceList::iterator rit = r.begin();
     for (;rit != r.end(); rit++) {
-      
       if ( **it != *rit) {
-        preserveList->push_back(std::move(*it));
+        std::cout << "Got: " << **it;
+//        preserveList->push_back(std::move(*it));
+        it = resPool->erase(it);
       }
     }
   }
-  resPool = preserveList;
+//  resPool = preserveList;*/
+  std::cout << "resPool[" << resPool->size() << "]\n";
 }
 
 void Scheduler::returnResources(ResourceList& res) {
-  std::cout << "Scheduler::returnResources()\n";
+  std::cout << "Scheduler::returnResources(): ";
+  std::cout << "\tresPool[" << resPool->size() << "]\n";
+
   std::cout << "{ ";
   ResourceList::iterator r = res.begin();
   for (; r != res.end(); r++) {
@@ -147,8 +162,10 @@ ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
       allocatedResources.push_back(*resPool->back());
       resPool->pop_back();
     }
+#ifdef DEBUG
     std::cout << "Allocated " << allocatedResources.size()
               << " Resources to " << j << "\n";
+#endif
   }
   return allocatedResources;
 }
@@ -215,10 +232,10 @@ void Scheduler::schedLoop() {
       //  std::cout << "Scheduler Thread woke up\n";
       }
       lock.unlock();
+   
       //A job was deposited in the readyQ
-//TODO[mtottenh]: modify schedule to lock all Q's for now.
       if (QStatus.getReadyQStatus() == true) {
-        //start boost  timer
+        QStatus.setReadyQStatus(false);
         auto start = boost::chrono::system_clock::now();
 
         std::cout << "Event on readyQ\n";
@@ -227,7 +244,8 @@ void Scheduler::schedLoop() {
         rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
-          std::cout << "Allocation returned nullptr, something horible happened\n";
+//          std::cout << "Allocation returned nullptr, something horible happened\n";
+//
         } else {
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
@@ -238,9 +256,8 @@ void Scheduler::schedLoop() {
 
             QStatus.setRunQStatus(true);
 
-            if (readyQ->size() == 0)
-              QStatus.setReadyQStatus(false);
-            delete a;
+//            if (readyQ->size() == 0)
+         //TODO[mtottenh]: fix this leak   delete a;
             auto end = boost::chrono::system_clock::now();
             auto duration = boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
             std::cout << "Scheduling took: " << duration.count() << "us" << std::endl;
@@ -273,7 +290,8 @@ void Scheduler::runJobs() {
     for (;it != runQ->end(); it++) {
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
-        boost::thread t(&Scheduler::runJob,this,*it); // spawn this into a separate thread?
+        jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
+        
       }
     }
 
