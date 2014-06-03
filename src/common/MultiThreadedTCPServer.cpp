@@ -101,6 +101,7 @@ void connection::handle_read(const boost::system::error_code& e,
 
   // XXX TODO[paul-g]: Need to do this async
   msg_t* request = NULL;
+  msg_t* reply = NULL; 
   do {
     // unpack request
     request = (msg_t*)buffer_.data();
@@ -129,7 +130,7 @@ void connection::handle_read(const boost::system::error_code& e,
     }
 
     // do work and generate reply
-    msg_t* reply = server_.handle_request(fullRequest);
+    reply = server_.handle_request(fullRequest);
 
     if (resized)
       free(fullRequest);
@@ -139,7 +140,7 @@ void connection::handle_read(const boost::system::error_code& e,
 
     socket_.read_some(ba::buffer(buffer_));
   } while (request != NULL && request->msgId != MSG_DONE);
-
+  free(reply);
   boost::system::error_code ignored_ec;
   socket_.shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
 }

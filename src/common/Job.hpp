@@ -18,6 +18,15 @@ class Job {
     /* Constructors */
     Job(msg_t* request,int);
     /* getters */
+    ~Job(){
+      if (req != nullptr) {
+ //       free(req);
+      }
+      if (rsp != nullptr) {
+        free(rsp);
+      }
+
+    }
     std::string str() const;
     msg_t* getReq() { return req;}
     void   setRsp(msg_t* rsp) { this->rsp = rsp; }

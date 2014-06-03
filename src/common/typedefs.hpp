@@ -11,9 +11,9 @@ class Resource;
 /* Base Types */
 typedef std::unique_ptr<Resource> ResourcePtr;
 //typedef std::unique_ptr<Job> JobPtr;
-typedef Job* JobPtr;
+typedef std::shared_ptr<Job> JobPtr;
 typedef std::tuple<JobPtr, struct JobInfo&, boost::condition_variable&> JobTuple;
-typedef JobTuple* JobTuplePtr;
+typedef std::shared_ptr<JobTuple> JobTuplePtr;
 typedef std::deque<Resource> ResourceList;   //TODO: change this maybe?
 typedef std::pair<JobTuplePtr,ResourceList> JobResPair;
 

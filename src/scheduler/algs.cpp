@@ -226,7 +226,6 @@ Allocations* ManagedMode(Scheduler &s) {
 
   /* Find the allocation with the highest score */
   Allocations *mChoice = selectMaxScore(allocations);
-  //TODO: Delete the ones we don't end up using...
   return mChoice;
 }
 
@@ -280,6 +279,11 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
     case 4:
         std::cout << "Err should never reach here\n";
       break;
+ }
+ for (unsigned int i = 0; i < a.size(); i++) {
+   if (i != index) {
+     delete a[i];
+   }
  }
  return a[index]; 
 }

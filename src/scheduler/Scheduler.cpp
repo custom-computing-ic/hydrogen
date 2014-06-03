@@ -174,7 +174,6 @@ msg_t* Scheduler::handle_request(msg_t* request) {
   //TODO: Lookup requestID/Implementation ID in a map and return error if not
   //found
   msg_t* response;
-  response = msg_ack();
   switch(request->msgId) {
     case MSG_DONE:
       return msg_ack();
@@ -223,9 +222,11 @@ void Scheduler::schedLoop() {
             QStatus.setRunQStatus(true);
             auto end = boost::chrono::system_clock::now();
             auto duration = boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+
             std::cout << "Scheduling took: " << duration.count() << "us" << std::endl;
             QCondVar.notify_all();
           }
+          delete a;
           std::cout << "***Managed Mode scheduled " << numJobsScheduled <<" Jobs***\n";
         }
         QStatus.setReadyQStatus(readyQ->size() > 0);
@@ -313,9 +314,6 @@ void Scheduler::runJob(JobResPair& j) {
   removeJobFromRunQ(jobPtr->getId());
   enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
 }
-bool idEq (const int& jid, const JobResPair & item) {
-  return jid == std::get<0>(*std::get<0>(item))->getId();
-}
 void Scheduler::removeJobFromRunQ(int jid) {
   boost::lock_guard<boost::mutex> lk(runQMtx); 
   auto it = std::find_if(runQ->begin(), runQ->end(), 
@@ -365,9 +363,9 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #ifdef DEBUG
   request.print();
 #endif
-  JobTuple t = std::make_tuple( new Job(&request,getNextId()),
+  JobTuple t = std::make_tuple( JobPtr(new Job(&request,getNextId())),
                                 std::ref(jInfo),std::ref(jCondVar));
-  enqueue(readyQ, &t, readyQMtx,"readyQ");
+  enqueue(readyQ, shared_ptr<JobTuple>(&t), readyQMtx,"readyQ");
 
 
   while (!jInfo.isFinished()) {
@@ -384,6 +382,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
     response.paramsSize = 0;
 //  size_t dataBytes  = rsp->dataSize*sizeof(int);
     memcpy(&response.data,rsp->data ,rsp->dataBytes());
+
   }
 #ifdef DEBUG
   response.print();

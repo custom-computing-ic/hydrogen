@@ -62,6 +62,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->paramsSize = 0;
     memcpy(response->data, out, nBytes);
     free(out);
+    free(data_in);
 
     return response;
   }

@@ -16,7 +16,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 5
+#define NUM_THREADS 10
 #include <algs.hpp>
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
@@ -67,8 +67,8 @@ public:
     meanWaitTime = boost::chrono::seconds(0); 
   }
 
-  template <typename T> void enqueue(typename ContainerPtr<T*>::deque container, 
-                                      T* elem, boost::mutex &lock, const std::string& name)
+  template <typename T> void enqueue(typename ContainerPtr<std::shared_ptr<T>>::deque container, 
+                                      std::shared_ptr<T> elem, boost::mutex &lock, const std::string& name)
   {
     //Check that this shouldn't be the lock passed in.
   //  std::cout << "Scheduler::enqueue()\n";
@@ -121,13 +121,13 @@ public:
 
   virtual void start();
   void stop() {   
-    schedulerThread->interrupt();
+/*    schedulerThread->interrupt();
     schedulerThread->join();
     dispatcherThread->interrupt();
     dispatcherThread->join();
     jobThreads.join_all();
     delete schedulerThread;
-    delete dispatcherThread;
+    delete dispatcherThread;*/
   } ;
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
@@ -135,9 +135,9 @@ public:
     if (i > rq->size()) {
       return nullptr;
     }
-    JobTuple j = *(rq->at(i));
-    JobTuplePtr nj = new JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j));
-    return nj;
+//    JobTuple j = *(rq->at(i));
+//    JobTuplePtr nj = std::shared_ptr<JobTuple>(new JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j)));
+    return rq->at(i);
   }
   inline std::string getStrategy() const { return strat; }
   inline size_t readyQSize(){return readyQ->size();}
@@ -155,11 +155,23 @@ public:
   void runJobs();
   void runJob(JobResPair& j);
   
+  inline static bool idEq (const int& jid, const JobResPair & item) {
+    return jid == std::get<0>(*std::get<0>(item))->getId();
+  }
 
-
-  JobResPair removeJobFromReadyQ(JobResPair& j) {
-   // std::cout << "Removing job " << *std::get<0>(*std::get<0>(j) ) << "from readyQ\n";
+  inline static bool idEqrq (const int& jid, const JobTuplePtr & item) {
+    return jid == std::get<0>(*item)->getId();
+  }
+  JobResPair removeJobFromReadyQ(const JobResPair& j) {
     boost::lock_guard<boost::mutex> lk(readyQMtx);
+/*    if (readyQ->size() > 0) {
+      auto elem = std::find_if(readyQ->begin(), readyQ->end(),
+                             std::bind(&idEqrq, std::get<0>(*(std::get<0>(j)))->getId(),
+                                       std::placeholders::_1));
+      if (elem != readyQ->end()) {
+        readyQ->erase(elem);
+      }
+*/
     JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
     JobQueue::iterator a = readyQ->begin();
     for(;a != readyQ->end(); a++) {
@@ -168,6 +180,7 @@ public:
       }
     }
     readyQ = preserve_list;
+    
     return j;
   }
   void removeJobFromRunQ(int jid);
@@ -181,7 +194,7 @@ public:
 
   void claimResources(JobResPair& elem);
   void returnResources(ResourceList& res);
-  void updateMeanWaitTime(Job* j) {
+  void updateMeanWaitTime(JobPtr j) {
     //LOCK
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);
     totalJobs++;
