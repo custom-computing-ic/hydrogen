@@ -155,17 +155,7 @@ public:
   void runJobs();
   void runJob(JobResPair& j);
   
-  /*Job removeJobFromQ(JobQueuePtr jq, Job& j) {
-    JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
-    JobQueue::iterator a = jq->begin();
-    for(;a != jq->end(); a++) {
-      if (std::get<0>(**a)->getId() != j.getId()) {
-        preserve_list->push_back(*a);
-      }
-    }
-    jq = std::move(preserve_list);
-    return j;
-  }*/
+
 
   JobResPair removeJobFromReadyQ(JobResPair& j) {
    // std::cout << "Removing job " << *std::get<0>(*std::get<0>(j) ) << "from readyQ\n";
@@ -180,18 +170,7 @@ public:
     readyQ = preserve_list;
     return j;
   }
-
-  /*template <typename T> T removeFromQ(typename ContainerPtr<T>::deque jq, T j) {
-    typename ContainerPtr<T>::deque preserve_list;
-    typename ContainerPtr<T>::deque::iterator a = jq->begin();
-    for(;a != jq->end(); a++) {
-      if ((*a)->getId() != j->getId()) {
-        preserve_list->push_back( move(*a) );
-      }
-    }
-    jq = preserve_list;
-    return j;
-  }*/
+  void removeJobFromRunQ(int jid);
 
   /* TODO[mtottenh]: Deprecate these. access to Ptrs of these Q's is bad 
    * now that everything is multithreaded
@@ -202,7 +181,6 @@ public:
 
   void claimResources(JobResPair& elem);
   void returnResources(ResourceList& res);
-
   void updateMeanWaitTime(Job* j) {
     //LOCK
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);

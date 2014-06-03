@@ -28,7 +28,7 @@ Job::Job(int a, int b, CostFunctionType c, float d) {
   status = -1;
 }*/
 /* for constructing a Job object from a message request */
-Job::Job(msg_t& request,int id) :  req(request) {
+Job::Job(msg_t* request,int id) :  req(request) {
   //TODO[mtottenh]: Replace this with metadata gained from executor
   min = 1;
   max = 2;
@@ -38,7 +38,7 @@ Job::Job(msg_t& request,int id) :  req(request) {
   defaultJobTime = 1.0;
   //TODO[mtottenh]: This works for now, but this needs to
   //change for after the demmo.
-  priority = request.clientId;
+  priority = request->clientId;
   issueTime =  boost::chrono::system_clock::now();
   dispatchTime = boost::chrono::system_clock::now();
   finishTime = boost::chrono::system_clock::now();
@@ -52,7 +52,7 @@ Job::Job(msg_t& request,int id) :  req(request) {
 // TODO[mtottenh]: Change this... I dont think it needs to return a result anymore
 msg_t Job::run() {
   std::cout << "In Job::run() : Needs Implementing\n";
-  return req;
+  return *req;
 }
 
 

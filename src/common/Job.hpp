@@ -16,18 +16,10 @@ float defaultCostFunction(JobResPair& p);
 class Job {
 	public:
     /* Constructors */
-//    Job(){
-//       issueTime = 0;
-//       dispatchTime = 0;
-//       finishTime = 0;
-//       AllocatedResources = ResourcePoolPtr(new ResourcePool());
-//   }
-    Job(msg_t& request,int);
-//    Job(int a,int b,CostFunctionType c);
-//    Job(int a, int b, CostFunctionType c, float d);
+    Job(msg_t* request,int);
     /* getters */
     std::string str() const;
-    msg_t& getReq() { return req;}
+    msg_t* getReq() { return req;}
     void   setRsp(msg_t* rsp) { this->rsp = rsp; }
     inline int getStatus() const { return status; }
     inline size_t getMin() const { return min;}
@@ -58,7 +50,6 @@ class Job {
     inline void setMax(size_t a) {max = a;}
     inline void setMin(size_t a) {min = a;}
     inline void setUid(int a) {uid = a;}
-
     inline void setJid(int a) {jid = a;}
     inline void setCostFunc(CostFunctionType f) {cost_func = f;}
     inline void setStatus(int a) { status = a;}
@@ -104,7 +95,7 @@ class Job {
     //Assigning it to a ref (e.g. msg_t& req and assigning in the constructor)
     //seems to lead to data corruption (probably because the pointer data
     //isn't a fixed size.
-    msg_t& req;
+    msg_t* req;
     msg_t* rsp;
 };
 #endif

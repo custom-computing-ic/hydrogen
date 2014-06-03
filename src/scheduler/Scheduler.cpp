@@ -120,6 +120,7 @@ void Scheduler::notifyClientsOfResults() {
   auto j = finishedQ->front();
   finishedQ->pop_front();
   std::cout << "Mean waiting time: " << meanWaitTime << "\n";
+  std::get<1>(*j).setFinished(true);
   std::get<2>(*j).notify_all();
 }
 
@@ -131,15 +132,6 @@ void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
 // return them to the pool... use with extreme caution
 void Scheduler::reclaimResources() {
   cout << "Scheduler::reclaimResources(): Not Implemented\n";
-  /*
-  auto j = runQ->begin();
-  for (;j != runQ->end(); j++) {
-    auto a = (std::get<0>(**j))->getAllocdRes()->begin();
-    for (;a != (std::get<0>(**j))->getAllocdRes()->end(); a++) {
-      resPool->push_back(   move(*a)   );
-    }
-  }
-*/
 }
 
 //TODO[mtottenh]: Collapse the below back into 1 function.
@@ -281,35 +273,19 @@ void Scheduler::schedLoop() {
     }
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
-    this->stop();
   }
 }
 void Scheduler::runJobs() {
     std::cout << "Scheduler::runJobs()\n";
+    boost::lock_guard<boost::mutex> lk(runQMtx);
+
     JobResPairQ::iterator it = runQ->begin();
     for (;it != runQ->end(); it++) {
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
         jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
-        
       }
     }
-
-   /* 
-    * it = runQ->begin();
-    JobResPairQPtr preserve_list(new JobResPairQ());
-    for (;it != runQ->end(); it++) {
-      //for each job in the runQ check if it is finished.
-      JobTuplePtr jobTuplePtr = std::get<0>(*it);
-      if (!std::get<1>(*jobTuplePtr).isFinished()){
-        //remove from runQ.
-        preserve_list->push_back(*it);
-      } else {
-        std::get<2>(*jobTuplePtr).notify_all();
-      }
-    }
-    runQ = preserve_list;
-    */
 }
 void Scheduler::runJob(JobResPair& j) {
   std::cout << "Scheduler::runJob()\n";
@@ -323,15 +299,16 @@ void Scheduler::runJob(JobResPair& j) {
   int portNumber = r.getPort();
   Client c(portNumber,name);
   c.start();
-  msg_t& req = jobPtr->getReq();
+  msg_t* req = jobPtr->getReq();
 
 #ifdef DEBUG
   req.print();
 #endif
+  if (req != NULL) {
+    c.send(req);
+  }
 
-  c.send(&req);
-
-  int sizeBytes = sizeof(msg_t) + sizeof(int) * req.dataSize;
+  int sizeBytes = sizeof(msg_t) + sizeof(int) * req->dataSize;
   char* buff = (char *)calloc(sizeBytes, 1);
 
   if (buff == NULL) {
@@ -349,34 +326,24 @@ void Scheduler::runJob(JobResPair& j) {
 #endif
   }  while ( rsp->msgId != MSG_RESULT);
   c.stop();
-
-//  std::cout << "client::read() finished\n";
-
 #ifdef DEBUG
   rsp->print();
 #endif
-  
   jobPtr->setRsp(rsp);
   returnResources(resourceList);
-//  std::get<0>(*jobTuplePtr)->setFinishTime(boost::chrono::system_clock::now());
-  
   updateMeanWaitTime(std::get<0>(*jobTuplePtr));
-
-
-  //LOCK runQ
-  boost::unique_lock<boost::mutex> lk(runQMtx);
-//  lk.lock();
-  auto it = runQ->begin();
-  while (it != runQ->end() &&  std::get<0>(*std::get<0>(*it))->getId() != jobPtr->getId()) {
-   it++; 
-  }
-  runQ->erase(it);
-  std::get<1>(*jobTuplePtr).setFinished(true);
-  lk.unlock();
-  //UNLOCK runQ
+  removeJobFromRunQ(jobPtr->getId());
   enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
 }
-
+bool idEq (const int& jid, const JobResPair & item) {
+  return jid == std::get<0>(*std::get<0>(item))->getId();
+}
+void Scheduler::removeJobFromRunQ(int jid) {
+  boost::lock_guard<boost::mutex> lk(runQMtx); 
+  auto it = std::find_if(runQ->begin(), runQ->end(), 
+                          std::bind(&idEq,jid,std::placeholders::_1));
+  runQ->erase(it);
+}
 void Scheduler::dispatcherLoop() {
   try {
     while (true) {
@@ -392,8 +359,6 @@ void Scheduler::dispatcherLoop() {
       lock.unlock();
       if (QStatus.getRunQStatus()) {
         std::cout << "Event on Run Q\n";
-//        runQ contains [" << runQ->size()
-//                  << "] Jobs \n";
         runJobs();
         QStatus.setRunQStatus(false);
       }
@@ -421,7 +386,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #ifdef DEBUG
   request.print();
 #endif
-  JobTuple t = std::make_tuple( new Job(request,getNextId()),
+  JobTuple t = std::make_tuple( new Job(&request,getNextId()),
                                 std::ref(jInfo),std::ref(jCondVar));
   enqueue(readyQ, &t, readyQMtx,"readyQ");
 
@@ -431,17 +396,18 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   }
   std::cout << "Job finished\n" << std::endl;
   msg_t* rsp = std::get<0>(t)->getRsp();
-  response.msgId = rsp->msgId;
-  response.dataSize = rsp->dataSize;
-  response.paramsSize = 0;
+  if (rsp == NULL) {
+//    response = msg_empty();
+  } else {
+    response.msgId = rsp->msgId;
+    response.dataSize = rsp->dataSize;
+    response.paramsSize = 0;
 //  size_t dataBytes  = rsp->dataSize*sizeof(int);
-  memcpy(&response.data,rsp->data ,rsp->dataBytes());
-
+    memcpy(&response.data,rsp->data ,rsp->dataBytes());
+  }
 #ifdef DEBUG
   response.print();
 #endif
-//  std::cout << "returning from concurrentHandler\n";
-  //dequeue(finishedQ,(job,condvar));
   return &response;
 }
 
