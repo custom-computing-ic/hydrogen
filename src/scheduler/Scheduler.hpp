@@ -16,7 +16,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 10
+#define NUM_THREADS 4
 #include <algs.hpp>
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
@@ -257,7 +257,7 @@ private:
   /* Helper functions for resource managment */
 
 
-
+  void finishedLoop();
   void serviceAllocations(Allocations &a);
 
   /* Signaling Structs */
@@ -275,6 +275,7 @@ private:
   /* Worker threads */
   boost::thread *schedulerThread;
   boost::thread *dispatcherThread;
+  boost::thread *finishedQThread;
   boost::thread_group jobThreads;
   /*Private Data Members */
   ResourcePoolPtr resPool;

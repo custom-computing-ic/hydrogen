@@ -198,7 +198,7 @@ void Scheduler::schedLoop() {
     while (true) {
       boost::unique_lock<boost::mutex> lock(qMutex);
       //If we have no results or nothing to try and schedule wait
-      while ( !QStatus.getReadyQStatus() && !QStatus.getFinishedQStatus() ) {
+      while ( !QStatus.getReadyQStatus()) {
         QCondVar.wait(lock);
       //  std::cout << "Scheduler Thread woke up\n";
       }
@@ -230,17 +230,6 @@ void Scheduler::schedLoop() {
           std::cout << "***Managed Mode scheduled " << numJobsScheduled <<" Jobs***\n";
         }
         QStatus.setReadyQStatus(readyQ->size() > 0);
-      }
-
-      //A result was returned on the finishedQ -- This could be delegated to
-      //a different thread
-      if (QStatus.getFinishedQStatus() == true) {
-        std::cout << "Event on finishedQ\n";
-//        QStatus.setReadyQStatus(true);
-        while (finishedQ->size() > 0) {
-          notifyClientsOfResults();
-        }
-        QStatus.setFinishedQStatus(false);
       }
     }
   } catch (std::exception &e) {
@@ -391,7 +380,27 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 }
 
 
-
+void Scheduler::finishedLoop() {
+  try {
+    while (true) {
+      boost::unique_lock<boost::mutex> lock(qMutex);
+      while (!QStatus.getFinishedQStatus() ) {
+        QCondVar.wait(lock);      
+      }
+      lock.unlock();
+      if (QStatus.getFinishedQStatus() == true) {
+        std::cout << "Event on finishedQ\n";
+        QStatus.setReadyQStatus(true);
+        while (finishedQ->size() > 0) {
+          notifyClientsOfResults();
+        }
+        QStatus.setFinishedQStatus(false);
+      }
+    }
+  }catch (std::exception& e) {
+    std::cout << "Finished Loop Error: " << e.what() << std::endl;
+  }
+}
 
 void Scheduler::start() {
   //Fire up the Scheduling and dispatch threads.
@@ -401,5 +410,6 @@ void Scheduler::start() {
 
   schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
   dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
+  finishedQThread = new boost::thread(&Scheduler::finishedLoop, this);
   run();
 }
