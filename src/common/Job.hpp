@@ -36,15 +36,15 @@ class Job {
     
     /* setters */
     inline void setIssueTime(boost::chrono::system_clock::time_point a) { 
-      std::cout << *this << " Issued at: " << a << "\n"; 
+      std::cout << *this << " Issued\n";// at: " << a << "\n"; 
       issueTime = a;
     }
     inline void setDispatchTime(boost::chrono::system_clock::time_point a) { 
-      std::cout << *this << " Dispatched at: " << a << "\n"; 
+      std::cout << *this << " Dispatched\n";// at: " << a << "\n"; 
       dispatchTime = a;
     }
     inline void setFinishTime(boost::chrono::system_clock::time_point a) { 
-      std::cout << *this << " Finished at: " << a << "\n";
+      std::cout << *this << " Finished\n"; // << a << "\n";
       finishTime = a; 
     }
     inline void setMax(size_t a) {max = a;}

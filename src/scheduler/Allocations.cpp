@@ -13,7 +13,7 @@ void Allocations::serviceAllocations(Scheduler &s) {
 
 
 void Allocations::returnResources(Scheduler& s) {
-  std::cout << "Allocations::returnResources()" << std::endl;
+  std::cout << "\t\tAllocations::returnResources()" << std::endl;
   auto it = jobs.begin();
   for ( ; it != jobs.end(); it++) {
        s.returnResources(std::get<1>(*it));
