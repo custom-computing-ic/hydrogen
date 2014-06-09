@@ -33,6 +33,7 @@ class Executor : public MultiThreadedTCPServer {
     int SetResources(std::list<Resource *> res);
     int AddResource(Resource *res);
     int DelResource(Resource *res);
+    Resource* FindResource(std::string);
     std::list<Resource *> GetResources(); 
     /* 
      * Manipulate the Task list
@@ -50,6 +51,7 @@ class Executor : public MultiThreadedTCPServer {
     std::list<Implementation *> GetImplementations(Task *tsk);
     //TODO[mtottenh]: Implement this..
     virtual msg_t* handle_request(msg_t* request);
+    msg_t* runImp(Implementation*,msg_t*);
     virtual void start(){ run(); }
     virtual void stop(){}
 

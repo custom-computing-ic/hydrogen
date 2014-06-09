@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdlib.h>
 #include <functional>
 
 #include <utils.hpp>
@@ -36,9 +37,21 @@ int main(int argc, char** argv) {
     std::cout << desc << "\n";
     return 1;
   }
-
-
-  Executor e("localhost", vm["client_id"].as<std::string>());
+  char* clientIdCh;
+  int client_id = -1;
+  clientIdCh = getenv("CLIENT_ID");
+  if (clientIdCh == NULL) {
+    std::cout << "(ERROR): Environmental Variable CLIENT_ID must be set before"
+              << " running the Executor service.\n"
+              << "(ERROR): Using default from the command line: ";
+    clientIdCh = strdup(vm["client_id"].as<std::string>().c_str());
+    std::cout << clientIdCh << "\n";
+  } else {
+    client_id = atoi(clientIdCh);
+    std::cout << "(DEBUG): Environmental Variable CLIENT_ID = " << client_id << "\n";
+  }
+  
+  Executor e("localhost",clientIdCh);  
   /* Add a local CPU and the shared DFE's from the cmd line */
   e.AddResource(new Resource(1, vm["scheduler_port"].as<int>(),
                              vm["hostname"].as<std::string>(), 
@@ -47,9 +60,9 @@ int main(int argc, char** argv) {
   /* Adding some tasks... */
   e.AddTask(new Task("MOVING_AVERAGE"));
   e.AddImp(e.FindTask("MOVING_AVERAGE"), 
-           new Implementation("","","MOVING_AVERAGE","","","DFE"));
+           new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE"));
   e.AddImp(e.FindTask("MOVING_AVERAGE"),
-           new Implementation( "","","MOVING_AVERAGE","", "","CPU"));
+           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
  
 
 

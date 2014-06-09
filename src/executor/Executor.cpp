@@ -74,11 +74,30 @@ Task* Executor::FindTask(std::string name) {
   return Tasks.end() != found ? *found : NULL;  
 	
 }
+bool res_type_eq(std::string type, Resource* res) {
+  return type == res->getType();
+}
+Resource* Executor::FindResource(std::string type) {
+
+  using namespace std::placeholders;
+  typedef std::list<Resource *>::iterator it;
+  it found = std::find_if(AvailableRes.begin(), 
+ 		                      AvailableRes.end(), 
+                          std::bind(res_type_eq,type,_1)
+                       );
+	//	          [&] (Task *t) { return *t == *t1; } );
+  return AvailableRes.end() != found ? *found : NULL;  
+
+}
+
 /* 
  * Add/Remove Implementations
  */
 int Executor::AddImp(Task *tsk,Implementation *imp) {
-  tsk->AddImp(imp);	
+  std::cout << "Executor::AddImp()\n";
+  PerfModel* p = new PerfModel(imp);
+  tsk->AddPerfModel(p);	
+  p->LoadFromDisk(*p);
   return 0;
 }
 
@@ -127,31 +146,50 @@ void Executor::parse_protobuf(msg_t* request) {
 
 
 }
+msg_t* Executor::runImp(Implementation* imp, msg_t* m) {
+  std::string type = imp->getType();
+  Resource* r = FindResource(imp->getType());
+  return r->dispatch(m);
+}
 msg_t* Executor::handle_request(msg_t* request) {
   std::cout << "Executor::handle_request()\n";
-
+  msg_t* rsp = NULL;
+  Implementation* imp = NULL;
   if (request->clientId != atoi(cid.c_str())) {
     std::cout << "Error: Got a request from incorrect clientId[" 
               << request->clientId << "]\n";
       return msg_ack();
   }
-  request->print();
+//  request->print();
   switch (request->msgId) {
     case MSG_CONTROL:
          parse_protobuf(request);
          //because I'm a bad person :)
          // TODO: fix this reutrn statement
-         return (msg_t*)NULL;
+         return rsp;
     break;
     case MSG_DONE:
       return msg_empty();
     case MSG_ACK:
     case MSG_MOVING_AVG:
+      /* TODO[mtottenh]: Add error checking/lookup msgId in task map
+       */
+      imp = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize);
+      rsp = runImp(imp,request);
+      return rsp;
+      break;
     default:
+      // Consult Map to get Task string
+      // Find the Corresponding Task
+      // Query Models 
+      // Get Best Result's impelementation
+      // Run Implementation
+      // Return Results
+
       //For the moment just act as a proxy.
       int sizeBytes = sizeof(msg_t) + sizeof(int) * (request->dataSize);
       char* buff = (char *)calloc(sizeBytes, 1);
-      msg_t* rsp = (msg_t *) buff;
+      rsp = (msg_t *) buff;
       std::cout << "Sending request to client\n";
       Client c(schedPort,schedName);
       c.start();

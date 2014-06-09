@@ -34,6 +34,7 @@ class PerfModel {
         int SaveToDisk();
         int LoadFromDisk(const std::string& fname);
         int LoadFromDisk(PerfModel& pm);
+        Implementation* getImp() { return imp;}
         friend std::ostream& operator<<(std::ostream& os, const PerfModel& pm) {
           double projectedCost = 0.0;
           std::vector<double> input_data;

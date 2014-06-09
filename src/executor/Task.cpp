@@ -20,3 +20,27 @@ Task::~Task() {
       delete t;
   }
 }
+
+Implementation* Task::SelectImplementation(size_t dataSize) {
+  /* for each implementation. 
+   * query model.
+   * select min one
+   */
+   std::cout << "Task::SelectImplementation()\n";
+   std::deque<double>::iterator it;
+   std::deque<double> values; 
+   for( auto p: PerformanceModels) {
+     if (p != NULL) {
+       std::cout << "Querying Model: " << dataSize << "=" << p->QueryModel(dataSize) << "\n";
+       values.push_back(p->QueryModel(dataSize));
+     } else {
+       std::cout << "Invalid Model\n";
+     }
+   }
+   it = min_element(values.begin(),values.end());
+   int index = std::distance(values.begin(), it);
+   std::cout << "Best implementation index: " << index << "\n";
+   std::list<PerfModel*>::iterator head= PerformanceModels.begin();
+   std::advance(head, index);
+   return (*head)->getImp();
+}

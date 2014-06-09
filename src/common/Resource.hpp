@@ -10,7 +10,7 @@ class Resource {
     {
         rid = r.getId();
         port = r.getPort();
-        name = r.getName();
+        url = r.getName();
         type = r.getType();
         /* should we copy idle/util time? */
     }
@@ -22,7 +22,7 @@ class Resource {
 
         : rid (id),
           port (port_),
-          name (name_),
+          url (name_),
           type (type_)
     {
       utilization = 0.0;
@@ -30,7 +30,7 @@ class Resource {
     }
    Resource ( const std::string& port_, const std::string& name_,
               const std::string& type_)
-    : name(name_),
+    : url(name_),
       type(type_)
     {
       rid = -1;
@@ -43,11 +43,12 @@ class Resource {
 
     int getId() const { return rid; }
     int getPort() const {return port;}
-    const std::string& getName() const  {return name;}
+    const std::string& getName() const  {return url;}
     const std::string& getType() const { return type;}
+    msg_t* dispatch(msg_t*);
     friend std::ostream& operator<< (std::ostream& os, const Resource& r) {
       os << "{ID: " << r.rid << ",TYPE: " << r.type;
-      os << ",HOSTNAME: " << r.name << ",PORT: " << r.port << "}";
+      os << ",HOSTNAME: " << r.url << ",PORT: " << r.port << "}";
       return os;
     }
     friend bool operator==(const Resource& lhs, const Resource& rhs) {
@@ -62,7 +63,7 @@ class Resource {
     int port;
     float utilization;
     float idle_time;
-    std::string name;
+    std::string url;
     std::string type;
 };
 

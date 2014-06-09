@@ -4,6 +4,9 @@
 #include <fstream>
 PerfModel::PerfModel(Implementation *param)
 {
+  /* Default paramaters that worked well for the Naieve CPU Matrix multiply
+   * O(n^3)
+   */
   this->imp = param;
   this->alpha = 4e-18;
   this->iterations = 1e2;
@@ -105,19 +108,19 @@ void PerfModel::LinearRegression() {
 double PerfModel::QueryModel(double input) {
   double projectedCost = 0.0;
   std::vector<double> input_data;
-  std::cout << std::setprecision(3);
+  std::cout << std::setprecision(2);
   for (int i = 0; i <= order; i++) {
     input_data.push_back(pow(input,i));
   }
   for (int i = 0; i < numberOfFeatures; i++) {
-    std::cout << weights[i];
+ //   std::cout << weights[i];
     if ( i > 0)
-      std::cout  << "x^" << i;
+//      std::cout  << "x^" << i;
     if (i < numberOfFeatures -1)
-      std::cout << " + ";
+//      std::cout << " + ";
     projectedCost += weights[i] * input_data[i];
   }
-  std::cout << "\t = ";
+//  std::cout << "\t = ";
   return projectedCost;
 }
 

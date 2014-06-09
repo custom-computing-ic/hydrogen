@@ -3,20 +3,23 @@
 #include <string>
 #include <functional>
 #include <iostream>
-
+#include <sstream>
+#include <message.hpp>
+#include <Client.hpp>
 class Implementation {
 public:
   Implementation();
   ~Implementation(){}; 
   Implementation(const std::string& libname, const std::string& funcName);
   
-  Implementation(const std::string& libraryName_,
-                 const std::string& funcName_,
-                 const std::string& name_,
-                 const std::string& url_,
-                 const std::string& port_,
-                 const std::string& type_) :
-    name(name_), url(url_), port(port_), type(type_)
+  Implementation(std::string libraryName_,
+                 std::string funcName_,
+                 std::string name_,
+                 std::string url_,
+                 std::string port_,
+                 std::string type_) :
+    name(name_), url(url_), port(port_), type(type_), libraryName(libraryName_), 
+    funcName(funcName_)
   {
     
   }
@@ -37,7 +40,6 @@ public:
   void setPort(std::string arg) {port = arg;}  
   void setType(std::string arg) {type = arg;}  
 
-  void run();
 
 private:
   std::string libraryName;

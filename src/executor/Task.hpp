@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <deque>
+#include <PerfModel.hpp>
 #include <Implementation.hpp>
 
 
@@ -13,11 +15,22 @@ class Task {
     ~Task();
 
     std::list<Implementation *> GetImplementations();
-	  void AddImp(Implementation *imp) { this->Implementations.push_back(imp);};
-  	void DelImp(Implementation *imp) { 
 
+    void AddImp(Implementation *imp) { 
+      this->Implementations.push_back(imp);
+    }
+  	void DelImp(Implementation *imp) { 
             this->Implementations.remove(imp); 
-            delete(imp);}; 
+            delete(imp);
+    } 
+    void AddPerfModel(PerfModel* p) { 
+      this->PerformanceModels.push_back(p);
+    }
+    void DelPerfModel(PerfModel* p){ 
+      this->PerformanceModels.remove(p);
+      delete p;
+    }
+    Implementation* SelectImplementation(size_t);
 	  friend std::ostream& operator<<(std::ostream& os, const Task& obj) { 
 	    os << obj.getName();
 	    return os;
@@ -46,6 +59,7 @@ class Task {
   private:
 	  std::list<Implementation *> Implementations;
   	std::string name;
+    std::list<PerfModel *> PerformanceModels;
     // add stuff here
 };
 
