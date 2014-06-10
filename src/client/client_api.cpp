@@ -65,8 +65,6 @@ void TerminateServer() {
   Client c(portNumber, name);
   c.start();
   c.send(msg);
-  c.read(buff, sizeof(msg_t));
-  c.stop();
   free(msg);
 }
 

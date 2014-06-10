@@ -155,12 +155,13 @@ msg_t* Executor::handle_request(msg_t* request) {
   std::cout << "Executor::handle_request()\n";
   msg_t* rsp = NULL;
   Implementation* imp = NULL;
+  Client c(8111,"localhost");
+
   if (request->clientId != atoi(cid.c_str())) {
     std::cout << "Error: Got a request from incorrect clientId[" 
               << request->clientId << "]\n";
       return msg_ack();
   }
-//  request->print();
   switch (request->msgId) {
     case MSG_CONTROL:
          parse_protobuf(request);
@@ -169,7 +170,12 @@ msg_t* Executor::handle_request(msg_t* request) {
          return rsp;
     break;
     case MSG_DONE:
-      return msg_empty();
+      return msg_ack();
+    case MSG_TERM:
+      std::cout << "(DEBUG): Sending TERM to scheduler..\n";
+      c.start();
+      c.send(request);
+      return msg_ack();
     case MSG_ACK:
     case MSG_MOVING_AVG:
       /* TODO[mtottenh]: Add error checking/lookup msgId in task map
@@ -191,7 +197,6 @@ msg_t* Executor::handle_request(msg_t* request) {
       char* buff = (char *)calloc(sizeBytes, 1);
       rsp = (msg_t *) buff;
       std::cout << "Sending request to client\n";
-      Client c(8111,"localhost");
       c.start();
       c.send(request);
 

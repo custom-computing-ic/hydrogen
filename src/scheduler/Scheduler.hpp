@@ -57,8 +57,8 @@ public:
     }
     if (!already_cleaned) {
       std::cout << "\t(DEBUG): Joining jobThreads\n";
-      jobThreads.interrupt_all();
-      jobThreads.join_all();
+//      jobThreads.interrupt_all();
+///      jobThreads.join_all();
     }
     std::cout << "(DEBUG): ~Scheduler() Deconstructed\n";
   }
@@ -196,15 +196,15 @@ public:
   }
   JobResPair removeJobFromReadyQ(const JobResPair& j) {
     boost::lock_guard<boost::mutex> lk(readyQMtx);
-/*    if (readyQ->size() > 0) {
+    if (readyQ->size() > 0) {
       auto elem = std::find_if(readyQ->begin(), readyQ->end(),
                              std::bind(&idEqrq, std::get<0>(*(std::get<0>(j)))->getId(),
                                        std::placeholders::_1));
       if (elem != readyQ->end()) {
         readyQ->erase(elem);
       }
-*/
-    JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
+    } 
+/*    JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
     JobQueue::iterator a = readyQ->begin();
     for(;a != readyQ->end(); a++) {
       if (std::get<0>(**a)->getId() != std::get<0>(*(std::get<0>(j)))->getId()) {
@@ -212,7 +212,7 @@ public:
       }
     }
     readyQ = preserve_list;
-    
+  */  
     return j;
   }
   void removeJobFromRunQ(int jid);

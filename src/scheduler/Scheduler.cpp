@@ -5,6 +5,10 @@
 #include <boost/chrono.hpp>
 #include <unistd.h>
 #define MODE_MANAGED 4
+
+
+#define REF_GET(N,Tuple) \
+        [] (Tuple& t) { return std::get<N>(t);};
 using namespace std;
 //Removes resources allocated to a job from the res pool....
 bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
@@ -225,7 +229,9 @@ void Scheduler::runJobs() {
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
          std::get<1>(*jobTuplePtr).setStarted(true);
-        jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
+         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
+         jobThread.detach();
+//        jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
       }
     }
 }
@@ -275,13 +281,12 @@ void Scheduler::runJob(JobResPair& j) {
     #ifdef DEBUG
       rsp->print();
     #endif
-    jobPtr->setRsp(rsp);
+//    jobPtr->copyRsp(buff,sizeBytes);
+    jobPtr->setRsp((msg_t*)buff);
     returnResources(resourceList);
     updateMeanWaitTime(std::get<0>(*jobTuplePtr));
     removeJobFromRunQ(jobPtr->getId());
-    boost::this_thread::interruption_point();
     enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
-    boost::this_thread::interruption_point();
   } catch (boost::thread_interrupted &) {
     std::cout << "(DEBUG): Worker thread interrupted" << std::endl;
     return;
@@ -341,8 +346,8 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #ifdef DEBUG
   request.print();
 #endif
-  JobTuple t = std::make_tuple( JobPtr(new Job(&request,getNextId())),
-                                std::ref(jInfo),std::ref(jCondVar));
+  JobPtr j = JobPtr(new Job(&request,getNextId()));
+  JobTuple t = std::make_tuple( j, std::ref(jInfo),std::ref(jCondVar));
   enqueue(readyQ, shared_ptr<JobTuple>(&t), readyQMtx,"readyQ");
 
   try {
@@ -350,8 +355,8 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
       jCondVar.wait(lock);
     }
     lock.unlock();
-    std::cout << "\t(DEBUG): " << *std::get<0>(t) << " finished\n" << std::endl;
-    msg_t* rsp = std::get<0>(t)->getRsp();
+    std::cout << "\t(DEBUG): " << *j << " finished\n" << std::endl;
+    msg_t* rsp = j->getRsp();
     if (rsp == NULL) {
       //ERROR
     } else {

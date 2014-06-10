@@ -5,7 +5,7 @@
 #include <functional>
 
 #include <boost/chrono.hpp>
-
+#include <boost/make_shared.hpp>
 #include <memory>
 #include <deque>
 #include <vector>
@@ -19,17 +19,22 @@ class Job {
     Job(msg_t* request,int);
     /* getters */
     ~Job(){
-      if (req != nullptr) {
- //       free(req);
+/*      if (req != nullptr) {
+       req = nullptr;
       }
       if (rsp != nullptr) {
-        free(rsp);
-      }
+        rsp = nullptr;
+      }*/
 
     }
     std::string str() const;
-    msg_t* getReq() { return req;}
-    void   setRsp(msg_t* rsp) { this->rsp = rsp; }
+    msg_t* getReq() { return req.get();}
+    void   setRsp(msg_t* r) { this->rsp = std::make_shared<msg_t>(*r); }
+    void   copyRsp(char* buff,size_t sizeBytes) {
+      msg_t* r = (msg_t*)buff;
+      this->rsp = std::make_shared<msg_t>();
+      memcpy(this->rsp->data,r->data,r->dataBytes());
+    }
     inline int getStatus() const { return status; }
     inline size_t getMin() const { return min;}
     inline size_t getMax() const { return max;}
@@ -45,15 +50,15 @@ class Job {
     
     /* setters */
     inline void setIssueTime(boost::chrono::system_clock::time_point a) { 
-      std::cout << *this << " Issued\n";// at: " << a << "\n"; 
+    //  std::cout << *this << " Issued\n";// at: " << a << "\n"; 
       issueTime = a;
     }
     inline void setDispatchTime(boost::chrono::system_clock::time_point a) { 
-      std::cout << *this << " Dispatched\n";// at: " << a << "\n"; 
+//      std::cout << *this << " Dispatched\n";// at: " << a << "\n"; 
       dispatchTime = a;
     }
     inline void setFinishTime(boost::chrono::system_clock::time_point a) { 
-      std::cout << *this << " Finished\n"; // << a << "\n";
+  //    std::cout << *this << " Finished\n"; // << a << "\n";
       finishTime = a; 
     }
     inline void setMax(size_t a) {max = a;}
@@ -79,7 +84,7 @@ class Job {
     }
     /* Helper Functions */
     msg_t run();
-    msg_t* getRsp() { return rsp;}
+    msg_t* getRsp() { return rsp.get();}
     void getResponse(char*,size_t);
 
   private:
@@ -104,7 +109,7 @@ class Job {
     //Assigning it to a ref (e.g. msg_t& req and assigning in the constructor)
     //seems to lead to data corruption (probably because the pointer data
     //isn't a fixed size.
-    msg_t* req;
-    msg_t* rsp;
+    std::shared_ptr<msg_t> req;
+    std::shared_ptr<msg_t> rsp;
 };
 #endif

@@ -7,26 +7,6 @@ float defaultCostFunction(JobResPair& p) {
 
 
 
-/*Job::Job(int a, int b, CostFunctionType c) {
-  min = a;
-  max = b;
-  cost_func = c;
-  issueTime = 0;
-  dispatchTime = 0;
-  defaultJobTime = 1.0;
-  finishTime = 0;
-  status = -1;
-}
-Job::Job(int a, int b, CostFunctionType c, float d) {
-  min = a;
-  max = b;
-  cost_func = c;
-  issueTime = 0;
-  dispatchTime = 0;
-  defaultJobTime = d;
-  finishTime = 0;
-  status = -1;
-}*/
 /* for constructing a Job object from a message request */
 Job::Job(msg_t* request,int id) :  req(request) {
   //TODO[mtottenh]: Replace this with metadata gained from executor

@@ -137,19 +137,27 @@ void connection::handle_read(const boost::system::error_code& e,
 
     // do work and generate reply
     reply = server_.handle_request(fullRequest);
-    if (reply == NULL)
-      raise(SIGINT);
+
     if (resized)
       free(fullRequest);
 
     // write reply back
-    ba::write(socket_, ba::buffer((char *)reply, reply->sizeBytes()));
-
-    socket_.read_some(ba::buffer(buffer_));
-  } while (request != NULL && request->msgId != MSG_DONE);
-  free(reply);
+    if (reply != NULL) {
+      ba::write(socket_, ba::buffer((char *)reply, reply->sizeBytes()));
+      socket_.read_some(ba::buffer(buffer_));
+    }
+  } while (request != NULL && 
+           request->msgId != MSG_DONE && 
+           request->msgId != MSG_TERM);
+  if (reply != NULL)
+    free(reply);
+  if (request->msgId == MSG_TERM) {
+    std::cout << "(DEBUG): Terminating in handle_read (msgId == MSG_TERM)\n";
+    raise(SIGINT);
+  }
   boost::system::error_code ignored_ec;
   socket_.shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
+
 }
 
 void connection::handle_write(const boost::system::error_code& e) {
