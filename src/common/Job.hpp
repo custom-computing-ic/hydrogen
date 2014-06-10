@@ -19,20 +19,20 @@ class Job {
     Job(msg_t* request,int);
     /* getters */
     ~Job(){
-/*      if (req != nullptr) {
+      if (req != nullptr) {
        req = nullptr;
       }
       if (rsp != nullptr) {
         rsp = nullptr;
-      }*/
-
+      }
     }
     std::string str() const;
-    msg_t* getReq() { return req.get();}
-    void   setRsp(msg_t* r) { this->rsp = std::make_shared<msg_t>(*r); }
+    msg_t* getReq() { return req;}
+    void   setRsp(msg_t* r) { this->rsp = r; }
     void   copyRsp(char* buff,size_t sizeBytes) {
       msg_t* r = (msg_t*)buff;
-      this->rsp = std::make_shared<msg_t>();
+//      this->rsp = std::make_shared<msg_t>();
+            
       memcpy(this->rsp->data,r->data,r->dataBytes());
     }
     inline int getStatus() const { return status; }
@@ -84,7 +84,7 @@ class Job {
     }
     /* Helper Functions */
     msg_t run();
-    msg_t* getRsp() { return rsp.get();}
+    msg_t* getRsp() { return rsp;}
     void getResponse(char*,size_t);
 
   private:
@@ -109,7 +109,11 @@ class Job {
     //Assigning it to a ref (e.g. msg_t& req and assigning in the constructor)
     //seems to lead to data corruption (probably because the pointer data
     //isn't a fixed size.
-    std::shared_ptr<msg_t> req;
-    std::shared_ptr<msg_t> rsp;
+    msg_t* req;
+    msg_t* rsp;
+
+    //
+//    std::shared_ptr<msg_t> req;
+ //   std::shared_ptr<msg_t> rsp;
 };
 #endif

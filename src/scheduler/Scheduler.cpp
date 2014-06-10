@@ -229,9 +229,9 @@ void Scheduler::runJobs() {
       JobTuplePtr jobTuplePtr = std::get<0>(*it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
          std::get<1>(*jobTuplePtr).setStarted(true);
-         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
-         jobThread.detach();
-//        jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
+//         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
+//         jobThread.detach();
+        jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
       }
     }
 }
@@ -346,8 +346,8 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #ifdef DEBUG
   request.print();
 #endif
-  JobPtr j = JobPtr(new Job(&request,getNextId()));
-  JobTuple t = std::make_tuple( j, std::ref(jInfo),std::ref(jCondVar));
+  JobPtr nJob = JobPtr(new Job(&request,getNextId()));
+  JobTuple t = std::make_tuple( nJob, std::ref(jInfo),std::ref(jCondVar));
   enqueue(readyQ, shared_ptr<JobTuple>(&t), readyQMtx,"readyQ");
 
   try {
@@ -355,8 +355,8 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
       jCondVar.wait(lock);
     }
     lock.unlock();
-    std::cout << "\t(DEBUG): " << *j << " finished\n" << std::endl;
-    msg_t* rsp = j->getRsp();
+    std::cout << "\t(DEBUG): " << *nJob << " finished\n" << std::endl;
+    msg_t* rsp = nJob->getRsp();
     if (rsp == NULL) {
       //ERROR
     } else {
