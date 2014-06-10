@@ -5,6 +5,10 @@
 #include <boost/chrono.hpp>
 #include <unistd.h>
 #define MODE_MANAGED 4
+#define FCFS_MIN 0
+#define FCFS_MAX 1
+#define FCFS_AMAP 2
+#define SJTF 3
 
 
 #define REF_GET(N,Tuple) \
@@ -284,7 +288,7 @@ void Scheduler::runJob(JobResPair& j) {
 //    jobPtr->copyRsp(buff,sizeBytes);
     jobPtr->setRsp((msg_t*)buff);
     returnResources(resourceList);
-    updateMeanWaitTime(std::get<0>(*jobTuplePtr));
+    updateStatistics(std::get<0>(*jobTuplePtr));
     removeJobFromRunQ(jobPtr->getId());
     enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
   } catch (boost::thread_interrupted &) {

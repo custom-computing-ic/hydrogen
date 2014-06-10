@@ -16,7 +16,7 @@ int main() {
   int *exp = mavg_threept_exp(n, data);
 
   /** Ask for a simple moving average a few times */
-  int t = 2;
+  int t = 20;
 
   bool status = true;
   for (int k = 0; k < t; k++) {

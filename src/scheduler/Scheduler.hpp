@@ -81,12 +81,20 @@ public:
     nextJid = 1;
     strat = "Completion Time";
     window = 5;
-    totalJobs = 0;
+    totalCompletions = 0;
     clientPriorities[1] = 1;
     clientPriorities[2] = 2;
     clientPriorities[3] = 3;
     clientPriorities[4] = 4;
     meanWaitTime = boost::chrono::seconds(0); 
+    meanServiceTime = boost::chrono::seconds(0); 
+    totalWaitTime = boost::chrono::seconds(0); 
+    totalServiceTime = boost::chrono::seconds(0); 
+
+    meanLatency = boost::chrono::seconds(0);
+    meanThroughput = 0;
+    meanUtilization = 0;
+    startTime = boost::chrono::system_clock::now();
   }
 
   template <typename T> void enqueue(typename ContainerPtr<std::shared_ptr<T>>::deque container, 
@@ -145,10 +153,14 @@ public:
   void stop() {   
     /* If not using priorities: */
     std::cout << "(INFO): Mean waiting Time: " << meanWaitTime << "\n";
- //   std::cout << "(INFO): Mean Service Time: " << meanServiceTime << "\n";
- //   std::cout << "(INFO): Mean Latency : " << meanLatency << "\n";
- //   std::cout << "(INFO): Mean Throughput " << meanThroughput << "\n";
- //   std::cout << "(INFO): Mean Utilization " << meanUtilization << "\n";
+    std::cout << "(INFO): Mean Service Time: " << meanServiceTime << "\n";
+    std::cout << "(INFO): Mean Latency : " << meanLatency << "\n";
+    std::cout << "(INFO): Mean Throughput " << meanThroughput << "  (Jobs/sec)\n";
+    std::cout << "(INFO): Mean Utilization " << meanUtilization << "\n";
+    std::cout << "(INFO): Total Jobs : " << totalCompletions + 
+                                            readyQ->size() + 
+                                            runQ->size() << "\n";
+
  //   add per resource Utilization Statistics
 
     /* Otherwise 
@@ -226,12 +238,30 @@ public:
 
   void claimResources(JobResPair& elem);
   void returnResources(ResourceList& res);
+
+  void updateStatistics(JobPtr j) {
+    boost::lock_guard<boost::mutex> lk(waitTimeMtx);
+    totalCompletions++;
+    updateMeanWaitTime(j);
+    updateMeanServiceTime(j);
+    //updateLatency()
+    updateThroughput(j);
+//    updateUtilization(j);
+  }
   void updateMeanWaitTime(JobPtr j) {
     //LOCK
-    boost::lock_guard<boost::mutex> lk(waitTimeMtx);
-    totalJobs++;
-    meanWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
-    meanWaitTime /=  totalJobs;  
+    totalWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
+    meanWaitTime =  totalWaitTime  /  totalCompletions;  
+  }
+
+  void updateMeanServiceTime(JobPtr j) {
+    totalServiceTime += (j->getDispatchTime() - j->getFinishTime());
+    meanServiceTime= totalServiceTime / totalCompletions;
+  }
+  void updateThroughput(JobPtr j) {
+    auto tp = boost::chrono::system_clock::now();
+    auto seconds = boost::chrono::duration_cast<boost::chrono::seconds>(tp-startTime);
+    meanThroughput = (double) totalCompletions / (double) seconds.count();
   }
   inline void addResource(Resource& r){
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
@@ -323,9 +353,19 @@ private:
   /* tuning variables */
   size_t window;
   boost::chrono::duration<double> meanWaitTime;
+  boost::chrono::duration<double> totalWaitTime;
+
+  boost::chrono::duration<double> meanServiceTime;
+  boost::chrono::duration<double> totalServiceTime;
+  boost::chrono::duration<double> meanLatency;
+  boost::chrono::time_point<boost::chrono::system_clock,boost::chrono::duration<double> > startTime;
+
+  double meanThroughput;
+  double meanUtilization; 
+
   std::string strat;
   int nextJid;
-  uint64_t totalJobs;
+  uint64_t totalCompletions;
   std::unordered_map<int,int> clientPriorities;
 };
 
