@@ -175,7 +175,7 @@ msg_t* Executor::handle_request(msg_t* request) {
       std::cout << "(DEBUG): Sending TERM to scheduler..\n";
       c.start();
       c.send(request);
-      return msg_ack();
+      return msg_done();
     case MSG_ACK:
     case MSG_MOVING_AVG:
       /* TODO[mtottenh]: Add error checking/lookup msgId in task map

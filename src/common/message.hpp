@@ -32,6 +32,8 @@ typedef struct msg {
 /** Utility functions for constructing various types of messages */
 msg_t* msg_empty();
 msg_t* msg_ack();
+msg_t* msg_done();
+
 msg_t* msg_moving_avg(int n, size_t width, int* dataIn);
 
 #endif /* _MESSAGE_H_ */

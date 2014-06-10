@@ -44,6 +44,11 @@ msg_t* msg_ack() {
   msg->msgId = MSG_ACK;
   return msg;
 }
+msg_t* msg_done() {
+  msg_t *msg = (msg_t *)calloc(sizeof(msg_t), 1);
+  msg->msgId = MSG_DONE;
+  return msg;
+}
 
 msg_t* msg_moving_avg(int n, size_t width, int* dataIn) {
   int sizeBytes = sizeof(msg_t) + n * sizeof(int) + sizeof(size_t);

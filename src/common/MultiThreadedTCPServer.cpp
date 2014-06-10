@@ -143,8 +143,12 @@ void connection::handle_read(const boost::system::error_code& e,
 
     // write reply back
     if (reply != NULL) {
-      ba::write(socket_, ba::buffer((char *)reply, reply->sizeBytes()));
-      socket_.read_some(ba::buffer(buffer_));
+      try {
+        ba::write(socket_, ba::buffer((char *)reply, reply->sizeBytes()));
+        socket_.read_some(ba::buffer(buffer_));
+      } catch (std::exception& e) {
+        std::cout << "(ERROR): handle_read - " << e.what() << std::endl;
+      }
     }
   } while (request != NULL && 
            request->msgId != MSG_DONE && 
