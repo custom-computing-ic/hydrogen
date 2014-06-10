@@ -247,6 +247,7 @@ public:
     //updateLatency()
     updateThroughput(j);
 //    updateUtilization(j);
+    updateLateJobs(j);
   }
   void updateMeanWaitTime(JobPtr j) {
     //LOCK
@@ -262,6 +263,13 @@ public:
     auto tp = boost::chrono::system_clock::now();
     auto seconds = boost::chrono::duration_cast<boost::chrono::seconds>(tp-startTime);
     meanThroughput = (double) totalCompletions / (double) seconds.count();
+  }
+  void updateLateJobs(JobPtr j) {
+    auto actualExecutionTime = j->getFinishTime() - j.getDispatchTime();
+    lateness = actualExecutionTime - estimateExecutionTime(j);      
+    if ( lateness > 0) {
+      std::cout << "(INFO): Estimate off by : "<< lateness << " seconds\n"
+    }
   }
   inline void addResource(Resource& r){
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
@@ -311,6 +319,7 @@ private:
   msg_t getJobResponse(int);
   void returnToReadyQ(JobPtr j,int pos);
   JobPtr estimateFinishTime(JobPtr j);
+  boost::chrono::duration<boost::chrono::seconds> estimateExecutionTime(JobPtr);
   int numLateJobs();
   void updateState();
   void dumpInfo();
