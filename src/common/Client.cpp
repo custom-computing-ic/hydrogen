@@ -18,18 +18,17 @@ Client::Client(Resource &r) :
 }
 
 void Client::send(msg_t *message) {
-  cout << "Client::send()" << endl;
-  cout << "\tSending " << message->sizeBytes() << " bytes" << endl;
-  ba::write(*socket_, ba::buffer((char *)message,
-                                 message->sizeBytes())
-            );
+  cout << "(DEBUG): Client::send()" << endl;
+  cout << "(DEBUG): \tSending " << message->sizeBytes() << " bytes" << endl;
+  ba::write(*socket_, 
+            ba::buffer((char *)message, message->sizeBytes())
+           );
 }
 
 void Client::start() {
-  cout << "Client::start()" << endl;
-  cout << "\tHostname: " << name;
+  cout << "(DEBUG): Client::start()" << endl;
+  cout << "(DEBUG): \tHostname: " << name;
   cout << "\tPort: " << port << endl;
-//  cout << "tcp::resolver()" << endl;
   try {
   tcp::resolver resolver(io_service);
 //  cout << "tcp::resolver::query()" << endl;
@@ -38,19 +37,18 @@ void Client::start() {
   boost::system::error_code ec;
   tcp::resolver::iterator endpoint_it = resolver.resolve(q,ec);
   if (ec)
-    cout << "cannot resolve address: " << ec.message() << endl;
-//  cout << "tcp::socket()" << endl;
+    cout << "(ERROR): cannot resolve address: " << ec.message() << endl;
   socket_ = boost::make_shared<tcp::socket>(boost::ref(io_service));
-//  cout << "asio::connect()" << endl;
+//  cout << "(DEBUG): asio::connect()" << endl;
   boost::asio::connect(*socket_, endpoint_it);
   } catch (std::exception& e) {
-    cout << e.what() << endl;
+    cout << "(ERROR): Client::start() - " << e.what() << endl;
   }
 
 }
 
 void Client::stop() {
-  cout << "Client::stop()" << endl;
+  cout << "(DEBUG): Client::stop()" << endl;
 
   // let the server know we're done
   msg_t msg;
@@ -64,13 +62,13 @@ void Client::stop() {
 }
 
 void Client::getResult(void* out, int sizeBytes) {
-  cout << "Client::getResult()" << endl;
+  cout << "(DEBUG): Client::getResult()" << endl;
   int size = sizeBytes + sizeof(msg_t);
   char *buf = (char *)calloc(size, 1);
   ba::read(*socket_, boost::asio::buffer(buf, size));
   msg_t* rsp = (msg_t*)buf;
   if (sizeBytes != rsp->dataBytes()) {
-    cerr << "\tError: reply size different than expected! ";
+    cerr << "(ERROR): \tError: reply size different than expected! ";
     cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes();
   }
   memcpy(out, rsp->data, rsp->dataBytes());
@@ -78,7 +76,7 @@ void Client::getResult(void* out, int sizeBytes) {
 }
 
 int Client::read(char* buffer, size_t sizeBytes) {
-  cout << "Client::read()" << endl;
+  cout << "(DEBUG): Client::read()" << endl;
   ba::read(*socket_, ba::buffer(buffer, sizeBytes));
   return 0;
 }

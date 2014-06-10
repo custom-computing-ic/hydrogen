@@ -8,7 +8,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/chrono.hpp>
-
+#include <signal.h>
 #include <unordered_map>
 #include <MultiThreadedTCPServer.hpp>
 #include <Resource.hpp>
@@ -33,23 +33,33 @@ class Scheduler : public MultiThreadedTCPServer {
 public:
   ~Scheduler() {
     std::cout << "(DEBUG): ~Scheduler()..\n";
-    std::cout << "\t(DEBUG): Joining schedulerThread\n";
-    schedulerThread->interrupt();
-    schedulerThread->join();
-    std::cout << "\t(DEBUG): Joining dispatcherThread\n";
-    dispatcherThread->interrupt();
-    dispatcherThread->join();
-
-    std::cout << "\t(DEBUG): Joining finishedQThread\n";
-    finishedQThread->interrupt();
-    finishedQThread->join();
-
-    std::cout << "\t(DEBUG): Joining jobThreads\n";
-    jobThreads.join_all();
-    std::cout << "\t(DEBUG): Freeing thread pointers\n";    
-    delete schedulerThread;
-    delete dispatcherThread;
-    delete finishedQThread;
+    bool already_cleaned = true;
+    if (schedulerThread != nullptr) {
+      std::cout << "\t(DEBUG): Joining schedulerThread\n";
+      schedulerThread->interrupt();
+      schedulerThread->join();
+      delete schedulerThread;
+      already_cleaned = false;
+    }
+    if (dispatcherThread != nullptr) {
+      std::cout << "\t(DEBUG): Joining dispatcherThread\n";
+      dispatcherThread->interrupt();
+      dispatcherThread->join();
+      delete dispatcherThread;
+      already_cleaned = false;
+    }
+    if (finishedQThread != nullptr) {
+      std::cout << "\t(DEBUG): Joining finishedQThread\n";
+      finishedQThread->interrupt();
+      finishedQThread->join();
+      delete finishedQThread;
+      already_cleaned = false;
+    }
+    if (!already_cleaned) {
+      std::cout << "\t(DEBUG): Joining jobThreads\n";
+      jobThreads.interrupt_all();
+      jobThreads.join_all();
+    }
     std::cout << "(DEBUG): ~Scheduler() Deconstructed\n";
   }
   Scheduler(const std::string& port,
@@ -149,7 +159,8 @@ public:
                 << priorityWt << "\n";
     }
     */
-  } ;
+//    raise(SIGINT);
+  };
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
   { 
@@ -228,7 +239,8 @@ public:
     std::string hostName = r.getName();
     int Rid = r.getId();
     std::string type = r.getType();
-    resPool->push_back(std::unique_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
+//    resPool->push_back(boost::unique_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
+    resPool->push_back(boost::shared_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
   }
 private:
   JobPtr deallocate(JobPtr j);
@@ -244,7 +256,10 @@ private:
   {
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
     const std::string& type = std::string("DFE");
-    resPool->push_back(std::unique_ptr<Resource>(new Resource(Rid,PortNo,Hostname,type)));
+     resPool->push_back(boost::shared_ptr<Resource>(new Resource(Rid,PortNo,Hostname,type)));
+
+//    resPool->push_back(boost::unique_ptr<Resource,Deleter<Resource>>(new Resource(Rid,PortNo,Hostname,type)));
+
   }
 
 

@@ -10,6 +10,7 @@ const int MSG_ACK = 1;
 const int MSG_MOVING_AVG = 2;
 const int MSG_RESULT = 100;
 const int MSG_CONTROL = 200;
+const int MSG_TERM = 300;
 #pragma pack(1)
 typedef struct msg {
   int msgId; // based on msg id we know what the data means

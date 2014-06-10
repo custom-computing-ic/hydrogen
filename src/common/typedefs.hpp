@@ -8,10 +8,21 @@ class Scheduler;
 class Job;
 class Resource;
 
+/* Deleter for boost::unqiue_ptr 
+ * From - http://stackoverflow.com/questions/3873750/boost-unique-ptr-deletor 
+ */
+template<typename T> struct Deleter {
+      void operator()(T *p)
+            {
+                      delete p;
+                          }
+};
+
 /* Base Types */
-typedef std::unique_ptr<Resource> ResourcePtr;
+//typedef boost::unique_ptr<Resource,Deleter<Resource>> ResourcePtr;
+typedef boost::shared_ptr<Resource> ResourcePtr;
 //typedef std::unique_ptr<Job> JobPtr;
-typedef std::shared_ptr<Job> JobPtr;
+typedef boost::shared_ptr<Job> JobPtr;
 typedef std::tuple<JobPtr, struct JobInfo&, boost::condition_variable&> JobTuple;
 typedef std::shared_ptr<JobTuple> JobTuplePtr;
 typedef std::deque<Resource> ResourceList;   //TODO: change this maybe?
@@ -100,6 +111,7 @@ struct JobInfo {
     started = p;
   }
 };
+
 
 
 

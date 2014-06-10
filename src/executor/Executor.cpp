@@ -191,7 +191,7 @@ msg_t* Executor::handle_request(msg_t* request) {
       char* buff = (char *)calloc(sizeBytes, 1);
       rsp = (msg_t *) buff;
       std::cout << "Sending request to client\n";
-      Client c(schedPort,schedName);
+      Client c(8111,"localhost");
       c.start();
       c.send(request);
 

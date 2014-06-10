@@ -17,7 +17,7 @@ if (OPENMP_FOUND)
 endif()
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -std=c++11 -g")
-
+#SET(CMAKE_CXX_COMPILER "clang")
 SET(BITSTREAM_DIR "${PROJECT_SOURCE_DIR}/src/bitstreams")
 SET(USE_BITSTREAMS "false")
 

@@ -1,5 +1,6 @@
 #include "MultiThreadedTCPServer.hpp"
 #include <boost/bind.hpp>
+#include <signal.h>
 #include <vector>
 
 #include "message.hpp"
@@ -136,7 +137,8 @@ void connection::handle_read(const boost::system::error_code& e,
 
     // do work and generate reply
     reply = server_.handle_request(fullRequest);
-
+    if (reply == NULL)
+      raise(SIGINT);
     if (resized)
       free(fullRequest);
 

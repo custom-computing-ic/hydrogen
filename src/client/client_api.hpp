@@ -6,6 +6,7 @@
 /** Contains client stubs. */
 
 void movingAverage(std::size_t n, std::size_t size, int* data, int* out);
+void TerminateServer();
 /** Version of Moving average where client can specify port # */
 void movingAverage(size_t n, size_t size, int* data, int* out, int pNum);
 

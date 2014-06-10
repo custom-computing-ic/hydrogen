@@ -7,7 +7,7 @@
 #define MODE_MANAGED 4
 using namespace std;
 //Removes resources allocated to a job from the res pool....
-bool resPtrEQ(const Resource& lhs, const std::unique_ptr<Resource>& rhs) {
+bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
   return lhs.getId() == rhs->getId();
 }
 void Scheduler::claimResources(JobResPair &elem) {
@@ -146,6 +146,9 @@ msg_t* Scheduler::handle_request(msg_t* request) {
   //found
   msg_t* response;
   switch(request->msgId) {
+    case MSG_TERM:
+        stop();
+        return (msg_t*)NULL;
     case MSG_DONE:
       return msg_ack();
     case MSG_MOVING_AVG:
@@ -227,57 +230,62 @@ void Scheduler::runJobs() {
     }
 }
 void Scheduler::runJob(JobResPair& j) {
+  try {
+    ResourceList resourceList = std::get<1>(j);
+    JobTuplePtr jobTuplePtr = std::get<0>(j);
+    JobPtr jobPtr = std::get<0>(*jobTuplePtr);
+    std::cout << "(DEBUG): Scheduler::runJob(" << *jobPtr  << ")\n";
+   //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
+    Resource r = resourceList.front();
+    const string& name = r.getName().c_str();
+    int portNumber = r.getPort();
+    std::cout << "\t(DEBUG): Scheduler::runJob() - Opening connection to: " 
+              << name << ":" << portNumber << "\n";
+    Client c(portNumber,name);
+    c.start();
+    msg_t* req = jobPtr->getReq();
+    boost::this_thread::interruption_point();
+    #ifdef DEBUG
+      req.print();
+    #endif
+    if (req != NULL) {
+      std::cout << "\t(DEBUG): Scheduler::runJob() - Sending Request\n";
+      c.send(req);
+    }
 
-  ResourceList resourceList = std::get<1>(j);
-  JobTuplePtr jobTuplePtr = std::get<0>(j);
-  JobPtr jobPtr = std::get<0>(*jobTuplePtr);
+    int sizeBytes = sizeof(msg_t) + sizeof(int) * req->dataSize;
+    char* buff = (char *)calloc(sizeBytes, 1);
 
-  std::cout << "(DEBUG): Scheduler::runJob(" << *jobPtr  << ")\n";
- //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
-  Resource r = resourceList.front();
-  const string& name = r.getName().c_str();
-  int portNumber = r.getPort();
-  std::cout << "\t(DEBUG): Scheduler::runJob() - Opening connection to: " 
-            << name << ":" << portNumber << "\n";
-  Client c(portNumber,name);
-  c.start();
-  msg_t* req = jobPtr->getReq();
+    if (buff == NULL) {
+      std::cout << "\t(ERROR): Unable to allocate result buffer\n";
+      c.stop();
+      return;
+    }
 
-#ifdef DEBUG
-  req.print();
-#endif
-  if (req != NULL) {
-    std::cout << "\t(DEBUG): Scheduler::runJob() - Sending Request\n";
-    c.send(req);
-  }
+    msg_t* rsp = (msg_t*)buff;
 
-  int sizeBytes = sizeof(msg_t) + sizeof(int) * req->dataSize;
-  char* buff = (char *)calloc(sizeBytes, 1);
-
-  if (buff == NULL) {
-    std::cout << "\t(ERROR): Unable to allocate result buffer\n";
+    do {
+      c.read(buff,sizeBytes);
+      #ifdef DEBUG
+        rsp->print();
+      #endif
+    }  while ( rsp->msgId != MSG_RESULT);
+    std::cout << "\t(DEBUG): Scheduler::runJob() - closing Connection\n";
     c.stop();
+    #ifdef DEBUG
+      rsp->print();
+    #endif
+    jobPtr->setRsp(rsp);
+    returnResources(resourceList);
+    updateMeanWaitTime(std::get<0>(*jobTuplePtr));
+    removeJobFromRunQ(jobPtr->getId());
+    boost::this_thread::interruption_point();
+    enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
+    boost::this_thread::interruption_point();
+  } catch (boost::thread_interrupted &) {
+    std::cout << "(DEBUG): Worker thread interrupted" << std::endl;
     return;
   }
-
-  msg_t* rsp = (msg_t*)buff;
-
-  do {
-    c.read(buff,sizeBytes);
-#ifdef DEBUG
-    rsp->print();
-#endif
-  }  while ( rsp->msgId != MSG_RESULT);
-  std::cout << "\t(DEBUG): Scheduler::runJob() - closing Connection\n";
-  c.stop();
-#ifdef DEBUG
-  rsp->print();
-#endif
-  jobPtr->setRsp(rsp);
-  returnResources(resourceList);
-  updateMeanWaitTime(std::get<0>(*jobTuplePtr));
-  removeJobFromRunQ(jobPtr->getId());
-  enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
 }
 void Scheduler::removeJobFromRunQ(int jid) {
   boost::lock_guard<boost::mutex> lk(runQMtx); 
@@ -337,22 +345,24 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
                                 std::ref(jInfo),std::ref(jCondVar));
   enqueue(readyQ, shared_ptr<JobTuple>(&t), readyQMtx,"readyQ");
 
-
-  while (!jInfo.isFinished()) {
-    jCondVar.wait(lock);
-  }
-  lock.unlock();
-  std::cout << "\t(DEBUG): " << *std::get<0>(t) << " finished\n" << std::endl;
-  msg_t* rsp = std::get<0>(t)->getRsp();
-  if (rsp == NULL) {
-//    response = msg_empty();
-  } else {
-    response.msgId = rsp->msgId;
-    response.dataSize = rsp->dataSize;
-    response.paramsSize = 0;
-//  size_t dataBytes  = rsp->dataSize*sizeof(int);
-    memcpy(&response.data,rsp->data ,rsp->dataBytes());
-
+  try {
+    while (!jInfo.isFinished()) {
+      jCondVar.wait(lock);
+    }
+    lock.unlock();
+    std::cout << "\t(DEBUG): " << *std::get<0>(t) << " finished\n" << std::endl;
+    msg_t* rsp = std::get<0>(t)->getRsp();
+    if (rsp == NULL) {
+      //ERROR
+    } else {
+      response.msgId = rsp->msgId;
+      response.dataSize = rsp->dataSize;
+      response.paramsSize = 0;
+      memcpy(&response.data,rsp->data ,rsp->dataBytes());
+    }
+  } catch (boost::thread_interrupted &)  {
+    std::cout << "(DEBUG): Concurrent handler interrupted" << std::endl;
+    return &response;
   }
 #ifdef DEBUG
   response.print();

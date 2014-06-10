@@ -67,12 +67,15 @@ public:
   // A thread safe function to be called by each connection
   virtual msg_t* handle_request(msg_t* request)=0;
 
+
 private:
   void start_accept();
 
   void handle_accept();
 
+  // Stop the server.
   void handle_stop();
+
 
   std::size_t thread_pool_size_;
 
