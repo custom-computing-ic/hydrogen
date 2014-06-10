@@ -265,10 +265,10 @@ public:
     meanThroughput = (double) totalCompletions / (double) seconds.count();
   }
   void updateLateJobs(JobPtr j) {
-    auto actualExecutionTime = j->getFinishTime() - j.getDispatchTime();
-    lateness = actualExecutionTime - estimateExecutionTime(j);      
-    if ( lateness > 0) {
-      std::cout << "(INFO): Estimate off by : "<< lateness << " seconds\n"
+ boost::chrono::duration<double> actualExecutionTime = boost::chrono::duration_cast<boost::chrono::seconds>(j->getFinishTime() - j->getDispatchTime());
+    auto lateness = actualExecutionTime - estimateExecutionTime(j);      
+    if ( lateness > boost::chrono::seconds(0)) {
+      std::cout << "(INFO): Estimate off by : "<< lateness << " seconds\n";
     }
   }
   inline void addResource(Resource& r){
@@ -319,7 +319,7 @@ private:
   msg_t getJobResponse(int);
   void returnToReadyQ(JobPtr j,int pos);
   JobPtr estimateFinishTime(JobPtr j);
-  boost::chrono::duration<boost::chrono::seconds> estimateExecutionTime(JobPtr);
+  boost::chrono::duration<double> estimateExecutionTime(JobPtr);
   int numLateJobs();
   void updateState();
   void dumpInfo();

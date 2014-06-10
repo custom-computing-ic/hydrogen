@@ -8,6 +8,7 @@
 #include <SimpleTimer.hpp>
 #include <Executor.hpp>
 #include <Implementation.hpp>
+#include <client_api.hpp>
 #include <boost/timer/timer.hpp>
 #include <random>
 #include <sstream>
@@ -59,15 +60,38 @@ int main(int argc, char** argv) {
   e.AddResource(new Resource(2, 8114, "localhost", "CPU"));
   /* Adding some tasks... */
   e.AddTask(new Task("MOVING_AVERAGE"));
-  e.AddImp(e.FindTask("MOVING_AVERAGE"), 
-           new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE"));
-  e.AddImp(e.FindTask("MOVING_AVERAGE"),
-           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
+  Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
+  PerfModel perf(mav_DFE,4e-18,1e2,2,1);
+  perf.CreateModel(384000, [&](const int size) -> double {
+                  if (size == 0) 
+                    return 0.0;
+                  std::default_random_engine gen;
+                  std::uniform_int_distribution<int> dist(0,10000);
+                  auto a1 = (int*) malloc(size*sizeof(int));
+                  auto out =(int*) malloc(size*sizeof(int));
+                  for (int j = 0; j < size; j++) {
+                    a1[j] = dist(gen);
+                  }
+                  SimpleTimer test_t;
+                  test_t.start();
+                  movingAverage(size,3,a1,out,1);
+                  uint64_t ms = test_t.end();
+                  std::stringstream ss;
+                  ss << ms;
+                  delete a1;
+                  double msd;
+                  ss >> msd;
+                  return msd;
+                });
+
+  perf.SaveToDisk("MAV_DFE");
+//  e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_DFE);
+//  e.AddImp(e.FindTask("MOVING_AVERAGE"),
+//           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
  
 
 
-
-  e.start();
+//  e.start();
   return 0;
 }
 

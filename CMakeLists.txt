@@ -78,7 +78,7 @@ target_link_libraries (scheduler Scheduler)
 
 # Executor Executable
 add_executable  (executor src/executor/main.cxx)
-target_link_libraries (executor Executor )
+target_link_libraries (executor Executor ${EXTRA_LIBS})
 
 # Tests - Can use these as client executables
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)

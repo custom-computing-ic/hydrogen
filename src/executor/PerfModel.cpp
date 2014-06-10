@@ -33,7 +33,7 @@ int PerfModel::CreateModel(int maxsize,std::function<double(int)> f) {
   milliseconds.push_back(1);  
   std::cout << "\t*Generating test data\n\t\t [";
   fflush(stdout);
-  for(int i = 0; i < maxsize; i+=5) {
+  for(int i = 0; i < maxsize; i+=(maxsize/100)) {
      tmp.clear();
     
      if ( i > 0) {
@@ -126,9 +126,13 @@ double PerfModel::QueryModel(double input) {
 
 
 int PerfModel::SaveToDisk(const std::string& name) {
-  std::cout << "Saving this model to: " << name << "_" 
-            << imp->getLibName() << "_" << imp->getFuncName() <<".mdl\n";
+  std::cout << "Saving this model to: " << name <<".mdl\n";
   //TODO: Serialize relevant data to disk.
+  std::ofstream saveFile;
+  saveFile.open(name+".mdl",std::ofstream::out);
+  boost::archive::text_oarchive output(saveFile);
+  output << *this;
+  saveFile.close();
 
   return 0;
 }

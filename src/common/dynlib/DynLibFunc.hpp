@@ -1,5 +1,5 @@
-#ifndef _IMPLEMENTATION_H_
-#define _IMPLEMENTATION_H_
+#ifndef _DYN_LIB_FUNC_H_
+#define _DYN_LIB_FUNC_H_
 #include <dlfcn.h>
 #include <string>
 #include <functional>

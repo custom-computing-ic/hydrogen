@@ -51,10 +51,10 @@ void Scheduler::defaultHandler(msg_t& request,
 #endif
 }
 
-boost::chrono::duration<boost::chrono::seconds> Scheduler::estimateExecutionTime(JobPtr j) {
+boost::chrono::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   //TODO[mtottenh]:Add code to estimate a job finish time
   std::cout << "Scheduler::estimateExecutionTime() : Not implemented\n";
-  return j;
+  return boost::chrono::seconds(0);
 }
 
 
