@@ -4,11 +4,12 @@
 #include <cstring>
 #include <boost/chrono.hpp>
 #include <unistd.h>
-#define MODE_MANAGED 4
+#define MODE_MANAGED 5
 #define FCFS_MIN 0
 #define FCFS_MAX 1
 #define FCFS_AMAP 2
 #define SJTF 3
+#define PRIORITY 4
 
 
 #define REF_GET(N,Tuple) \
@@ -107,7 +108,7 @@ Allocations* Scheduler::schedule(size_t choice, bool flag) {
 
   flag = false;
   Allocations *a = nullptr;
-  if (resPool->size() > 0) {
+  if (resPool->size() > 0 && readyQ->size() > 0) {
     a = this->algVec[choice](*this);
   }
  return a;

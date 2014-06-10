@@ -26,7 +26,6 @@ int main() {
     status &= mavg_check(n, out, exp);
     free(out);
   }
-  TerminateServer();
 
   return status ? 0 : 1;
 }

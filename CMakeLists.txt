@@ -83,6 +83,10 @@ target_link_libraries (executor Executor )
 # Tests - Can use these as client executables
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
+
+add_executable (TerminateServer test/TerminateServer.cpp)
+target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
+
 # Add resource Test - needs protobufs and currently segfaults. should find out
 # why
 #add_executable (AddResource test/AddResource.cpp)
@@ -101,3 +105,4 @@ enable_testing ()
 add_test ("DispatcherTest" DispatcherTest)
 add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
 add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
+add_test ("TerminateServer" TerminateServer)

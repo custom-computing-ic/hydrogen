@@ -29,6 +29,8 @@ int main(int argc, char** argv) {
   /* 3 */
   s.addSchedAlg(SJTF);
   /* 4 */
+  s.addSchedAlg(Priority);
+  /* 5 */
   s.addSchedAlg(ManagedMode);
 
   s.start();
