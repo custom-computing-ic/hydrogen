@@ -1,7 +1,5 @@
 #include "MultiThreadedTCPServer.hpp"
 #include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
 #include <vector>
 
 #include "message.hpp"
@@ -9,7 +7,10 @@
 using namespace std;
 namespace ba = boost::asio;
 
-MultiThreadedTCPServer::~MultiThreadedTCPServer() {}
+MultiThreadedTCPServer::~MultiThreadedTCPServer() {
+  std::cout << "(DEBUG): ~MultiThradedTCPServer()...\n";
+  std::cout << "(DEBUG): ~MultiThradedTCPServer() Deconstructed\n";
+}
 
 MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const string& port,
                                                size_t thread_pool_size)
@@ -33,22 +34,21 @@ MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const stri
   acceptor_.set_option(bip::tcp::acceptor::reuse_address(true));
   acceptor_.bind(endpoint);
   acceptor_.listen();
-
   start_accept();
 }
 
 void MultiThreadedTCPServer::run() {
-  cout << "Creating thread pool size " << thread_pool_size_ << endl;
-  boost::thread_group worker_threads;
+  cout << "(DEBUG): Creating thread pool size " << thread_pool_size_ << endl;
   for (size_t i = 0; i < thread_pool_size_; ++i) {
     worker_threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service_));
   }
-  worker_threads.join_all();
+  cout << "(DEBUG): Calling join_all()\n";
+  worker_threads.join_all(); 
 }
 
 void MultiThreadedTCPServer::start_accept() {
 #ifdef DEBUG
-  cout << "Start accept\n";
+  cout << "(DEBUG): Start accept\n";
 #endif
   new_connection_.reset(new connection(io_service_, *this));
   acceptor_.async_accept(new_connection_->socket(),
@@ -57,14 +57,19 @@ void MultiThreadedTCPServer::start_accept() {
 
 void MultiThreadedTCPServer::handle_accept() {
 #ifdef DEBUG
-  cout << "Server:: handle_accept" << endl;
+  cout << "(DEBUG): Server:: handle_accept" << endl;
 #endif
   new_connection_->start();
   start_accept();
 }
 
 void MultiThreadedTCPServer::handle_stop() {
+  cout << "(DEBUG): Server::handle_stop()" << endl;
   io_service_.stop();
+  cout << "(DEBUG): interrupting worker_threads" << endl;
+  worker_threads.interrupt_all();
+//  cout << "(DEBUG): joining worker_threads" << endl;
+//  worker_threads.join_all();
 }
 
 connection::connection(ba::io_service& io_service,
@@ -84,17 +89,17 @@ void connection::start() {
   // solution is to wait for sizeof(msg_t) so that we are sure we read
   // all the fields of the struct correctly
   socket_.async_read_some(ba::buffer(buffer_),
-                          strand_.wrap(
-                                       boost::bind(&connection::handle_read, shared_from_this(),
-						   ba::placeholders::error,
-						   ba::placeholders::bytes_transferred)));
+                          strand_.wrap(boost::bind(&connection::handle_read, 
+                                                   shared_from_this(),
+                                    						   ba::placeholders::error,
+                                    						   ba::placeholders::bytes_transferred)));
 }
 
 void connection::handle_read(const boost::system::error_code& e,
 			     std::size_t bytes_transferred)
 {
 #ifdef DEBUG
-  cout << "TCPServer::Bytes transferred: ";
+  cout << "(DEBUG): TCPServer::Bytes transferred: ";
   cout << bytes_transferred << endl;
 #endif
 

@@ -67,7 +67,7 @@ Task* Executor::FindTask(std::string name) {
   typedef std::list<Task *>::iterator it;
   it found = std::find_if(Tasks.begin(), 
  		                      Tasks.end(), 
-                          std::bind(task_ptr_eq,t1,_1)
+                          std::bind(task_ptr_eq,t1,std::placeholders::_1)
                        );
 	//	          [&] (Task *t) { return *t == *t1; } );
   delete(t1);
@@ -83,7 +83,7 @@ Resource* Executor::FindResource(std::string type) {
   typedef std::list<Resource *>::iterator it;
   it found = std::find_if(AvailableRes.begin(), 
  		                      AvailableRes.end(), 
-                          std::bind(res_type_eq,type,_1)
+                          std::bind(res_type_eq,type,std::placeholders::_1)
                        );
 	//	          [&] (Task *t) { return *t == *t1; } );
   return AvailableRes.end() != found ? *found : NULL;  

@@ -32,13 +32,25 @@ class Scheduler : public MultiThreadedTCPServer {
 
 public:
   ~Scheduler() {
+    std::cout << "(DEBUG): ~Scheduler()..\n";
+    std::cout << "\t(DEBUG): Joining schedulerThread\n";
     schedulerThread->interrupt();
     schedulerThread->join();
+    std::cout << "\t(DEBUG): Joining dispatcherThread\n";
     dispatcherThread->interrupt();
     dispatcherThread->join();
+
+    std::cout << "\t(DEBUG): Joining finishedQThread\n";
+    finishedQThread->interrupt();
+    finishedQThread->join();
+
+    std::cout << "\t(DEBUG): Joining jobThreads\n";
     jobThreads.join_all();
+    std::cout << "\t(DEBUG): Freeing thread pointers\n";    
     delete schedulerThread;
     delete dispatcherThread;
+    delete finishedQThread;
+    std::cout << "(DEBUG): ~Scheduler() Deconstructed\n";
   }
   Scheduler(const std::string& port,
 	    const std::string& name,
@@ -121,13 +133,22 @@ public:
 
   virtual void start();
   void stop() {   
-/*    schedulerThread->interrupt();
-    schedulerThread->join();
-    dispatcherThread->interrupt();
-    dispatcherThread->join();
-    jobThreads.join_all();
-    delete schedulerThread;
-    delete dispatcherThread;*/
+    /* If not using priorities: */
+    std::cout << "(INFO): Mean waiting Time: " << meanWaitTime << "\n";
+ //   std::cout << "(INFO): Mean Service Time: " << meanServiceTime << "\n";
+ //   std::cout << "(INFO): Mean Latency : " << meanLatency << "\n";
+ //   std::cout << "(INFO): Mean Throughput " << meanThroughput << "\n";
+ //   std::cout << "(INFO): Mean Utilization " << meanUtilization << "\n";
+ //   add per resource Utilization Statistics
+
+    /* Otherwise 
+    int i = 0;
+    for(priorityWt: meanWaitTimes) {
+      i++;
+      std::cout << "Mean waiting time for priority[" << i << "]: " 
+                << priorityWt << "\n";
+    }
+    */
   } ;
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)

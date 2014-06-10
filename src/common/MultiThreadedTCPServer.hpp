@@ -6,6 +6,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread.hpp>
 #include <string>
 
 #include "message.hpp"
@@ -80,6 +81,8 @@ private:
   boost::asio::signal_set signals_;
 
   boost::asio::ip::tcp::acceptor acceptor_;
+  
+  boost::thread_group worker_threads;
 
   connection_ptr new_connection_;
 };

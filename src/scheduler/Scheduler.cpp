@@ -25,44 +25,16 @@ void Scheduler::claimResources(JobResPair &elem) {
 }
 
 void Scheduler::returnResources(ResourceList& res) {
-//  std::cout << "Scheduler::returnResources(): ";
-//  std::cout << "\tresPool[" << resPool->size() << "]\t";
-
-//  std::cout << "{ ";
   ResourceList::iterator r = res.begin();
   for (; r != res.end(); r++) {
-//    std::cout << *r << ",";
     addResource(*r);
   }
-//  std::cout << "}\n";
-//  std::cout << "resPool[" << resPool->size() << "]\n";
 }
 
 //TODO[mtottenh] Finish implementing the rest of the scheduler class
 void Scheduler::defaultHandler(msg_t& request,
                                msg_t& response,
                                int responseSize) {
-  /*
-  resPool->front()->send(&request);
-  // wait for reply back
-  char buffer[responseSize];
-  memset(buffer, 0, responseSize);
-  int n = resPool->front()->read(buffer, responseSize);
-
-  cout << "Default handler " << endl;
-  request.print();
-  response.print();
-
-  msg_t* rsp = (msg_t*)buffer;
-  rsp->print();
-  response.msgId = rsp->msgId;
-  response.dataSize = rsp->dataSize;
-  response.paramsSize = 0;
-  memcpy(response.data, rsp->data, rsp->dataBytes());
-
-  cout << "DefHandler Response" << endl;
-  response.print();*/
-
   cout << "Default Handler: Not implemented\n" << responseSize;
 #ifdef DEBUG
   request.print();
@@ -107,7 +79,6 @@ void Scheduler::notifyClientsOfResults() {
 //  std::cout << "NotifyClients Of Results: Needs implementing\n";
   auto j = finishedQ->front();
   finishedQ->pop_front();
-  std::cout << "Mean waiting time: " << meanWaitTime << "\n";
   std::get<1>(*j).setFinished(true);
   std::get<2>(*j).notify_all();
 }
@@ -153,14 +124,14 @@ ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
 //TODO[mtottenh]:Check this functions as intended.
 //I'm not sure about getAllocdRes()->***/
 JobPtr Scheduler::deallocate(JobPtr j) {
-  std::cout << "De-allocating (NOT IMPLEMENTED) " << *j << "\n";
+  std::cout << "(ERROR): Scheduler::deallocate (NOT IMPLEMENTED) \n";
   return j;
 }
 
 
 //TODO[mtottenh]: Remove this
 msg_t Scheduler::getJobResponse(int jobID) {
-  std::cout << "Scheduler::getJobResponse: Not Implmented" << jobID << "\n";
+  std::cout << "(ERROR): Scheduler::getJobResponse (NOT IMPLEMENTED)\n";
   msg_t rsp;
   return rsp;
 }
@@ -208,7 +179,7 @@ void Scheduler::schedLoop() {
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
         auto start = boost::chrono::system_clock::now();
-        std::cout << "Event on readyQ\n";
+        std::cout << "(DEBUG): Event on readyQ\n";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
@@ -223,22 +194,27 @@ void Scheduler::schedLoop() {
             auto end = boost::chrono::system_clock::now();
             auto duration = boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
 
-            std::cout << "Scheduling took: " << duration.count() << "us" << std::endl;
+            std::cout << "(INFO): Scheduling took: " << duration.count() << "us" << std::endl;
             QCondVar.notify_all();
           }
           delete a;
-          std::cout << "***Managed Mode scheduled " << numJobsScheduled <<" Jobs***\n";
+          std::cout << "(INFO): Managed Mode scheduled " << numJobsScheduled <<" Jobs\n";
         }
         QStatus.setReadyQStatus(readyQ->size() > 0);
       }
     }
-  } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
+  } 
+  catch (boost::thread_interrupted &) {
+    std::cout << "(DEBUG): Scheduling thread recieved interrupt"  << std::endl;
+    return;
+  }
+  catch (std::exception &e) {
+    std::cout << "(ERROR): Scheduling thread - " << e.what() << std::endl;
     throw e;
   }
 }
 void Scheduler::runJobs() {
-    std::cout << "Scheduler::runJobs()\n";
+    std::cout << "(DEBUG): Scheduler::runJobs()\n";
     boost::lock_guard<boost::mutex> lk(runQMtx);
 
     JobResPairQ::iterator it = runQ->begin();
@@ -256,12 +232,12 @@ void Scheduler::runJob(JobResPair& j) {
   JobTuplePtr jobTuplePtr = std::get<0>(j);
   JobPtr jobPtr = std::get<0>(*jobTuplePtr);
 
-  std::cout << "Scheduler::runJob(" << *jobPtr  << ")\n";
+  std::cout << "(DEBUG): Scheduler::runJob(" << *jobPtr  << ")\n";
  //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
   Resource r = resourceList.front();
   const string& name = r.getName().c_str();
   int portNumber = r.getPort();
-  std::cout << "\tScheduler::runJob() - Opening connection to: " 
+  std::cout << "\t(DEBUG): Scheduler::runJob() - Opening connection to: " 
             << name << ":" << portNumber << "\n";
   Client c(portNumber,name);
   c.start();
@@ -271,7 +247,7 @@ void Scheduler::runJob(JobResPair& j) {
   req.print();
 #endif
   if (req != NULL) {
-    std::cout << "\t Scheduler::runJob() - Sending Request\n";
+    std::cout << "\t(DEBUG): Scheduler::runJob() - Sending Request\n";
     c.send(req);
   }
 
@@ -279,7 +255,7 @@ void Scheduler::runJob(JobResPair& j) {
   char* buff = (char *)calloc(sizeBytes, 1);
 
   if (buff == NULL) {
-    std::cout << "ERROR: Unable to allocate result buffer\n";
+    std::cout << "\t(ERROR): Unable to allocate result buffer\n";
     c.stop();
     return;
   }
@@ -292,7 +268,7 @@ void Scheduler::runJob(JobResPair& j) {
     rsp->print();
 #endif
   }  while ( rsp->msgId != MSG_RESULT);
-  std::cout << "\tScheduler::runJob() - closing Connection\n";
+  std::cout << "\t(DEBUG): Scheduler::runJob() - closing Connection\n";
   c.stop();
 #ifdef DEBUG
   rsp->print();
@@ -320,18 +296,23 @@ void Scheduler::dispatcherLoop() {
       //situation....
       while ( !QStatus.getRunQStatus() ) {
         QCondVar.wait(lock);
-        std::cout << "Dispatcher thread woke up\n";
+//        std::cout << "(DEBUG): Dispatcher thread woke up\n";
       }
       lock.unlock();
       if (QStatus.getRunQStatus()) {
-        std::cout << "Event on Run Q\n";
+        std::cout << "(DEBUG): Event on Run Q\n";
         runJobs();
         QStatus.setRunQStatus(false);
       }
     }
-  } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
-    this->stop();
+  } 
+  catch (boost::thread_interrupted &) {
+    std::cout << "(DEBUG): Dispatcher thread recieved interrupt"  << std::endl;
+    return;
+  }
+  catch (std::exception &e) {
+    std::cout << "(ERROR): Dispatcher thread - " << e.what() << std::endl;
+    throw e;
   }
 }
 
@@ -347,7 +328,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 
   jInfo.setFinished(false);
   jInfo.setStarted(false);
-  std::cout << "Scheduler::concurrentHandler()\n";
+  std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
 
 #ifdef DEBUG
   request.print();
@@ -361,7 +342,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
     jCondVar.wait(lock);
   }
   lock.unlock();
-  std::cout << "\t" << *std::get<0>(t) << " finished\n" << std::endl;
+  std::cout << "\t(DEBUG): " << *std::get<0>(t) << " finished\n" << std::endl;
   msg_t* rsp = std::get<0>(t)->getRsp();
   if (rsp == NULL) {
 //    response = msg_empty();
@@ -389,7 +370,7 @@ void Scheduler::finishedLoop() {
       }
       lock.unlock();
       if (QStatus.getFinishedQStatus() == true) {
-        std::cout << "Event on finishedQ\n";
+        std::cout << "(DEBUG): Event on finishedQ\n";
         QStatus.setReadyQStatus(true);
         while (finishedQ->size() > 0) {
           notifyClientsOfResults();
@@ -397,8 +378,13 @@ void Scheduler::finishedLoop() {
         QStatus.setFinishedQStatus(false);
       }
     }
-  }catch (std::exception& e) {
-    std::cout << "Finished Loop Error: " << e.what() << std::endl;
+  }
+  catch (boost::thread_interrupted &) {
+    std::cout << "(DEBUG): FinishedQ thread recieved interrupt"  << std::endl;
+    return;
+  }
+  catch (std::exception& e) {
+    std::cout << "(ERROR): FinishedQ thread - " << e.what() << std::endl;
   }
 }
 
@@ -413,3 +399,9 @@ void Scheduler::start() {
   finishedQThread = new boost::thread(&Scheduler::finishedLoop, this);
   run();
 }
+
+
+
+
+
+
