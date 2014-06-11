@@ -21,11 +21,11 @@ Allocations* FCFSMin(Scheduler &s) {
     ResourceList resourceList =  s.allocate(*std::get<0>(*j),
                                     std::get<0>(*j)->getMin(),
                                     std::get<0>(*j)->getMin());
-
+    auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
     //TODO: make allocate leave resources in the pool?
     if (resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      a->addJobResourcePair(j,resourceList);
+      a->addJobResourcePair(j,resourceListPtr);
     } else {
 #ifdef DEBUG
       std::cout << "FCFSMin Can't allocate resources to job\n";
@@ -53,7 +53,8 @@ Allocations* FCFSAsManyAsPos(Scheduler &s) {
 
     if ( resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      a->addJobResourcePair(j,resourceList);
+      auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
+      a->addJobResourcePair(j,resourceListPtr);
     } else {
       break;
       /* if we can't allocate then just stop */
@@ -76,7 +77,8 @@ Allocations* FCFSMax(Scheduler &s) {
                                     std::get<0>(*j)->getMax()); 
     if ( resourceList.size() > 0) {
       /* successfully allocated the min resources */
-      a->addJobResourcePair(j,resourceList);
+      auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
+      a->addJobResourcePair(j,resourceListPtr);
     } else {
       break;
       /* if we can't allocate then just stop */
@@ -110,9 +112,10 @@ Allocations* Priority(Scheduler &s) {
 
    ResourceList resourceList =  s.allocate(*std::get<0>(**max_elem),
                                     std::get<0>(**max_elem)->getMax(),
-                                    std::get<0>(**max_elem)->getMax()); 
+                                    std::get<0>(**max_elem)->getMax());
 
-   alloc->addJobResourcePair(*max_elem,resourceList);
+   auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
+   alloc->addJobResourcePair(*max_elem,resourceListPtr);
 
    nend = remove(job_window.begin(),nend,*max_elem);
    max_elem =  std::max_element(job_window.begin(), nend, sortByPriority);   
@@ -194,8 +197,8 @@ Allocations* SJTF(Scheduler &s) {
    ResourceList resourceList =  s.allocate(*std::get<0>(**min_elem),
                                     std::get<0>(**min_elem)->getMax(),
                                     std::get<0>(**min_elem)->getMax()); 
-
-   aloc->addJobResourcePair(*min_elem,resourceList);
+   auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
+   aloc->addJobResourcePair(*min_elem,resourceListPtr);
 
    nend = remove(job_window.begin(),nend,*min_elem);
    min_elem =  std::min_element(job_window.begin(), nend, sortByMin);   

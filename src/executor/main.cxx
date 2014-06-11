@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
   e.AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
   PerfModel perf(mav_DFE,4e-18,1e2,2,1);
-  perf.CreateModel(384000, [&](const int size) -> double {
+  perf.CreateModel(38400000, [&](const int size) -> double {
                   if (size == 0) 
                     return 0.0;
                   std::default_random_engine gen;
@@ -77,15 +77,21 @@ int main(int argc, char** argv) {
                   movingAverage(size,3,a1,out,1);
                   uint64_t ms = test_t.end();
                   std::stringstream ss;
+                  std::cout << "(INFO): Size: " << size << "\t ms: " << ms << "\n";
                   ss << ms;
-                  delete a1;
+                  free(a1);
+                  free(out);
                   double msd;
                   ss >> msd;
                   return msd;
                 });
-
+  std::cout << "(INFO)" << perf << "\n";
+  for (int i = 384; i < 38400; i+= 384) {
+    std::cout << "(DEBUG): perf.QueryModel("<< i 
+              << ") = " << perf.QueryModel(i) << "ms\n";
+  }
   perf.SaveToDisk("MAV_DFE");
-//  e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_DFE);
+  e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_DFE);
 //  e.AddImp(e.FindTask("MOVING_AVERAGE"),
 //           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
  

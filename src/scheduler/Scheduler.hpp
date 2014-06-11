@@ -120,13 +120,13 @@ public:
 #endif
     QCondVar.notify_all();
   }
-  void addToRunQ(JobResPair &elem) {
+  void addToRunQ(JobResPairPtr &elem) {
     boost::lock_guard<boost::mutex> guard(runQMtx);
 #ifdef DEBUG
     std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
 #endif
     runQ->push_back(elem);
-    std::get<0>(*std::get<0>(elem))->setDispatchTime(boost::chrono::system_clock::now());
+    std::get<0>(*std::get<0>(*elem))->setDispatchTime(boost::chrono::system_clock::now());
     QStatus.setRunQStatus(true);
 #ifdef DEBUG
     std::cout << "Added element to runQ, calling notify_all().\n";
@@ -197,20 +197,20 @@ public:
   inline  AlgVecType* getAlgVecPtr() { return &algVec;}
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
   void runJobs();
-  void runJob(JobResPair& j);
+  void runJob(JobResPairPtr j);
   
-  inline static bool idEq (const int& jid, const JobResPair & item) {
-    return jid == std::get<0>(*std::get<0>(item))->getId();
+  inline static bool idEq (const int& jid, const JobResPairPtr & item) {
+    return jid == std::get<0>(*std::get<0>(*item))->getId();
   }
 
   inline static bool idEqrq (const int& jid, const JobTuplePtr & item) {
     return jid == std::get<0>(*item)->getId();
   }
-  JobResPair removeJobFromReadyQ(const JobResPair& j) {
+  JobResPairPtr removeJobFromReadyQ(const JobResPairPtr& j) {
     boost::lock_guard<boost::mutex> lk(readyQMtx);
     if (readyQ->size() > 0) {
       auto elem = std::find_if(readyQ->begin(), readyQ->end(),
-                             std::bind(&idEqrq, std::get<0>(*(std::get<0>(j)))->getId(),
+                             std::bind(&idEqrq, std::get<0>(*(std::get<0>(*j)))->getId(),
                                        std::placeholders::_1));
       if (elem != readyQ->end()) {
         readyQ->erase(elem);
@@ -236,8 +236,8 @@ public:
   JobQueuePtr getFinishedQPtr() { return finishedQ; }
   JobResPairQPtr getRunQPtr() { return runQ;}
 
-  void claimResources(JobResPair& elem);
-  void returnResources(ResourceList& res);
+  void claimResources(JobResPairPtr elem);
+  void returnResources(ResourceListPtr res);
 
   void updateStatistics(JobPtr j) {
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);

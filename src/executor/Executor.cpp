@@ -97,7 +97,7 @@ int Executor::AddImp(Task *tsk,Implementation *imp) {
   std::cout << "Executor::AddImp()\n";
   PerfModel* p = new PerfModel(imp);
   tsk->AddPerfModel(p);	
-  p->LoadFromDisk(*p);
+  p->LoadFromDisk("MAV_DFE");
   return 0;
 }
 

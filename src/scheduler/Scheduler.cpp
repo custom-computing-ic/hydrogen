@@ -19,23 +19,23 @@ using namespace std;
 bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
   return lhs.getId() == rhs->getId();
 }
-void Scheduler::claimResources(JobResPair &elem) {
+void Scheduler::claimResources(JobResPairPtr elem) {
   boost::lock_guard<boost::mutex> lk(resPoolMtx);
   using namespace std::placeholders;
   std::cout << "Scheduler::claimResources():\t";
   std::cout << "resPool[" << resPool->size() << "]\t";
 
-  ResourceList& r = std::get<1>(elem);
-  for (auto rit = r.begin(); rit != r.end(); rit++) {
+  ResourceListPtr r = std::get<1>(*elem);
+  for (auto rit = r->begin(); rit != r->end(); rit++) {
     auto remove = std::find_if(resPool->begin(), resPool->end(),std::bind(resPtrEQ,*rit,std::placeholders::_1));
     resPool->erase(remove);
   }
   std::cout << "resPool[" << resPool->size() << "]\n";
 }
 
-void Scheduler::returnResources(ResourceList& res) {
-  ResourceList::iterator r = res.begin();
-  for (; r != res.end(); r++) {
+void Scheduler::returnResources(ResourceListPtr res) {
+  ResourceList::iterator r = res->begin();
+  for (; r != res->end(); r++) {
     addResource(*r);
   }
 }
@@ -227,27 +227,33 @@ void Scheduler::schedLoop() {
 }
 void Scheduler::runJobs() {
     std::cout << "(DEBUG): Scheduler::runJobs()\n";
-    boost::lock_guard<boost::mutex> lk(runQMtx);
-
+    boost::unique_lock<boost::mutex> lk(runQMtx);
+    boost::thread_group jT;
     JobResPairQ::iterator it = runQ->begin();
     for (;it != runQ->end(); it++) {
-      JobTuplePtr jobTuplePtr = std::get<0>(*it);
+      JobTuplePtr jobTuplePtr = std::get<0>(**it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
          std::get<1>(*jobTuplePtr).setStarted(true);
 //         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
 //         jobThread.detach();
-        jobThreads.create_thread(boost::bind(&Scheduler::runJob,this,*it));
+
+         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
       }
+
     }
+    lk.unlock();
+    jT.join_all();
 }
-void Scheduler::runJob(JobResPair& j) {
+void Scheduler::runJob(JobResPairPtr j) {
   try {
-    ResourceList resourceList = std::get<1>(j);
-    JobTuplePtr jobTuplePtr = std::get<0>(j);
+    ResourceListPtr resourceList;
+    JobTuplePtr jobTuplePtr;
+    std::tie(jobTuplePtr,resourceList) = *j;
+
     JobPtr jobPtr = std::get<0>(*jobTuplePtr);
     std::cout << "(DEBUG): Scheduler::runJob(" << *jobPtr  << ")\n";
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
-    Resource r = resourceList.front();
+    Resource r = resourceList->front();
     const string& name = r.getName().c_str();
     int portNumber = r.getPort();
     std::cout << "\t(DEBUG): Scheduler::runJob() - Opening connection to: " 
@@ -289,7 +295,8 @@ void Scheduler::runJob(JobResPair& j) {
 //    jobPtr->copyRsp(buff,sizeBytes);
     jobPtr->setRsp((msg_t*)buff);
     returnResources(resourceList);
-    updateStatistics(std::get<0>(*jobTuplePtr));
+    resourceList = nullptr;
+    updateStatistics(jobPtr);
     removeJobFromRunQ(jobPtr->getId());
     enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
   } catch (boost::thread_interrupted &) {
@@ -353,7 +360,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #endif
   JobPtr nJob = JobPtr(new Job(&request,getNextId()));
   JobTuple t = std::make_tuple( nJob, std::ref(jInfo),std::ref(jCondVar));
-  enqueue(readyQ, shared_ptr<JobTuple>(&t), readyQMtx,"readyQ");
+  enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx,"readyQ");
 
   try {
     while (!jInfo.isFinished()) {
@@ -369,6 +376,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
       response.dataSize = rsp->dataSize;
       response.paramsSize = 0;
       memcpy(&response.data,rsp->data ,rsp->dataBytes());
+      free(rsp);
     }
   } catch (boost::thread_interrupted &)  {
     std::cout << "(DEBUG): Concurrent handler interrupted" << std::endl;

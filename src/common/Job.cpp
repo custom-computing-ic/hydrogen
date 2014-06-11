@@ -2,7 +2,7 @@
 
 
 float defaultCostFunction(JobResPair& p) {
-  return std::get<0>(*std::get<0>(p))->getDefaultJobTime() /   std::get<1>(p).size();
+  return std::get<0>(*std::get<0>(p))->getDefaultJobTime() /   std::get<1>(p)->size();
 }
 
 

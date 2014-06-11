@@ -11,8 +11,8 @@ class Allocations {
       score = 0;
       jobs.clear();
     }
-    void addJobResourcePair(JobTuplePtr j, ResourceList r) {
-      jobs.push_back(std::make_pair(j,r));
+    void addJobResourcePair(JobTuplePtr j, ResourceListPtr r) {
+      jobs.push_back(std::make_shared<JobResPair>(std::make_pair(j,r)));
     }
 
     float makespan() {
@@ -20,7 +20,7 @@ class Allocations {
       JobResPairQ::iterator it = jobs.begin();
       for(;it != jobs.end();it++) 
       {
-        sum += std::get<0>(*std::get<0>(*it))->cost(*it);
+        sum += std::get<0>(*std::get<0>(**it))->cost(**it);
       } 
       return sum;
     }

@@ -27,12 +27,13 @@ typedef boost::shared_ptr<Job> JobPtr;
 typedef std::tuple<JobPtr, struct JobInfo&, boost::condition_variable&> JobTuple;
 typedef std::shared_ptr<JobTuple> JobTuplePtr;
 typedef std::deque<Resource> ResourceList;   //TODO: change this maybe?
-typedef std::pair<JobTuplePtr,ResourceList> JobResPair;
-
+typedef std::shared_ptr<ResourceList> ResourceListPtr;
+typedef std::pair<JobTuplePtr,ResourceListPtr> JobResPair;
+typedef std::shared_ptr<JobResPair> JobResPairPtr;
 /* Collections of Bases */
 typedef std::deque<ResourcePtr> ResourcePool;
 typedef std::deque<JobTuplePtr> JobQueue;
-typedef std::deque<JobResPair>  JobResPairQ;
+typedef std::deque<JobResPairPtr>  JobResPairQ;
 
 /* Pointers to Collections */
 typedef std::shared_ptr<JobQueue>     JobQueuePtr;

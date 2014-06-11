@@ -35,7 +35,6 @@ int PerfModel::CreateModel(int maxsize,std::function<double(int)> f) {
   fflush(stdout);
   for(int i = 0; i < maxsize; i+=(maxsize/100)) {
      tmp.clear();
-    
      if ( i > 0) {
        for (int j = 0; j <= order; j++) {
         tmp.push_back(pow(i,j));
@@ -108,7 +107,7 @@ void PerfModel::LinearRegression() {
 double PerfModel::QueryModel(double input) {
   double projectedCost = 0.0;
   std::vector<double> input_data;
-  std::cout << std::setprecision(2);
+  //std::cout << std::setprecision(2);
   for (int i = 0; i <= order; i++) {
     input_data.push_back(pow(input,i));
   }
@@ -157,10 +156,13 @@ int PerfModel::SaveToDisk() {
 
 
 int PerfModel::LoadFromDisk(const std::string& name) {
-  std::cout << "Loading this model from: " << name << "_" 
-            << imp->getLibName() << "_" << imp->getFuncName() <<".mdl\n";
+  std::cout << "Loading this model from: " << name <<".mdl\n";
   //TODO: Serialize relevant data to disk.
-
+  std::ifstream saveFile;
+  saveFile.open(name+".mdl",std::ofstream::in);
+  boost::archive::text_iarchive input(saveFile);
+  input >> *this;
+  saveFile.close(); 
   return 0;
 }
 
