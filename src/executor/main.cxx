@@ -90,18 +90,18 @@ int main(int argc, char** argv) {
   perf.LoadFromDisk("MAV_DFE");
   std::cout << "(INFO)" << perf << "\n";
 
-  for (int i = 0; i < 38400000; i+= 384000) {
+/*  for (int i = 0; i < 38400000; i+= 384000) {
     std::cout << "(DEBUG): perf.QueryModel("<< i 
               << ") = " << perf.QueryModel(i) << "ms\n";
-  }
-  perf.SaveToDisk("MAV_DFE");
+  }*/
+//  perf.SaveToDisk("MAV_DFE");
   e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_DFE);
 //  e.AddImp(e.FindTask("MOVING_AVERAGE"),
 //           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
  
 
 
-//  e.start();
+  e.start();
   return 0;
 }
 

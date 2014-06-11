@@ -9,13 +9,13 @@ Allocations* FCFSMin(Scheduler &s) {
   Allocations* a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
 #ifdef DEBUG
-  std::cout << "Using FCFSMin" << "\n";
+  std::cout << "(DEBUG): Using FCFSMin" << "\n";
 #endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
     JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
     if (j == nullptr) {
-      std::cout << "FATAL ERROR COPYING JOB!\n";
+      std::cout << "(ERROR): FATAL ERROR COPYING JOB!\n";
     }
 
     ResourceList resourceList =  s.allocate(*std::get<0>(*j),
@@ -28,7 +28,7 @@ Allocations* FCFSMin(Scheduler &s) {
       a->addJobResourcePair(j,resourceListPtr);
     } else {
 #ifdef DEBUG
-      std::cout << "FCFSMin Can't allocate resources to job\n";
+      std::cout << "(DEBUG): FCFSMin Can't allocate resources to job\n";
 #endif
       break;
       /* if we can't allocate then just stop */
@@ -42,7 +42,7 @@ Allocations* FCFSAsManyAsPos(Scheduler &s) {
   JobQueuePtr rq = s.getReadyQPtr();
 
 #ifdef DEBUG
-  std::cout << "Using FCFSAMAP" << "\n";
+  std::cout << "(DEBUG) Using FCFSAMAP" << "\n";
 #endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -67,7 +67,7 @@ Allocations* FCFSMax(Scheduler &s) {
   Allocations *a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
 #ifdef DEBUG
-  std::cout << "Using FCFS Max" << "\n";
+  std::cout << "(DEBUG): Using FCFS Max" << "\n";
 #endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -168,16 +168,16 @@ Allocations* SJTF(Scheduler &s) {
   Allocations *aloc = new Allocations();
   size_t w_size = s.getWindow();
 #ifdef DEBUG
-  std::cout << "Using SJTF\n";
+  std::cout << "(DEBUG): Using SJTF\n";
 #endif
   JobQueuePtr rq = s.getReadyQPtr();
   if (rq == nullptr) {
-    std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
+    std::cout << "(ERROR): SOMETHING WENT HORRIBLY WRONG :O ";
     return aloc;
   }
   if (rq->size() == 0) {
 #ifdef DEBUG
-    std::cout << "No items to process\n";
+    std::cout << "(DEBUG): No items to process\n";
 #endif
     return aloc;
   }
@@ -211,8 +211,8 @@ Allocations* ManagedMode(Scheduler &s) {
   AlgVecType* av = s.getAlgVecPtr();
   std::deque<Allocations*> allocations;
 
-  std::cout << "***Scheduling using the managed mode***\n"
-            << "\t\tResource Pool Size [" <<s.resPoolSize() << "]\t" 
+  std::cout << "(DEBUG):  Scheduling using the managed mode\n"
+            << "\t\t(DEBUG): Resource Pool Size [" <<s.resPoolSize() << "]\t" 
             << "# Waiting Jobs [" << s.readyQSize() << "]\n";
   /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
@@ -220,13 +220,12 @@ Allocations* ManagedMode(Scheduler &s) {
     /* This means that we don't actually allocate the resources for each job */
     allocations.back()->returnResources(s);
   }
-  std::cout << "\t\tScoring Allocations\n";
+  std::cout << "\t\t(DEBUG): Scoring Allocations\n";
   /* Score each allocation */
   std::deque<Allocations* >::iterator a = allocations.begin();
   for (;a != allocations.end(); a++) {
     score(**a,s);
   }
-
   /* Find the allocation with the highest score */
   Allocations *mChoice = selectMaxScore(allocations);
   return mChoice;
@@ -250,7 +249,7 @@ void score(Allocations &a, Scheduler &s) {
     a.setScore(a.totalPriorities());
 
   } 
-//  std::cout << "Score: " << a.getScore() << "\n";
+  std::cout << "(DEBUG): Score: " << a.getScore() << "\n";
 }
 
 Allocations* selectMaxScore(std::deque<Allocations *> &a) {
@@ -265,7 +264,7 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
     }
   }
 
-  std::cout << "\t\tManaged mode chose: ";
+  std::cout << "\t\t(DEBUG): Managed mode chose: ";
   switch(index) {
     case 0:
       std::cout << "FCFS MAX\n";
@@ -280,8 +279,11 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
       std::cout << "SJTF\n";
       break;
     case 4:
-        std::cout << "Err should never reach here\n";
+        std::cout << "Priority\n";
       break;
+    default:
+        std::cout << "\n(ERROR): Manage Mode decided on an algorithm "
+                  << "that doesn't exist!\n";
  }
  for (unsigned int i = 0; i < a.size(); i++) {
    if (i != index) {
