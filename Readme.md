@@ -12,9 +12,19 @@ The startup action sequence is:
 
 1. start dispatcher (```./build/dispatcher <dispPort>```)
 2. start scheduler (```./build/scheduler <schedPort> <dispPort>```)
-3. start executor (```./build/executor <executorPort> <schedPort>```)
+3. start executor (```./build/executor -c <client_id> -p <schedPort> -n <schedHostname>```)
 3. run a client application (which submits jobs to the executor service,
 e.g. ```./build/MovingAverageOneDfe```)
+
+
+__Note__ For client applications the environmental variable CLIENT_ID
+must match that of the paramater passed into the executor service with the ```-c``` flag
+so the startup command for a client application becomes:
+```
+CLIENT_ID=${YOUR_ID_HERE} ./build/MOvingAverageOneDfe
+```
+If the variable is set on the machine the executor is running on, the executor will ignore the ```-c```
+flag. 
 
 __Note__ To enable DFE implementations, the dispatcher must be started
 on a machine with DFEs and Hardware MaxelerOS installed. The hardware
