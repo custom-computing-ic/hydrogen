@@ -38,7 +38,7 @@ class PerfModel {
         friend std::ostream& operator<<(std::ostream& os, const PerfModel& pm) {
           double projectedCost = 0.0;
           std::vector<double> input_data;
-          os << std::setprecision(3);
+//          os << std::setprecision(3);
           for (int i = 0; i <= pm.order; i++) {
             input_data.push_back(pow(2.0,i));
           }
@@ -50,7 +50,7 @@ class PerfModel {
               os << " + ";
             projectedCost += pm.weights[i] * input_data[i];
           }
-          os << "\t = " << projectedCost;
+          os << "\t = " << projectedCost << "\t(x=" << 2.0 << ")\n";
           return os;
         }
         friend bool operator== (const PerfModel& lhs, const PerfModel& rhs) {

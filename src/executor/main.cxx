@@ -62,6 +62,7 @@ int main(int argc, char** argv) {
   e.AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
   PerfModel perf(mav_DFE,4e-18,1e2,2,1);
+  /*
   perf.CreateModel(38400000, [&](const int size) -> double {
                   if (size == 0) 
                     return 0.0;
@@ -84,9 +85,12 @@ int main(int argc, char** argv) {
                   double msd;
                   ss >> msd;
                   return msd;
-                });
+                });*/
+ // std::cout << "(INFO)" << perf << "\n";
+  perf.LoadFromDisk("MAV_DFE");
   std::cout << "(INFO)" << perf << "\n";
-  for (int i = 384; i < 38400; i+= 384) {
+
+  for (int i = 0; i < 38400000; i+= 384000) {
     std::cout << "(DEBUG): perf.QueryModel("<< i 
               << ") = " << perf.QueryModel(i) << "ms\n";
   }
