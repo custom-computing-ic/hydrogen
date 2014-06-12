@@ -62,8 +62,8 @@ int main(int argc, char** argv) {
   e.AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
   PerfModel perf(mav_DFE,4e-18,1e2,2,1);
-  /*
-  perf.CreateModel(38400000, [&](const int size) -> double {
+  
+/*  perf.CreateModel(38400000, [&](const int size) -> double {
                   if (size == 0) 
                     return 0.0;
                   std::default_random_engine gen;
