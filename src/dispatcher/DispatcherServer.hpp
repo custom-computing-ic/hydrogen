@@ -32,7 +32,7 @@ public:
   void movingAverage_cpu(size_t n, size_t size, int *data, int *out);
   void movingAverage_dfe(int n, int size, int *data, int *out);
   void movingAverage_dfe(int n, int size, int *data, int *out,
-                         char* dfeIds, int nDfes);
+                         char** dfeIds, int nDfes);
   msg_t* handle_request(msg_t* request);
 };
 
