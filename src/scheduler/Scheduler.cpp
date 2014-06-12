@@ -260,7 +260,9 @@ void Scheduler::runJob(JobResPairPtr j) {
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
    //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     char packed_rids = 0x0;
+    std::cout << "(DEBUG): Rids:  ";
     for (auto &r : *resourceList) {
+      std::cout << r.getId() << ", "; 
       switch(r.getId()) {
         case 1:
           packed_rids |= RID1;
@@ -276,7 +278,7 @@ void Scheduler::runJob(JobResPairPtr j) {
           break;
       }
     }
-
+    std::cout << "\n";
     Resource r = resourceList->front();
     const string& name = r.getName().c_str();
     int portNumber = r.getPort();
