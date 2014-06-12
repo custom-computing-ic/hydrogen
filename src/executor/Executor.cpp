@@ -152,7 +152,7 @@ msg_t* Executor::runImp(Implementation* imp, msg_t* m) {
   return r->dispatch(m);
 }
 msg_t* Executor::handle_request(msg_t* request) {
-  std::cout << "Executor::handle_request()\n";
+  std::cout << "(DEBUG): Executor::handle_request()\n";
   msg_t* rsp = NULL;
   Implementation* imp = NULL;
   Client c(8111,"localhost");
