@@ -1,5 +1,7 @@
 #include <DispatcherServer.hpp>
-
+#include <cmath>
+#include <vector>
+#include <sstream>
 using namespace std;
 
 void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
@@ -18,12 +20,22 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
     out[i] = 0;
   }
 }
-
-void DispatcherServer::movingAverage_dfe(int n, int size, int *data, int *out) {
+void DispatcherServer::movingAverage_dfe(int n, int size, 
+                                         int *data, int *out) {
   cout << "Dispatcher::MovingAverageDFE" << endl;
   char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
   MovingAverageDFE(size, n, data, out, 2, dfeIds, false);
+#endif
+}
+
+void DispatcherServer::movingAverage_dfe(int n, int size, 
+                                         int *data, int *out, 
+                                         char* dfeIds, int nDfes) {
+  cout << "Dispatcher::MovingAverageDFE" << endl;
+//  char* dfeIds[] = {"1", "2", "3", "4"};
+#ifdef USEDFE
+  MovingAverageDFE(size, n, data, out, nDfes, dfeIds, false);
 #endif
 }
 
@@ -38,13 +50,30 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     size_t nBytes = sizeof(int) * n;
     int* out = (int *)calloc(n, sizeof(int));
     int* data_in = (int*)malloc(nBytes);
+    std::cout << "(DEBUG): RIDS[";
+    std::vector<char> dfeIds;
+    std::stringstream ss;
+    int nDFEs = 0;
+    for (int i = 0; i < 4; i++) {
+       if ((int)(pow(2,i)) & request->rids) {
+               char temp;
+               std::cout << 1;
+               ss << i+1;
+               ss >> temp;
+               dfeIds.push_back(temp);
+               nDFEs++;
+       } else {
+               std::cout << 0;
+       }
+    }
+    std::cout << "]\n";
     memcpy(data_in, request->data, nBytes);
 
     // do computation
     // TODO check resource type
     if (/*request->resourceType == "DFE" &&*/ useDfe) {
       // TODO pass in other arguments (e.g. nDfes, dfeIDs)
-      movingAverage_dfe(n, request->firstParam(), data_in, out);
+      movingAverage_dfe(n, request->firstParam(), data_in, out, dfeIds.data(),nDFEs);
     } else
       movingAverage_cpu(n, (size_t)request->firstParam(), data_in, out);
 

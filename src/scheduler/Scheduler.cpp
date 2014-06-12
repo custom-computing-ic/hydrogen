@@ -4,16 +4,21 @@
 #include <cstring>
 #include <boost/chrono.hpp>
 #include <unistd.h>
-#define MODE_MANAGED 5
+#define REF_GET(N,Tuple) \
+        [] (Tuple& t) { return std::get<N>(t);};
+
 #define FCFS_MIN 0
 #define FCFS_MAX 1
 #define FCFS_AMAP 2
 #define SJTF 3
 #define PRIORITY 4
+#define MODE_MANAGED 5
 
+#define RID1 0x1
+#define RID2 0x2
+#define RID3 0x4
+#define RID4 0x8
 
-#define REF_GET(N,Tuple) \
-        [] (Tuple& t) { return std::get<N>(t);};
 using namespace std;
 //Removes resources allocated to a job from the res pool....
 bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
@@ -253,6 +258,25 @@ void Scheduler::runJob(JobResPairPtr j) {
     JobPtr jobPtr = std::get<0>(*jobTuplePtr);
     std::cout << "(DEBUG): Scheduler::runJob(" << *jobPtr  << ")\n";
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
+   //TODO[mtottenh]: Quick hack for now, need to make this scaleable
+    char packed_rids = 0x0;
+    for (auto &r : *resourceList) {
+      switch(r.getId()) {
+        case 1:
+          packed_rids |= RID1;
+          break;
+        case 2:
+          packed_rids |= RID2;
+          break;
+        case 3:
+          packed_rids |= RID3;
+          break;
+        case 4:
+          packed_rids |= RID4;
+          break;
+      }
+    }
+
     Resource r = resourceList->front();
     const string& name = r.getName().c_str();
     int portNumber = r.getPort();
@@ -261,12 +285,14 @@ void Scheduler::runJob(JobResPairPtr j) {
     Client c(portNumber,name);
     c.start();
     msg_t* req = jobPtr->getReq();
+    
     boost::this_thread::interruption_point();
     #ifdef DEBUG
       req.print();
     #endif
     if (req != NULL) {
       std::cout << "\t(DEBUG): Scheduler::runJob() - Sending Request\n";
+      req->rids = packed_rids;
       c.send(req);
     }
 
