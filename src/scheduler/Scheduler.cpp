@@ -18,9 +18,9 @@
 #define RID2 0x2
 #define RID3 0x4
 #define RID4 0x8
+namespace bc = boost::chrono;
 
 using namespace std;
-namespace bc = boost::chrono;
 //Removes resources allocated to a job from the res pool....
 bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
   return lhs.getId() == rhs->getId();
@@ -28,7 +28,7 @@ bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
 void Scheduler::claimResources(JobResPairPtr elem) {
   boost::lock_guard<boost::mutex> lk(resPoolMtx);
   using namespace std::placeholders;
-//  std::cout << "(DEBUG): Scheduler::claimResources():\t";
+  std::cout << "(DEBUG):\t- Scheduler::claimResources():\t";
 //  std::cout << "resPool[" << resPool->size() << "]\t";
 
   ResourceListPtr r = std::get<1>(*elem);
@@ -99,6 +99,8 @@ void Scheduler::notifyClientsOfResults() {
 //  std::cout << "NotifyClients Of Results: Needs implementing\n";
   auto j = finishedQ->front();
   finishedQ->pop_front();
+  updateStatistics(std::get<0>(*j));
+
   std::get<1>(*j).setFinished(true);
   std::get<2>(*j).notify_all();
 }
@@ -120,10 +122,11 @@ Allocations* Scheduler::schedule(size_t choice, bool flag) {
   flag = false;
   Allocations *a = nullptr;
   if (resPool->size() <= 0) {
-    std::cout << "(DEBUG): No free resources.\n";
+//    std::cout << "(DEBUG): No free resources.\n";
+
   }
   if (readyQ->size() <= 0) {
-    std::cout << "(DEBUG): No waiting jobs.\n";
+//    std::cout << "(DEBUG): No waiting jobs.\n";
   }
   
   if (resPool->size() > 0 && readyQ->size() > 0) {
@@ -208,13 +211,15 @@ void Scheduler::schedLoop() {
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
         auto start = bc::system_clock::now();
-        std::cout << "(DEBUG): Event on readyQ\n";
+//        std::cout << "(DEBUG): Event on readyQ\n";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
 //          std::cout << "(DEBUG): Allocations returned null\n";
+        boost::this_thread::yield();
+
         QStatus.setRunQStatus(true);
         QCondVar.notify_all();        
         } else {
@@ -257,23 +262,24 @@ void Scheduler::schedLoop() {
   }
 }
 void Scheduler::runJobs() {
-    std::cout << "(DEBUG): Scheduler::runJobs()\n";
+
     boost::unique_lock<boost::mutex> lk(runQMtx);
     boost::thread_group jT;
     JobResPairQ::iterator it = runQ->begin();
     for (;it != runQ->end(); it++) {
       JobTuplePtr jobTuplePtr = std::get<0>(**it);
       if (! std::get<1>(*jobTuplePtr).isStarted()){
+         std::cout << "(DEBUG): Scheduler::runJobs()\n";
          std::get<1>(*jobTuplePtr).setStarted(true);
-//         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
-//         jobThread.detach();
+         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
+         jobThread.detach();
 
-         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
+//         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
       }
 
     }
     lk.unlock();
-    jT.join_all();
+  //  jT.join_all();
 }
 void Scheduler::runJob(JobResPairPtr j) {
     ResourceListPtr resourceList;
@@ -313,7 +319,10 @@ void Scheduler::runJob(JobResPairPtr j) {
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
    //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     Client c(portNumber,name);
+    auto start = bc::system_clock::now();
     c.start();
+
+
     boost::this_thread::interruption_point();
     #ifdef DEBUG
       req.print();
@@ -344,6 +353,9 @@ void Scheduler::runJob(JobResPairPtr j) {
     }  while ( rsp->msgId != MSG_RESULT);
     std::cout << "(DEBUG):\t\t* Got Result\n";
     c.stop();
+    auto end = bc::system_clock::now();
+    jobPtr->setMeasuredExecutionTime(end-start);
+    jobPtr->setActualExecutionTime(bc::milliseconds(rsp->predicted_time));
     #ifdef DEBUG
       rsp->print();
     #endif
@@ -351,9 +363,9 @@ void Scheduler::runJob(JobResPairPtr j) {
     jobPtr->setRsp((msg_t*)buff);
     returnResources(resourceList);
     resourceList = nullptr;
-    updateStatistics(jobPtr);
-    removeJobFromRunQ(jobPtr->getId());
     enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
+    removeJobFromRunQ(jobPtr->getId());
+
 }
 void Scheduler::removeJobFromRunQ(int jid) {
   boost::lock_guard<boost::mutex> lk(runQMtx); 
@@ -361,6 +373,7 @@ void Scheduler::removeJobFromRunQ(int jid) {
                           std::bind(&idEq,jid,std::placeholders::_1));
   if (it != runQ->end())
     runQ->erase(it);
+  QCondVar.notify_all();
 }
 void Scheduler::dispatcherLoop() {
   try {
@@ -378,6 +391,7 @@ void Scheduler::dispatcherLoop() {
       if (QStatus.getRunQStatus()) {
 //        std::cout << "(DEBUG): Event on Run Q\n";
         runJobs();
+//        if (runQ->size() == 0)
         QStatus.setRunQStatus(false);
       }
     }
@@ -386,10 +400,10 @@ void Scheduler::dispatcherLoop() {
     std::cout << "(DEBUG): Dispatcher thread recieved interrupt"  << std::endl;
     return;
   }
-  catch (std::exception &e) {
+/*  catch (std::exception &e) {
     std::cout << "(ERROR): Dispatcher thread - " << e.what() << std::endl;
     throw e;
-  }
+  }*/
 }
 
 msg_t*  Scheduler::concurrentHandler( msg_t &request,
