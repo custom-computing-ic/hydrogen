@@ -7,12 +7,13 @@
 #include <boost/chrono.hpp>
 #include <boost/make_shared.hpp>
 #include <memory>
+#include <csignal>
 #include <deque>
 #include <vector>
 #include <typedefs.hpp>
 #include <Resource.hpp>
 float defaultCostFunction(JobResPair& p);
-
+namespace bc = boost::chrono;
 class Job {
 	public:
     /* Constructors */
@@ -43,22 +44,38 @@ class Job {
 
     inline CostFunctionType getCostFunc() { return cost_func;}
 
-    inline boost::chrono::system_clock::time_point getDispatchTime()const {return dispatchTime;}
-    inline boost::chrono::system_clock::time_point getIssueTime() const {return issueTime;}
-    inline boost::chrono::system_clock::time_point getFinishTime() const {return finishTime;}
+    inline bc::system_clock::time_point getDispatchTime()const {return dispatchTime;}
+    inline bc::system_clock::time_point getIssueTime() const {return issueTime;}
+    inline bc::system_clock::time_point getFinishTime() const {return finishTime;}
     inline float getDefaultJobTime() const {return defaultJobTime;}
-    
+
+    inline bc::duration<double> getMeasuredExecutionTime() const {
+      return measuredExecutionTime;
+    }
+    inline bc::duration<double> getActualExecutionTime() const {
+      return actualExecutionTime;}
+
+    inline void setMeasuredExecutionTime(bc::duration<double> tp) {
+       measuredExecutionTime = tp;
+     }
+    inline void setActualExecutionTime(bc::duration<double> tp) {
+      actualExecutionTime = tp;
+    }
+
+   
+
+
     /* setters */
-    inline void setIssueTime(boost::chrono::system_clock::time_point a) { 
+    inline void setIssueTime(bc::system_clock::time_point a) { 
     //  std::cout << *this << " Issued\n";// at: " << a << "\n"; 
       issueTime = a;
     }
-    inline void setDispatchTime(boost::chrono::system_clock::time_point a) { 
-//      std::cout << *this << " Dispatched\n";// at: " << a << "\n"; 
+    inline void setDispatchTime(bc::system_clock::time_point a) { 
+//      std::cout << "(ERR): " << *this << " Dispatched at: " << a << "\n"; 
       dispatchTime = a;
     }
-    inline void setFinishTime(boost::chrono::system_clock::time_point a) { 
-  //    std::cout << *this << " Finished\n"; // << a << "\n";
+    inline void setFinishTime(bc::system_clock::time_point a) { 
+  //    std::cout << "(ERR): " << *this << " Finished at: " << a << "\n";
       finishTime = a; 
     }
     inline void setMax(size_t a) {max = a;}
@@ -97,9 +114,11 @@ class Job {
     float defaultJobTime;
     
     
-    boost::chrono::system_clock::time_point issueTime;
-    boost::chrono::system_clock::time_point dispatchTime;
-    boost::chrono::system_clock::time_point finishTime;
+    bc::system_clock::time_point issueTime;
+    bc::system_clock::time_point dispatchTime;
+    bc::system_clock::time_point finishTime;
+    bc::duration<double> actualExecutionTime;
+    bc::duration<double> measuredExecutionTime;
 
 
 
