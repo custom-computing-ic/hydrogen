@@ -2,8 +2,9 @@
 #include <cmath>
 #include <vector>
 #include <sstream>
+#include <boost/chrono.hpp>
 using namespace std;
-
+namespace bc = boost::chrono;
 void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
   cout << "Dispatcher::MovingAverageCPU" << endl;
   cout << " n:    " << n << endl;
@@ -46,6 +47,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 
   if (request->msgId == MSG_MOVING_AVG) {
     // unpack data
+    auto start = bc::system_clock::now();
     size_t n = request->dataSize;
     size_t nBytes = sizeof(int) * n;
     int* out = (int *)calloc(n, sizeof(int));
@@ -83,7 +85,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     for (auto c : dfeIds) {
       free(c);
     }
-
+    auto end = bc::system_clock::now();
 #ifdef DEBUG
     cout << "Data out " << endl;
     for (int i = 0; i < n; i++)
@@ -96,6 +98,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->msgId = MSG_RESULT;
     response->dataSize = n;
     response->paramsSize = 0;
+    response->predicted_time = bc::duration_cast<bc::milliseconds>(end-start).count();
     memcpy(response->data, out, nBytes);
     free(out);
     free(data_in);
