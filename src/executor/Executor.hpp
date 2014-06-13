@@ -15,12 +15,12 @@
 #include "../perf_model/model.h"
 #include "../implementation/implementation.h"
 */
-
+#define NUM_THREADS 10
 class Executor : public MultiThreadedTCPServer {
   public:
     Executor(const std::string& hostname,
              const std::string& clientId) :
-      MultiThreadedTCPServer::super(hostname,"811"+clientId,5)
+      MultiThreadedTCPServer::super(hostname,"811"+clientId,NUM_THREADS)
     {
       //MISC 
       cid = clientId;
