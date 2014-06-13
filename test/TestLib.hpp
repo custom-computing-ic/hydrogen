@@ -4,7 +4,7 @@
 #define _TESTLIB_H_
 
 /** Moving average functions */
-const int mavg_data_size = 384 * 100000;
+const int mavg_data_size = 384 * 1000;
 
 int* mavg_data(int n);
 int* mavg_threept_exp(int n, int* data);
