@@ -39,9 +39,9 @@ void Client::send(msg_t *message) {
 }
 
 void Client::start() {
-///  cout << "(DEBUG): Client::start()" << endl;
-//  cout << "(DEBUG): \tHostname: " << name;
-//  cout << "\tPort: " << port << endl;
+  cout << "(DEBUG):\t\t* Client::start()" << endl;
+  cout << "(DEBUG): \tHostname: " << name;
+  cout << "\tPort: " << port << endl;
   try {
   tcp::resolver resolver(io_service);
 //  cout << "tcp::resolver::query()" << endl;
@@ -75,13 +75,23 @@ void Client::stop() {
 }
 
 void Client::getResult(void* out, int sizeBytes) {
-//  cout << "(DEBUG): Client::getResult()" << endl;
+  cout << "(DEBUG):\t\t* Waiting for result..." << endl;
   int size = sizeBytes + sizeof(msg_t);
   char *buf = (char *)calloc(size, 1);
-  ba::read(*socket_, boost::asio::buffer(buf, size));
+
+
+  try {
+    ba::read(*socket_, boost::asio::buffer(buf, size));
+  } catch (std::exception& e) {
+    std::cout << "(ERROR):\t\t* Failed to read from socket." 
+              << "Check if remote host crashed\n";
+  }
+
+
+
   msg_t* rsp = (msg_t*)buf;
   if (sizeBytes != rsp->dataBytes()) {
-    cerr << "(ERROR):\t - Error: reply size different than expected! ";
+    cerr << "(ERROR):\t\t* Error: reply size different than expected! ";
     cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes();
   }
   memcpy(out, rsp->data, rsp->dataBytes());
@@ -90,6 +100,11 @@ void Client::getResult(void* out, int sizeBytes) {
 
 int Client::read(char* buffer, size_t sizeBytes) {
 //  cout << "(DEBUG): Client::read()" << endl;
-  ba::read(*socket_, ba::buffer(buffer, sizeBytes));
+  try {
+    ba::read(*socket_, ba::buffer(buffer, sizeBytes));
+  } catch (std::exception& e) {
+    std::cout << "(ERROR):\t\t* Failed to read from socket." 
+              << "Check if remote host crashed\n";
+  }
   return 0;
 }

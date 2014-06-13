@@ -25,7 +25,7 @@ void DispatcherServer::movingAverage_dfe(int n, int size,
   cout << "Dispatcher::MovingAverageDFE" << endl;
   char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
-  MovingAverageDFE(size, n, data, out, 2, dfeIds, false);
+  MovingAverageDFE(size, n, data, out, 2, dfeIds, true);
 #endif
 }
 
@@ -35,7 +35,7 @@ void DispatcherServer::movingAverage_dfe(int n, int size,
   cout << "Dispatcher::MovingAverageDFE" << endl;
 //  char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
-  MovingAverageDFE(size, n, data, out, nDfes, dfeIds, false);
+  MovingAverageDFE(size, n, data, out, nDfes, dfeIds, true);
 #endif
 }
 

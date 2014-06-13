@@ -119,6 +119,13 @@ Allocations* Scheduler::schedule(size_t choice, bool flag) {
 
   flag = false;
   Allocations *a = nullptr;
+  if (resPool->size() <= 0) {
+    std::cout << "(DEBUG): No free resources.\n";
+  }
+  if (readyQ->size() <= 0) {
+    std::cout << "(DEBUG): No waiting jobs.\n";
+  }
+  
   if (resPool->size() > 0 && readyQ->size() > 0) {
     a = this->algVec[choice](*this);
   }
@@ -196,17 +203,20 @@ void Scheduler::schedLoop() {
       //  std::cout << "Scheduler Thread woke up\n";
       }
       lock.unlock();
-   
+       
       //A job was deposited in the readyQ
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
         auto start = bc::system_clock::now();
-//        std::cout << "(DEBUG): Event on readyQ\n";
+        std::cout << "(DEBUG): Event on readyQ\n";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
+//          std::cout << "(DEBUG): Allocations returned null\n";
+        QStatus.setRunQStatus(true);
+        QCondVar.notify_all();        
         } else {
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
@@ -233,7 +243,7 @@ void Scheduler::schedLoop() {
             std::cout <<" Job left)\n";
 
         }
-        QStatus.setReadyQStatus(readyQ->size() > 0);
+        QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
       }
     }
   } 
@@ -266,15 +276,11 @@ void Scheduler::runJobs() {
     jT.join_all();
 }
 void Scheduler::runJob(JobResPairPtr j) {
-  try {
     ResourceListPtr resourceList;
     JobTuplePtr jobTuplePtr;
     std::tie(jobTuplePtr,resourceList) = *j;
-
     JobPtr jobPtr = std::get<0>(*jobTuplePtr);
     std::cout << "(DEBUG):\t- Scheduler::runJob(" << *jobPtr  << ")\n";
-   //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
-   //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     char packed_rids = 0x0;
     std::cout << "(DEBUG):\t\t* Rids: { ";
     for (auto &r : *resourceList) {
@@ -299,12 +305,15 @@ void Scheduler::runJob(JobResPairPtr j) {
     Resource r = resourceList->front();
     const string& name = r.getName().c_str();
     int portNumber = r.getPort();
+    msg_t* req = jobPtr->getReq();
+
     std::cout << "(DEBUG):\t\t* Opening connection to: " 
               << name << ":" << portNumber << "\n";
+  
+   //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
+   //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     Client c(portNumber,name);
     c.start();
-    msg_t* req = jobPtr->getReq();
-    
     boost::this_thread::interruption_point();
     #ifdef DEBUG
       req.print();
@@ -321,7 +330,8 @@ void Scheduler::runJob(JobResPairPtr j) {
     if (buff == NULL) {
       std::cout << "(ERROR):\tUnable to allocate result buffer\n";
       c.stop();
-      return;
+      returnResources(resourceList);
+      resourceList = nullptr;
     }
 
     msg_t* rsp = (msg_t*)buff;
@@ -344,10 +354,6 @@ void Scheduler::runJob(JobResPairPtr j) {
     updateStatistics(jobPtr);
     removeJobFromRunQ(jobPtr->getId());
     enqueue(finishedQ,jobTuplePtr,finishedQMtx,"finishedQ");
-  } catch (boost::thread_interrupted &) {
-    std::cout << "(DEBUG): Worker thread interrupted" << std::endl;
-    return;
-  }
 }
 void Scheduler::removeJobFromRunQ(int jid) {
   boost::lock_guard<boost::mutex> lk(runQMtx); 
