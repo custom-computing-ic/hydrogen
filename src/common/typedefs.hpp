@@ -94,22 +94,22 @@ struct QInfo {
 struct JobInfo {
   bool finished;
   bool started;
-  boost::mutex jobInfoLock;
-  
+  boost::mutex finishedLock;
+  boost::mutex startedLock;
   bool isFinished() { 
-    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    boost::lock_guard<boost::mutex> l1(finishedLock);
     return finished;
   }
   void setFinished(bool p) {
-    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    boost::lock_guard<boost::mutex> l1(finishedLock);
     finished = p;
   }
   bool isStarted() { 
-    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    boost::lock_guard<boost::mutex> l1(startedLock);
     return started;
   }
   void setStarted(bool p) {
-    boost::lock_guard<boost::mutex> l1(jobInfoLock);
+    boost::lock_guard<boost::mutex> l1(startedLock);
     started = p;
   }
 };
