@@ -80,12 +80,12 @@ void Client::getResult(void* out, int sizeBytes) {
   char *buf = (char *)calloc(size, 1);
 
 
-  try {
+//  try {
     ba::read(*socket_, boost::asio::buffer(buf, size));
-  } catch (std::exception& e) {
-    std::cout << "(ERROR):\t\t* Failed to read from socket." 
-              << "Check if remote host crashed\n";
-  }
+//  } catch (std::exception& e) {
+//    std::cout << "(ERROR):\t\t* Failed to read from socket." 
+//              << "Check if remote host crashed\n";
+//  }
 
 
 
@@ -100,11 +100,12 @@ void Client::getResult(void* out, int sizeBytes) {
 
 int Client::read(char* buffer, size_t sizeBytes) {
 //  cout << "(DEBUG): Client::read()" << endl;
-  try {
+//  try {
     ba::read(*socket_, ba::buffer(buffer, sizeBytes));
-  } catch (std::exception& e) {
-    std::cout << "(ERROR):\t\t* Failed to read from socket." 
-              << "Check if remote host crashed\n";
-  }
+//  } catch (std::exception& e) {
+//    std::cout << "(ERROR):\t\t* Failed to read from socket." 
+//              << "Check if remote host crashed\n";
+//    return 1;
+//  }
   return 0;
 }
