@@ -155,6 +155,7 @@ msg_t* Executor::handle_request(msg_t* request) {
   std::cout << "(DEBUG): Executor::handle_request()\n";
   msg_t* rsp = NULL;
   Implementation* imp = NULL;
+  int runtime = 0;
   Client c(8111,"localhost");
 
   if (request->clientId != atoi(cid.c_str())) {
@@ -180,7 +181,8 @@ msg_t* Executor::handle_request(msg_t* request) {
     case MSG_MOVING_AVG:
       /* TODO[mtottenh]: Add error checking/lookup msgId in task map
        */
-      imp = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize);
+      std::tie(imp,runtime) = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize);
+      request->predicted_time = (int)runtime;
       rsp = runImp(imp,request);
       return rsp;
       break;

@@ -6,6 +6,7 @@
 #include <string>
 #include <deque>
 #include <PerfModel.hpp>
+#include <utility>
 #include <Implementation.hpp>
 
 
@@ -30,7 +31,7 @@ class Task {
       this->PerformanceModels.remove(p);
       delete p;
     }
-    Implementation* SelectImplementation(size_t);
+    std::pair<Implementation*,double> SelectImplementation(size_t);
 	  friend std::ostream& operator<<(std::ostream& os, const Task& obj) { 
 	    os << obj.getName();
 	    return os;

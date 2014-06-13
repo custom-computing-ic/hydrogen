@@ -22,12 +22,17 @@ void Client::send(msg_t *message) {
     cout << "(DEBUG):\t\t* Sending Request" << endl;
   size_t byteSize= message->sizeBytes();
   float kb = (float)byteSize / 1024;
-  if ( kb >= 1) {
-    cout << "(DEBUG):\t\t\t->Sending " << kb << " KB" << endl;
+  float mb = kb / 1024;
+  cout << "(DEBUG):\t\t\t->Sending "; 
+  if ( mb >= 1) {
+    cout << mb << " MB" << endl;
   } else {
-    cout << "(DEBUG):\t\t\t->Sending " << byteSize << " Bytes" << endl;
+    if ( kb >= 1) {
+     cout << kb << " KB" << endl;
+    } else {
+     cout << byteSize << " Bytes" << endl;
+    }
   }
-
   ba::write(*socket_, 
             ba::buffer((char *)message, message->sizeBytes())
            );

@@ -21,7 +21,7 @@ Task::~Task() {
   }
 }
 
-Implementation* Task::SelectImplementation(size_t dataSize) {
+std::pair<Implementation*,double> Task::SelectImplementation(size_t dataSize) {
    std::cout << "(DEBUG): Task::SelectImplementation()\n";
    std::deque<double>::iterator it;
    std::deque<double> values; 
@@ -39,5 +39,5 @@ Implementation* Task::SelectImplementation(size_t dataSize) {
    std::cout << "(DEBUG): Best implementation index: " << index << "\n";
    std::list<PerfModel*>::iterator head= PerformanceModels.begin();
    std::advance(head, index);
-   return (*head)->getImp();
+   return std::make_pair((*head)->getImp(),(*head)->QueryModel(dataSize));
 }

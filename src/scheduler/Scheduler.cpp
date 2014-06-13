@@ -20,6 +20,7 @@
 #define RID4 0x8
 
 using namespace std;
+namespace bc = boost::chrono;
 //Removes resources allocated to a job from the res pool....
 bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
   return lhs.getId() == rhs->getId();
@@ -56,10 +57,15 @@ void Scheduler::defaultHandler(msg_t& request,
 #endif
 }
 
-boost::chrono::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
+bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   //TODO[mtottenh]:Add code to estimate a job finish time
-  std::cout << "(ERROR): Scheduler::estimateExecutionTime() : Not implemented\n";
-  return boost::chrono::seconds(0);
+  std::cout << "(DEBUG): Scheduler::estimateExecutionTime()\n";
+  double milliseconds = (double) j->getReq()->predicted_time;
+  bc::duration<double,boost::ratio<1,1000>> milli_sec(milliseconds);
+  auto micro_sec = bc::duration_cast<bc::microseconds>(milli_sec);
+  std::cout << "(DEBUG):\t- " << milli_sec.count() << "ms\n";
+  std::cout << "(DEBUG):\t- " << micro_sec.count() << "us\n";
+  return milli_sec;
 }
 
 
@@ -74,9 +80,9 @@ int Scheduler::numLateJobs() {
   int sum = 0;
   JobQueue::iterator it = finishedQ->begin();
   for(;it != finishedQ->end(); it++) {
-    boost::chrono::system_clock::time_point disp_t = (std::get<0>(**it))->getDispatchTime();
-    boost::chrono::system_clock::time_point issue_t = (std::get<0>(**it))->getIssueTime();
-    sum = (disp_t - issue_t)  > boost::chrono::seconds(1) ? sum+1 : sum;
+    bc::system_clock::time_point disp_t = (std::get<0>(**it))->getDispatchTime();
+    bc::system_clock::time_point issue_t = (std::get<0>(**it))->getIssueTime();
+    sum = (disp_t - issue_t)  > bc::seconds(1) ? sum+1 : sum;
   }
   return sum;
 }
@@ -194,7 +200,7 @@ void Scheduler::schedLoop() {
       //A job was deposited in the readyQ
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
-        auto start = boost::chrono::system_clock::now();
+        auto start = bc::system_clock::now();
 //        std::cout << "(DEBUG): Event on readyQ\n";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
@@ -207,14 +213,25 @@ void Scheduler::schedLoop() {
           if ( numJobsScheduled > 0) {
             a->serviceAllocations(*this);
             QStatus.setRunQStatus(true);
-            auto end = boost::chrono::system_clock::now();
-            auto duration = boost::chrono::duration_cast<boost::chrono::microseconds>(end - start);
+            auto end = bc::system_clock::now();
+            auto duration = bc::duration_cast<bc::microseconds>(end - start);
 
             std::cout << "(INFO): Scheduling took: " << duration.count() << "us" << std::endl;
             QCondVar.notify_all();
           }
           delete a;
-          std::cout << "(INFO): Managed Mode scheduled " << numJobsScheduled <<" Jobs\n";
+          std::cout << "(INFO): Managed Mode scheduled " << numJobsScheduled;
+          if (numJobsScheduled > 1)
+            std::cout <<" Jobs";
+          else 
+            std::cout <<" Job";
+          size_t waitingJobs = readyQ->size();
+          std::cout << "\t(" << waitingJobs;
+          if (waitingJobs> 1 || waitingJobs == 0)
+            std::cout <<" Jobs left)\n";
+          else 
+            std::cout <<" Job left)\n";
+
         }
         QStatus.setReadyQStatus(readyQ->size() > 0);
       }
