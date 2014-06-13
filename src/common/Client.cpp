@@ -18,17 +18,25 @@ Client::Client(Resource &r) :
 }
 
 void Client::send(msg_t *message) {
-  cout << "(DEBUG): Client::send()" << endl;
-  cout << "(DEBUG): \tSending " << message->sizeBytes() << " bytes" << endl;
+  if (message->msgId != MSG_DONE)
+    cout << "(DEBUG):\t\t* Sending Request" << endl;
+  size_t byteSize= message->sizeBytes();
+  float kb = (float)byteSize / 1024;
+  if ( kb >= 1) {
+    cout << "(DEBUG):\t\t\t->Sending " << kb << " KB" << endl;
+  } else {
+    cout << "(DEBUG):\t\t\t->Sending " << byteSize << " Bytes" << endl;
+  }
+
   ba::write(*socket_, 
             ba::buffer((char *)message, message->sizeBytes())
            );
 }
 
 void Client::start() {
-  cout << "(DEBUG): Client::start()" << endl;
-  cout << "(DEBUG): \tHostname: " << name;
-  cout << "\tPort: " << port << endl;
+///  cout << "(DEBUG): Client::start()" << endl;
+//  cout << "(DEBUG): \tHostname: " << name;
+//  cout << "\tPort: " << port << endl;
   try {
   tcp::resolver resolver(io_service);
 //  cout << "tcp::resolver::query()" << endl;
@@ -48,7 +56,7 @@ void Client::start() {
 }
 
 void Client::stop() {
-  cout << "(DEBUG): Client::stop()" << endl;
+  cout << "(DEBUG):\t\t* Closing connection" << endl;
 
   // let the server know we're done
   msg_t msg;
@@ -62,13 +70,13 @@ void Client::stop() {
 }
 
 void Client::getResult(void* out, int sizeBytes) {
-  cout << "(DEBUG): Client::getResult()" << endl;
+//  cout << "(DEBUG): Client::getResult()" << endl;
   int size = sizeBytes + sizeof(msg_t);
   char *buf = (char *)calloc(size, 1);
   ba::read(*socket_, boost::asio::buffer(buf, size));
   msg_t* rsp = (msg_t*)buf;
   if (sizeBytes != rsp->dataBytes()) {
-    cerr << "(ERROR): \tError: reply size different than expected! ";
+    cerr << "(ERROR):\t - Error: reply size different than expected! ";
     cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes();
   }
   memcpy(out, rsp->data, rsp->dataBytes());
@@ -76,7 +84,7 @@ void Client::getResult(void* out, int sizeBytes) {
 }
 
 int Client::read(char* buffer, size_t sizeBytes) {
-  cout << "(DEBUG): Client::read()" << endl;
+//  cout << "(DEBUG): Client::read()" << endl;
   ba::read(*socket_, ba::buffer(buffer, sizeBytes));
   return 0;
 }

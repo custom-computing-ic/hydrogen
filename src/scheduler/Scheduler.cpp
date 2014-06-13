@@ -13,7 +13,7 @@
 #define SJTF 3
 #define PRIORITY 4
 #define MODE_MANAGED 5
-
+#define RID0 0x0
 #define RID1 0x1
 #define RID2 0x2
 #define RID3 0x4
@@ -27,15 +27,15 @@ bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
 void Scheduler::claimResources(JobResPairPtr elem) {
   boost::lock_guard<boost::mutex> lk(resPoolMtx);
   using namespace std::placeholders;
-  std::cout << "Scheduler::claimResources():\t";
-  std::cout << "resPool[" << resPool->size() << "]\t";
+//  std::cout << "(DEBUG): Scheduler::claimResources():\t";
+//  std::cout << "resPool[" << resPool->size() << "]\t";
 
   ResourceListPtr r = std::get<1>(*elem);
   for (auto rit = r->begin(); rit != r->end(); rit++) {
     auto remove = std::find_if(resPool->begin(), resPool->end(),std::bind(resPtrEQ,*rit,std::placeholders::_1));
     resPool->erase(remove);
   }
-  std::cout << "resPool[" << resPool->size() << "]\n";
+//  std::cout << "resPool[" << resPool->size() << "]\n";
 }
 
 void Scheduler::returnResources(ResourceListPtr res) {
@@ -49,7 +49,7 @@ void Scheduler::returnResources(ResourceListPtr res) {
 void Scheduler::defaultHandler(msg_t& request,
                                msg_t& response,
                                int responseSize) {
-  cout << "Default Handler: Not implemented\n" << responseSize;
+  cout << "(ERROR): Default Handler: Not implemented\n" << responseSize;
 #ifdef DEBUG
   request.print();
   response.print();
@@ -58,7 +58,7 @@ void Scheduler::defaultHandler(msg_t& request,
 
 boost::chrono::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   //TODO[mtottenh]:Add code to estimate a job finish time
-  std::cout << "Scheduler::estimateExecutionTime() : Not implemented\n";
+  std::cout << "(ERROR): Scheduler::estimateExecutionTime() : Not implemented\n";
   return boost::chrono::seconds(0);
 }
 
@@ -168,7 +168,6 @@ msg_t* Scheduler::handle_request(msg_t* request) {
     case MSG_MOVING_AVG:
     default:
       // XXX TODO[paul-g]: need to actually determine data size here
-      cout << "Request data size " << request->dataSize << endl;
       unsigned long sizeBytes = sizeof(msg_t) + sizeof(int) * request->dataSize;
       response = (msg_t*)calloc(sizeBytes, 1);
       concurrentHandler(*request, *response, sizeBytes);
@@ -196,7 +195,7 @@ void Scheduler::schedLoop() {
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
         auto start = boost::chrono::system_clock::now();
-        std::cout << "(DEBUG): Event on readyQ\n";
+//        std::cout << "(DEBUG): Event on readyQ\n";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
@@ -256,14 +255,15 @@ void Scheduler::runJob(JobResPairPtr j) {
     std::tie(jobTuplePtr,resourceList) = *j;
 
     JobPtr jobPtr = std::get<0>(*jobTuplePtr);
-    std::cout << "(DEBUG): Scheduler::runJob(" << *jobPtr  << ")\n";
+    std::cout << "(DEBUG):\t- Scheduler::runJob(" << *jobPtr  << ")\n";
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
    //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     char packed_rids = 0x0;
-    std::cout << "(DEBUG): Rids:  ";
+    std::cout << "(DEBUG):\t\t* Rids: { ";
     for (auto &r : *resourceList) {
       std::cout << r.getId() << ", "; 
       switch(r.getId()) {
+        
         case 1:
           packed_rids |= RID1;
           break;
@@ -278,11 +278,11 @@ void Scheduler::runJob(JobResPairPtr j) {
           break;
       }
     }
-    std::cout << "\n";
+    std::cout << "}\n";
     Resource r = resourceList->front();
     const string& name = r.getName().c_str();
     int portNumber = r.getPort();
-    std::cout << "\t(DEBUG): Scheduler::runJob() - Opening connection to: " 
+    std::cout << "(DEBUG):\t\t* Opening connection to: " 
               << name << ":" << portNumber << "\n";
     Client c(portNumber,name);
     c.start();
@@ -293,7 +293,7 @@ void Scheduler::runJob(JobResPairPtr j) {
       req.print();
     #endif
     if (req != NULL) {
-      std::cout << "\t(DEBUG): Scheduler::runJob() - Sending Request\n";
+ //     std::cout << "(DEBUG):\t\t* Scheduler::runJob() - Sending Request\n";
       req->rids = packed_rids;
       c.send(req);
     }
@@ -302,7 +302,7 @@ void Scheduler::runJob(JobResPairPtr j) {
     char* buff = (char *)calloc(sizeBytes, 1);
 
     if (buff == NULL) {
-      std::cout << "\t(ERROR): Unable to allocate result buffer\n";
+      std::cout << "(ERROR):\tUnable to allocate result buffer\n";
       c.stop();
       return;
     }
@@ -315,7 +315,7 @@ void Scheduler::runJob(JobResPairPtr j) {
         rsp->print();
       #endif
     }  while ( rsp->msgId != MSG_RESULT);
-    std::cout << "\t(DEBUG): Scheduler::runJob() - closing Connection\n";
+    std::cout << "(DEBUG):\t\t* Got Result\n";
     c.stop();
     #ifdef DEBUG
       rsp->print();
@@ -353,7 +353,7 @@ void Scheduler::dispatcherLoop() {
       }
       lock.unlock();
       if (QStatus.getRunQStatus()) {
-        std::cout << "(DEBUG): Event on Run Q\n";
+//        std::cout << "(DEBUG): Event on Run Q\n";
         runJobs();
         QStatus.setRunQStatus(false);
       }
@@ -382,6 +382,8 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   jInfo.setFinished(false);
   jInfo.setStarted(false);
   std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
+  std::cout << "(INFO): New Connection on Thread: " 
+            << boost::this_thread::get_id() << "\n";
 
 #ifdef DEBUG
   request.print();
@@ -395,7 +397,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
       jCondVar.wait(lock);
     }
     lock.unlock();
-    std::cout << "\t(DEBUG): " << *nJob << " finished\n" << std::endl;
+    std::cout << "(DEBUG): " << *nJob << " finished\n" << std::endl;
     msg_t* rsp = nJob->getRsp();
     if (rsp == NULL) {
       //ERROR
@@ -426,7 +428,7 @@ void Scheduler::finishedLoop() {
       }
       lock.unlock();
       if (QStatus.getFinishedQStatus() == true) {
-        std::cout << "(DEBUG): Event on finishedQ\n";
+//        std::cout << "(DEBUG): Event on finishedQ\n";
         QStatus.setReadyQStatus(true);
         while (finishedQ->size() > 0) {
           notifyClientsOfResults();

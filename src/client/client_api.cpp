@@ -10,7 +10,7 @@
 using namespace std;
 
 void movingAverage(size_t n, size_t size, int* data, int* out) {
-  cout << "(DEBUG): client - Send job :: movingAverage" << endl;
+  cout << "(DEBUG): Send job :: movingAverage" << endl;
 
   msg_t *msg = msg_moving_avg(n, size, data);
   
@@ -24,7 +24,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG): CLIENT_ID= " << clientIdCh << "    Connecting to " 
+    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to " 
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
@@ -40,7 +40,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
 }
 
 void TerminateServer() {
-  cout << "(DEBUG): client - Terminate Server" << endl;
+  cout << "(DEBUG): Send job :: Terminate Server" << endl;
 
   msg_t *msg = msg_empty();
   
@@ -54,7 +54,7 @@ void TerminateServer() {
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG): CLIENT_ID= " << clientIdCh << "    Connecting to " 
+    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to " 
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
@@ -69,7 +69,8 @@ void TerminateServer() {
 }
 
 void movingAverage(size_t n, size_t size, int* data, int* out, int pNum) {
-  cout << "(DEBUG): client - Send job :: movingAverage" << endl;
+  cout << "(DEBUG): Send job :: movingAverage, Priority: "
+       << pNum << endl;
 
   msg_t *msg = msg_moving_avg(n, size, data);
 

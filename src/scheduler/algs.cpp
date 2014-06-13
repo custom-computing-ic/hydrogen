@@ -211,8 +211,8 @@ Allocations* ManagedMode(Scheduler &s) {
   AlgVecType* av = s.getAlgVecPtr();
   std::deque<Allocations*> allocations;
 
-  std::cout << "(DEBUG):  Scheduling using the managed mode\n"
-            << "\t\t(DEBUG): Resource Pool Size [" <<s.resPoolSize() << "]\t" 
+  std::cout << "(DEBUG): Scheduling using the managed mode\n"
+            << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t" 
             << "# Waiting Jobs [" << s.readyQSize() << "]\n";
   /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
@@ -220,7 +220,7 @@ Allocations* ManagedMode(Scheduler &s) {
     /* This means that we don't actually allocate the resources for each job */
     allocations.back()->returnResources(s);
   }
-  std::cout << "\t\t(DEBUG): Scoring Allocations\n";
+  std::cout << "(DEBUG):\t- Scoring Allocations\n";
   /* Score each allocation */
   std::deque<Allocations* >::iterator a = allocations.begin();
   for (;a != allocations.end(); a++) {
@@ -249,7 +249,7 @@ void score(Allocations &a, Scheduler &s) {
     a.setScore(a.totalPriorities());
 
   } 
-  std::cout << "(DEBUG): Score: " << a.getScore() << "\n";
+  std::cout << "(DEBUG):\t\t* Score: " << a.getScore() << "\n";
 }
 
 Allocations* selectMaxScore(std::deque<Allocations *> &a) {
@@ -264,7 +264,7 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
     }
   }
 
-  std::cout << "\t\t(DEBUG): Managed mode chose: ";
+  std::cout << "(DEBUG):\t - Managed mode chose: ";
   switch(index) {
     case 0:
       std::cout << "FCFS MAX\n";
