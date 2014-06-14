@@ -24,7 +24,7 @@ sleep 0.2s
 printf "."
 sleep 0.2s
 printf ".\n"
-./executor -c 4 -p 8111 -n localhost  1> exe.out 2> exe.err &
+./executor -c 4 -p 8111 -n localhost  2> ./log/exe.err 1> ./log/exe.out &
 printf "Starting Executor"
 sleep 0.2s
 printf "."
