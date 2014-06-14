@@ -16,7 +16,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 6
+#define NUM_THREADS 2
 #include <algs.hpp>
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
@@ -102,11 +102,13 @@ public:
   {
     //Check that this shouldn't be the lock passed in.
   //  std::cout << "Scheduler::enqueue()\n";
-    boost::lock_guard<boost::mutex> guard(lock);
+    boost::unique_lock<boost::mutex> lk(lock);
 
     container->push_back(elem);
+    lk.unlock();
     if (name == "readyQ") {
       std::get<0>(*elem)->setIssueTime( bc::system_clock::now());
+
       QStatus.setReadyQStatus(true);
     }
     if (name == "runQ") {
@@ -123,12 +125,13 @@ public:
     QCondVar.notify_all();
   }
   void addToRunQ(JobResPairPtr elem) {
-    boost::lock_guard<boost::mutex> guard(runQMtx);
+    boost::unique_lock<boost::mutex> guard(runQMtx);
 #ifdef DEBUG
     std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
 #endif
     runQ->push_back(elem);
     std::get<0>(*std::get<0>(*elem))->setDispatchTime(bc::system_clock::now());
+    guard.unlock();
     QStatus.setRunQStatus(true);
 #ifdef DEBUG
     std::cout << "Added element to runQ, calling notify_all().\n";

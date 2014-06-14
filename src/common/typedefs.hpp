@@ -18,13 +18,35 @@ template<typename T> struct Deleter {
                       delete p;
                           }
 };
-
+struct JobInfo {
+  bool finished;
+  bool started;
+  boost::mutex finishedLock;
+  boost::mutex startedLock;
+  bool isFinished() { 
+    boost::lock_guard<boost::mutex> l1(finishedLock);
+    return finished;
+  }
+  void setFinished(bool p) {
+    boost::lock_guard<boost::mutex> l1(finishedLock);
+    finished = p;
+  }
+  bool isStarted() { 
+    boost::lock_guard<boost::mutex> l1(startedLock);
+    return started;
+  }
+  void setStarted(bool p) {
+    boost::lock_guard<boost::mutex> l1(startedLock);
+    started = p;
+  }
+};
 /* Base Types */
 //typedef boost::unique_ptr<Resource,Deleter<Resource>> ResourcePtr;
 typedef boost::shared_ptr<Resource> ResourcePtr;
 //typedef std::unique_ptr<Job> JobPtr;
 typedef boost::shared_ptr<Job> JobPtr;
-typedef std::tuple<JobPtr, struct JobInfo&, boost::condition_variable&> JobTuple;
+typedef boost::shared_ptr<struct JobInfo> JobInfoPtr;
+typedef std::tuple<JobPtr, JobInfoPtr, boost::condition_variable&> JobTuple;
 typedef std::shared_ptr<JobTuple> JobTuplePtr;
 typedef std::deque<Resource> ResourceList;   //TODO: change this maybe?
 typedef std::shared_ptr<ResourceList> ResourceListPtr;
@@ -91,28 +113,7 @@ struct QInfo {
 
 };
 
-struct JobInfo {
-  bool finished;
-  bool started;
-  boost::mutex finishedLock;
-  boost::mutex startedLock;
-  bool isFinished() { 
-    boost::lock_guard<boost::mutex> l1(finishedLock);
-    return finished;
-  }
-  void setFinished(bool p) {
-    boost::lock_guard<boost::mutex> l1(finishedLock);
-    finished = p;
-  }
-  bool isStarted() { 
-    boost::lock_guard<boost::mutex> l1(startedLock);
-    return started;
-  }
-  void setStarted(bool p) {
-    boost::lock_guard<boost::mutex> l1(startedLock);
-    started = p;
-  }
-};
+
 
 
 

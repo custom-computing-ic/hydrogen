@@ -28,7 +28,7 @@ bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
 void Scheduler::claimResources(JobResPairPtr elem) {
   boost::lock_guard<boost::mutex> lk(resPoolMtx);
   using namespace std::placeholders;
-  std::cout << "(DEBUG):\t- Scheduler::claimResources():\t";
+  std::cout << "(DEBUG):\t- Scheduler::claimResources()\n";
 //  std::cout << "resPool[" << resPool->size() << "]\t";
 
   ResourceListPtr r = std::get<1>(*elem);
@@ -97,11 +97,13 @@ void Scheduler::dumpInfo() {
 
 void Scheduler::notifyClientsOfResults() {
 //  std::cout << "NotifyClients Of Results: Needs implementing\n";
+  boost::unique_lock<boost::mutex> lk(finishedQMtx);
   auto j = finishedQ->front();
   finishedQ->pop_front();
+  lk.unlock();
   updateStatistics(std::get<0>(*j));
 
-  std::get<1>(*j).setFinished(true);
+  std::get<1>(*j)->setFinished(true);
   std::get<2>(*j).notify_all();
 }
 
@@ -264,21 +266,24 @@ void Scheduler::schedLoop() {
 void Scheduler::runJobs() {
 
     boost::unique_lock<boost::mutex> lk(runQMtx);
-    boost::thread_group jT;
-    JobResPairQ::iterator it = runQ->begin();
-    for (;it != runQ->end(); it++) {
-      JobTuplePtr jobTuplePtr = std::get<0>(**it);
-      if (! std::get<1>(*jobTuplePtr).isStarted()){
-         std::cout << "(DEBUG): Scheduler::runJobs()\n";
-         std::get<1>(*jobTuplePtr).setStarted(true);
-         boost::thread jobThread(boost::bind(&Scheduler::runJob,this,*it));
-         jobThread.detach();
-
-//         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
-      }
-
-    }
+//    boost::thread_group jT;
+    auto job_pair_ptr = runQ->front();
+    runQ->pop_front();
     lk.unlock();
+    JobTuplePtr jobTuplePtr = std::get<0>(*job_pair_ptr);
+    auto jobInfo = std::get<1>(*jobTuplePtr);
+    if (! jobInfo->isStarted()){
+
+       std::cout << "(DEBUG): Scheduler::runJobs()\n";
+       jobInfo->setStarted(true);
+       boost::thread jobThread(boost::bind(&Scheduler::runJob,this,job_pair_ptr));
+       jobThread.detach();
+//         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
+    }
+     if (!jobInfo->isFinished()) {
+       lk.lock();
+       runQ->push_back(job_pair_ptr);
+    }
   //  jT.join_all();
 }
 void Scheduler::runJob(JobResPairPtr j) {
@@ -390,7 +395,9 @@ void Scheduler::dispatcherLoop() {
       lock.unlock();
       if (QStatus.getRunQStatus()) {
 //        std::cout << "(DEBUG): Event on Run Q\n";
-        runJobs();
+        while(runQ->size() > 0) {
+          runJobs();
+        }
 //        if (runQ->size() == 0)
         QStatus.setRunQStatus(false);
       }
@@ -414,10 +421,10 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   boost::condition_variable jCondVar;
   boost::mutex jobMutex;
   boost::unique_lock<boost::mutex> lock(jobMutex);
-  struct JobInfo jInfo;
-
-  jInfo.setFinished(false);
-  jInfo.setStarted(false);
+//  struct JobInfo jInfo;
+  auto jInfo = JobInfoPtr(new JobInfo());
+  jInfo->setFinished(false);
+  jInfo->setStarted(false);
   std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
   std::cout << "(INFO): New Connection on Thread: " 
             << boost::this_thread::get_id() << "\n";
@@ -426,11 +433,11 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   request.print();
 #endif
   JobPtr nJob = JobPtr(new Job(&request,getNextId()));
-  JobTuple t = std::make_tuple( nJob, std::ref(jInfo),std::ref(jCondVar));
+  JobTuple t = std::make_tuple( nJob, jInfo ,std::ref(jCondVar));
   enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx,"readyQ");
 
   try {
-    while (!jInfo.isFinished()) {
+    while (!jInfo->isFinished()) {
       jCondVar.wait(lock);
     }
     lock.unlock();
