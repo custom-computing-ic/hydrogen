@@ -33,6 +33,16 @@ public:
   void movingAverage_dfe(int n, int size, int *data, int *out);
   void movingAverage_dfe(int n, int size, int *data, int *out,
                          char** dfeIds, int nDfes);
+  void optionPricing_dfe(double strike,
+			 double sigma,
+			 double timestep,
+			 int numMaturity,
+			 int paraNode,
+			 int numPathGroup,
+			 double T,
+			 double *out
+			 );
+
   msg_t* handle_request(msg_t* request);
 };
 

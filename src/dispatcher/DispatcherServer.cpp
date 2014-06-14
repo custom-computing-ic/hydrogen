@@ -21,7 +21,7 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
     out[i] = 0;
   }
 }
-void DispatcherServer::movingAverage_dfe(int n, int size, 
+void DispatcherServer::movingAverage_dfe(int n, int size,
                                          int *data, int *out) {
   cout << "Dispatcher::MovingAverageDFE" << endl;
   char* dfeIds[] = {"1", "2", "3", "4"};
@@ -30,13 +30,35 @@ void DispatcherServer::movingAverage_dfe(int n, int size,
 #endif
 }
 
-void DispatcherServer::movingAverage_dfe(int n, int size, 
-                                         int *data, int *out, 
+void DispatcherServer::movingAverage_dfe(int n, int size,
+                                         int *data, int *out,
                                          char** dfeIds, int nDfes) {
   cout << "Dispatcher::MovingAverageDFE" << endl;
-//  char* dfeIds[] = {"1", "2", "3", "4"};
+  //  char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
   MovingAverageDFE(size, n, data, out, nDfes, dfeIds, true);
+#endif
+}
+
+void DispatcherServer::optionPricing_dfe(double strike,
+                                         double sigma,
+                                         double timestep,
+                                         int numMaturity,
+                                         int paraNode,
+                                         int numPathGroup,
+                                         double T,
+					 double *out
+                                         ) {
+#ifdef USEDFE
+  *out = optionPricing(strike,
+		       sigma,
+		       timestep,
+		       numMaturity,
+		       paraNode,
+		       numPathGroup,
+		       T,
+		       NULL,
+		       NULL);
 #endif
 }
 
@@ -57,16 +79,16 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     std::stringstream ss;
     int nDFEs = 0;
     for (int i = 0; i < 4; i++) {
-       if ((int)(pow(2,i)) & request->rids) {
-               char* temp = (char*) malloc (sizeof(char));
-               std::cout << 1;
-               ss << i;
-               ss >> *temp;
-               dfeIds.push_back(temp);
-               nDFEs++;
-       } else {
-               std::cout << 0;
-       }
+      if ((int)(pow(2,i)) & request->rids) {
+        char* temp = (char*) malloc (sizeof(char));
+        std::cout << 1;
+        ss << i;
+        ss >> *temp;
+        dfeIds.push_back(temp);
+        nDFEs++;
+      } else {
+        std::cout << 0;
+      }
     }
     std::cout << "]\n";
     memcpy(data_in, request->data, nBytes);
@@ -103,6 +125,37 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     free(out);
     free(data_in);
 
+    return response;
+  } else if (request->msgId == MSG_OPTION_PRICE) {
+
+    // -- Dummy Parameters --
+    double strike = 0.01;
+    double sigma = 0.02;
+    double timestep = 0.05;
+    int numTimeStep = (int)(10/0.05);
+    int numMaturity = 2000000;
+    int paraNode = 50;
+    int numPathGroup = 20;
+    int numPE = 4;
+    double T = 10;
+
+    double res;
+    this->optionPricing_dfe(strike,
+			    sigma,
+			    timestep,
+			    numMaturity,
+			    paraNode,
+			    numPathGroup,
+			    T,
+			    &res);
+
+    // write the response
+    size_t sizeBytes = sizeof(msg_t) + sizeof(double);
+    msg_t* response = (msg_t*)calloc(sizeBytes, 1);
+    response->msgId = MSG_RESULT;
+    response->dataSize = 1;
+    response->paramsSize = 0;
+    memcpy(response->data, &res, sizeof(double));
     return response;
   }
 

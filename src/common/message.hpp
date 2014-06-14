@@ -8,6 +8,7 @@
 const int MSG_DONE = 0;
 const int MSG_ACK = 1;
 const int MSG_MOVING_AVG = 2;
+const int MSG_OPTION_PRICE = 3;
 const int MSG_RESULT = 100;
 const int MSG_CONTROL = 200;
 const int MSG_TERM = 300;
