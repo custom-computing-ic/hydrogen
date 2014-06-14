@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-if [ -z "$MAXELEROSDIR" ]; then
+if [ -z "$MAXELEROSDIR" ] || [ -z "$MAXCOMPILERDIR" ]; then
   printf "Starting Dispatcher Without DFE Implementations"
   ./dispatcher 8112 1> /dev/null &
 else

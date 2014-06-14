@@ -26,7 +26,7 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
    */
   std::rotate(&out[0],&out[n-1],&out[n]);
 }
-<<<<<<< HEAD
+
 void DispatcherServer::movingAverage_dfe(int n, int size,
                                          int *data, int *out) {
   cout << "Dispatcher::MovingAverageDFE" << endl;

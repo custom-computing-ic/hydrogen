@@ -74,7 +74,7 @@ Allocations* FCFSMax(Scheduler &s) {
     JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
     ResourceList resourceList =  s.allocate(*std::get<0>(*j),
                                     std::get<0>(*j)->getMax(),
-                                    std::get<0>(*j)->getMax()); 
+                                    std::get<0>(*j)->getMax());
     if ( resourceList.size() > 0) {
       /* successfully allocated the min resources */
       auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
@@ -103,11 +103,11 @@ Allocations* Priority(Scheduler &s) {
 
 
   std::sort(job_window.begin(), job_window.end(), sortByPriority);
-  auto max_elem = std::max_element(job_window.begin(), job_window.end(), sortByPriority); 
+  auto max_elem = std::max_element(job_window.begin(), job_window.end(), sortByPriority);
   JobQueue::iterator nend = job_window.end();
 
-  while(*max_elem != nullptr && 
-       (std::get<0>(**max_elem))->getMax() < s.resPoolSize() && 
+  while(*max_elem != nullptr &&
+       (std::get<0>(**max_elem))->getMax() < s.resPoolSize() &&
        max_elem != nend) {
 
    ResourceList resourceList =  s.allocate(*std::get<0>(**max_elem),
@@ -118,8 +118,8 @@ Allocations* Priority(Scheduler &s) {
    alloc->addJobResourcePair(*max_elem,resourceListPtr);
 
    nend = remove(job_window.begin(),nend,*max_elem);
-   max_elem =  std::max_element(job_window.begin(), nend, sortByPriority);   
-    
+   max_elem =  std::max_element(job_window.begin(), nend, sortByPriority);
+
   }
   return alloc;
 }
@@ -128,7 +128,7 @@ Allocations* Priority(Scheduler &s) {
 /*Allocations PBackfill(Scheduler &s) {
   int w_size = s.getWindow();
   JobQueue* rq = s.getQueuePointer("readyQ");
- 
+
   if (rq == nullptr) {
     std::cout << "SOMETHING WENT HORRIBLY WRONG :O ";
     return nullptr;
@@ -137,7 +137,7 @@ Allocations* Priority(Scheduler &s) {
     std::cout << "No items to process\n";
     return nullptr;
   }
-   
+
   std::map< int , std::deque<Job>> sjtmap;
   for ( auto a : *(rq->getContainer())) {
     sjtmap[a.getPriority()].push_back(a);
@@ -153,15 +153,15 @@ Allocations* Priority(Scheduler &s) {
 }*/
 bool sortByPriority(const JobTuplePtr i, const JobTuplePtr j)
 {
-  return    (std::get<0>(*i))->getPriority() < (std::get<0>(*j))->getPriority(); 
+  return    (std::get<0>(*i))->getPriority() < (std::get<0>(*j))->getPriority();
 }
 bool sortByTime(const JobTuplePtr i, const JobTuplePtr j)
 {
-  return    (std::get<0>(*i))->minCost() < (std::get<0>(*j))->minCost(); 
+  return    (std::get<0>(*i))->minCost() < (std::get<0>(*j))->minCost();
 }
-bool sortByMin(const JobTuplePtr i, const JobTuplePtr j) { 
-  
-  return (std::get<0>(*i)->getMin() < std::get<0>(*j)->getMin()); 
+bool sortByMin(const JobTuplePtr i, const JobTuplePtr j) {
+
+  return (std::get<0>(*i)->getMin() < std::get<0>(*j)->getMin());
 }
 /***** Shortest Job Time First Mode *****/
 Allocations* SJTF(Scheduler &s) {
@@ -181,7 +181,7 @@ Allocations* SJTF(Scheduler &s) {
 #endif
     return aloc;
   }
-  // Get the minimum Job size (min number of req resources) 
+  // Get the minimum Job size (min number of req resources)
   JobQueue job_window;
   for (size_t i = 0; i < w_size && i < rq->size(); i++) {
     job_window.push_back(s.copyJobFromQ(rq,i));
@@ -190,19 +190,19 @@ Allocations* SJTF(Scheduler &s) {
   JobQueue::iterator min_elem =  std::min_element(job_window.begin(), job_window.end(), sortByMin);
   JobQueue::iterator nend = job_window.end();
 
-  while(*min_elem != nullptr && 
-       (std::get<0>(**min_elem))->getMin() < s.resPoolSize() && 
+  while(*min_elem != nullptr &&
+       (std::get<0>(**min_elem))->getMin() < s.resPoolSize() &&
        min_elem < nend) {
 
    ResourceList resourceList =  s.allocate(*std::get<0>(**min_elem),
                                     std::get<0>(**min_elem)->getMax(),
-                                    std::get<0>(**min_elem)->getMax()); 
+                                    std::get<0>(**min_elem)->getMax());
    auto resourceListPtr = std::make_shared<ResourceList>(resourceList);
    aloc->addJobResourcePair(*min_elem,resourceListPtr);
 
    nend = remove(job_window.begin(),nend,*min_elem);
-   min_elem =  std::min_element(job_window.begin(), nend, sortByMin);   
-    
+   min_elem =  std::min_element(job_window.begin(), nend, sortByMin);
+
   }
   return aloc;
 }
@@ -212,7 +212,7 @@ Allocations* ManagedMode(Scheduler &s) {
   std::deque<Allocations*> allocations;
 
   std::cout << "(DEBUG): Scheduling using the managed mode\n"
-            << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t" 
+            << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t"
             << "# Waiting Jobs [" << s.readyQSize() << "]\n";
   /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
@@ -234,29 +234,34 @@ Allocations* ManagedMode(Scheduler &s) {
 
 void score(Allocations &a, Scheduler &s) {
   std::string strat = s.getStrategy();
-//  std::cout << "starting score: " << a.getScore() << "\n"; 
+  std::cout << "(DEBUG):\t\t* Score: ";
+//  std::cout << "starting score: " << a.getScore() << "\n";
   if (!strat.compare("Completion Time")) {
 //    std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
-    if (a.noJobs() == 0 || a.makespan() < 0) {
+    if (a.noJobs() == 0 || a.makespan() <= 0) {
       a.setScore(0);
     } else {
       size_t q_const = s.readyQSize();
+      std::cout << "QCONST: " << q_const;
+      std::cout << "\tNOJOBS: " << a.noJobs();
+      std::cout << "\tMKSPN: " << a.makespan();
       q_const = q_const > 0 ? q_const : 1;
-      a.setScore((q_const*a.noJobs()) + ( a.noJobs() / a.makespan() ));  
+      a.setScore((float)((q_const*a.noJobs()) +
+                ((float) a.noJobs() / (float) a.makespan() )));
     }
   }
   if (!strat.compare("Fairness")) {
     a.setScore(a.totalPriorities());
 
-  } 
-  std::cout << "(DEBUG):\t\t* Score: " << a.getScore() << "\n";
+  }
+  std::cout <<"\tRESULT:" << a.getScore() << "\n";
 }
 
 Allocations* selectMaxScore(std::deque<Allocations *> &a) {
   float maxScore = a[0]->getScore();
   unsigned int index = 0;
   for (unsigned int i = 0; i < a.size() ; i++ ) {
- //   std::cout << "a[" << i << "].score: " << a[i]->getScore() 
+ //   std::cout << "a[" << i << "].score: " << a[i]->getScore()
 //              << " maxScore: " << maxScore << "\n";
     if (a[i]->getScore() >= maxScore) {
       maxScore = a[i]->getScore();
@@ -290,7 +295,7 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
      delete a[i];
    }
  }
- return a[index]; 
+ return a[index];
 }
 
 
