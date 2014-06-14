@@ -130,7 +130,7 @@ Allocations* Scheduler::schedule(size_t choice, bool flag) {
   if (readyQ->size() <= 0) {
 //    std::cout << "(DEBUG): No waiting jobs.\n";
   }
-  
+
   if (resPool->size() > 0 && readyQ->size() > 0) {
     a = this->algVec[choice](*this);
   }
@@ -208,13 +208,13 @@ void Scheduler::schedLoop() {
       //  std::cout << "Scheduler Thread woke up\n";
       }
       lock.unlock();
-       
+
       //A job was deposited in the readyQ
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
         auto start = bc::system_clock::now();
 //        std::cout << "(DEBUG): Event on readyQ\n";
-        boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
+        boost::unique_lock<boost::mutex> rqLk(readyQMtx);
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
         if (a == nullptr) {
@@ -223,7 +223,7 @@ void Scheduler::schedLoop() {
         boost::this_thread::yield();
 
         QStatus.setRunQStatus(true);
-        QCondVar.notify_all();        
+        QCondVar.notify_all();
         } else {
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
@@ -244,20 +244,20 @@ void Scheduler::schedLoop() {
           totalJobsScheduled += numJobsScheduled;
           if (numJobsScheduled > 1)
             std::cout <<" Jobs";
-          else 
+          else
             std::cout <<" Job";
           size_t waitingJobs = readyQ->size();
           std::cout << "\t(" << waitingJobs;
           if (waitingJobs> 1 || waitingJobs == 0)
             std::cout <<" Jobs left)\n";
-          else 
+          else
             std::cout <<" Job left)\n";
 
         }
         QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
       }
     }
-  } 
+  }
   catch (boost::thread_interrupted &) {
     std::cout << "(DEBUG):\t\t* Scheduling thread recieved interrupt"  << std::endl;
     return;
@@ -301,12 +301,13 @@ void Scheduler::runJob(JobResPairPtr j) {
     std::tie(jobTuplePtr,resourceList) = *j;
     JobPtr jobPtr = std::get<0>(*jobTuplePtr);
     std::cout << "(DEBUG):\t- Scheduler::runJob(" << *jobPtr  << ")\n";
+    std::cout << "(DEBUG):\t- Allocated[" << resourceList->size() <<"]\n";
     char packed_rids = 0x0;
     std::cout << "(DEBUG):\t\t* Rids: { ";
     for (auto &r : *resourceList) {
-      std::cout << r.getId() << ", "; 
+      std::cout << r.getId() << ", ";
       switch(r.getId()) {
-        
+
         case 1:
           packed_rids |= RID1;
           break;
@@ -327,9 +328,9 @@ void Scheduler::runJob(JobResPairPtr j) {
     int portNumber = r.getPort();
     msg_t* req = jobPtr->getReq();
 
-    std::cout << "(DEBUG):\t\t* Opening connection to: " 
+    std::cout << "(DEBUG):\t\t* Opening connection to: "
               << name << ":" << portNumber << "\n";
-  
+
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
    //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     Client c(portNumber,name);
@@ -382,8 +383,8 @@ void Scheduler::runJob(JobResPairPtr j) {
 
 }
 void Scheduler::removeJobFromRunQ(int jid) {
-  boost::lock_guard<boost::mutex> lk(runQMtx); 
-  auto it = std::find_if(runQ->begin(), runQ->end(), 
+  boost::lock_guard<boost::mutex> lk(runQMtx);
+  auto it = std::find_if(runQ->begin(), runQ->end(),
                           std::bind(&idEq,jid,std::placeholders::_1));
   if (it != runQ->end())
     runQ->erase(it);
@@ -411,7 +412,7 @@ void Scheduler::dispatcherLoop() {
         QStatus.setRunQStatus(false);
       }
     }
-  } 
+  }
   catch (boost::thread_interrupted &) {
     std::cout << "(DEBUG):\t\t* Dispatcher thread recieved interrupt"  << std::endl;
     return;
@@ -435,7 +436,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   jInfo->setFinished(false);
   jInfo->setStarted(false);
   std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
-  std::cout << "(DEBUG):\t- New Connection on Thread: " 
+  std::cout << "(DEBUG):\t- New Connection on Thread: "
             << boost::this_thread::get_id() << "\n";
 
 #ifdef DEBUG
@@ -477,7 +478,7 @@ void Scheduler::finishedLoop() {
     while (true) {
       boost::unique_lock<boost::mutex> lock(qMutex);
       while (!QStatus.getFinishedQStatus() ) {
-        QCondVar.wait(lock);      
+        QCondVar.wait(lock);
       }
       lock.unlock();
       if (QStatus.getFinishedQStatus() == true) {
