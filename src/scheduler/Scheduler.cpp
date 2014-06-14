@@ -104,7 +104,7 @@ void Scheduler::notifyClientsOfResults() {
   updateStatistics(std::get<0>(*j));
 
   std::get<1>(*j)->setFinished(true);
-  std::get<2>(*j).notify_all();
+  std::get<2>(*j)->notify_all();
 }
 
 void Scheduler::printQInfo(const char*, JobQueuePtr, bool) {
@@ -255,7 +255,7 @@ void Scheduler::schedLoop() {
     }
   } 
   catch (boost::thread_interrupted &) {
-    std::cout << "(DEBUG): Scheduling thread recieved interrupt"  << std::endl;
+    std::cout << "(DEBUG):\t\t* Scheduling thread recieved interrupt"  << std::endl;
     return;
   }
   catch (std::exception &e) {
@@ -266,24 +266,29 @@ void Scheduler::schedLoop() {
 void Scheduler::runJobs() {
 
     boost::unique_lock<boost::mutex> lk(runQMtx);
+    if (runQ->size() > 0) {
 //    boost::thread_group jT;
-    auto job_pair_ptr = runQ->front();
-    runQ->pop_front();
-    lk.unlock();
-    JobTuplePtr jobTuplePtr = std::get<0>(*job_pair_ptr);
-    auto jobInfo = std::get<1>(*jobTuplePtr);
-    if (! jobInfo->isStarted()){
-
+      auto job_pair_ptr = runQ->front();
+      runQ->pop_front();
+      lk.unlock();
+      JobTuplePtr jobTuplePtr = std::get<0>(*job_pair_ptr);
+      auto jobInfo = std::get<1>(*jobTuplePtr);
+      if (! jobInfo->isStarted()) {
        std::cout << "(DEBUG): Scheduler::runJobs()\n";
        jobInfo->setStarted(true);
        boost::thread jobThread(boost::bind(&Scheduler::runJob,this,job_pair_ptr));
        jobThread.detach();
 //         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
-    }
-     if (!jobInfo->isFinished()) {
+      }
+      if (!jobInfo->isFinished()) {
        lk.lock();
        runQ->push_back(job_pair_ptr);
+       lk.unlock();
+      }
+    } else {
+     lk.unlock();
     }
+
   //  jT.join_all();
 }
 void Scheduler::runJob(JobResPairPtr j) {
@@ -404,7 +409,7 @@ void Scheduler::dispatcherLoop() {
     }
   } 
   catch (boost::thread_interrupted &) {
-    std::cout << "(DEBUG): Dispatcher thread recieved interrupt"  << std::endl;
+    std::cout << "(DEBUG):\t\t* Dispatcher thread recieved interrupt"  << std::endl;
     return;
   }
 /*  catch (std::exception &e) {
@@ -418,7 +423,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
                                       unsigned long sizeBytes) {
   //creat (job,condvar) pair
   //
-  boost::condition_variable jCondVar;
+  auto jCondVar = CondVarPtr(new boost::condition_variable);
   boost::mutex jobMutex;
   boost::unique_lock<boost::mutex> lock(jobMutex);
 //  struct JobInfo jInfo;
@@ -433,12 +438,12 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   request.print();
 #endif
   JobPtr nJob = JobPtr(new Job(&request,getNextId()));
-  JobTuple t = std::make_tuple( nJob, jInfo ,std::ref(jCondVar));
+  JobTuple t = std::make_tuple( nJob, jInfo ,jCondVar);
   enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx,"readyQ");
 
   try {
     while (!jInfo->isFinished()) {
-      jCondVar.wait(lock);
+      jCondVar->wait(lock);
     }
     lock.unlock();
     std::cout << "(DEBUG): " << *nJob << " finished\n" << std::endl;
@@ -482,7 +487,7 @@ void Scheduler::finishedLoop() {
     }
   }
   catch (boost::thread_interrupted &) {
-    std::cout << "(DEBUG): FinishedQ thread recieved interrupt"  << std::endl;
+    std::cout << "(DEBUG):\t\t* FinishedQ thread recieved interrupt"  << std::endl;
     return;
   }
   catch (std::exception& e) {

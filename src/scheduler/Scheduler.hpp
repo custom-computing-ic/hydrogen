@@ -35,28 +35,28 @@ public:
     std::cout << "(DEBUG): ~Scheduler()..\n";
     bool already_cleaned = true;
     if (schedulerThread != nullptr) {
-      std::cout << "\t(DEBUG): Joining schedulerThread\n";
+      std::cout << "(DEBUG):\t- Joining schedulerThread\n";
       schedulerThread->interrupt();
       schedulerThread->join();
       delete schedulerThread;
       already_cleaned = false;
     }
     if (dispatcherThread != nullptr) {
-      std::cout << "\t(DEBUG): Joining dispatcherThread\n";
+      std::cout << "(DEBUG):\t- Joining dispatcherThread\n";
       dispatcherThread->interrupt();
       dispatcherThread->join();
       delete dispatcherThread;
       already_cleaned = false;
     }
     if (finishedQThread != nullptr) {
-      std::cout << "\t(DEBUG): Joining finishedQThread\n";
+      std::cout << "(DEBUG):\t- Joining finishedQThread\n";
       finishedQThread->interrupt();
       finishedQThread->join();
       delete finishedQThread;
       already_cleaned = false;
     }
     if (!already_cleaned) {
-      std::cout << "\t(DEBUG): Joining jobThreads\n";
+      std::cout << "(DEBUG):\t- Joining jobThreads\n";
 //      jobThreads.interrupt_all();
 ///      jobThreads.join_all();
     }

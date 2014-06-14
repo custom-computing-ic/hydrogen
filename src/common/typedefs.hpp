@@ -46,7 +46,8 @@ typedef boost::shared_ptr<Resource> ResourcePtr;
 //typedef std::unique_ptr<Job> JobPtr;
 typedef boost::shared_ptr<Job> JobPtr;
 typedef boost::shared_ptr<struct JobInfo> JobInfoPtr;
-typedef std::tuple<JobPtr, JobInfoPtr, boost::condition_variable&> JobTuple;
+typedef boost::shared_ptr<boost::condition_variable> CondVarPtr;
+typedef std::tuple<JobPtr, JobInfoPtr, CondVarPtr> JobTuple;
 typedef std::shared_ptr<JobTuple> JobTuplePtr;
 typedef std::deque<Resource> ResourceList;   //TODO: change this maybe?
 typedef std::shared_ptr<ResourceList> ResourceListPtr;
