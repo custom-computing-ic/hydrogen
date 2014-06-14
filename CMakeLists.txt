@@ -108,6 +108,14 @@ target_link_libraries (MovingAverageOneDfePriority ${EXTRA_LIBS} TestLib)
 add_executable (MultiUserSingleJobType test/MultiUserSingleJobType.cpp)
 target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS} TestLib)
 
+
+
+add_executable (MultiUserSingleJobTypeSmall test/MultiUserSingleJobTypeSmall.cpp)
+target_link_libraries (MultiUserSingleJobTypeSmall ${EXTRA_LIBS} TestLib)
+
+add_executable (MultiUserSingleJobTypeLarge test/MultiUserSingleJobTypeLarge.cpp)
+target_link_libraries (MultiUserSingleJobTypeLarge ${EXTRA_LIBS} TestLib)
+
 add_executable (DispatcherTest test/DispatcherTest.cpp)
 target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
 
@@ -118,4 +126,8 @@ add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
 add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
 add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
 add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
+
+add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
+add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
+
 add_test ("TerminateServer" TerminateServer)
