@@ -11,7 +11,7 @@ float defaultCostFunction(JobResPair& p) {
 Job::Job(msg_t* request,int id) :  req(request) {
   //TODO[mtottenh]: Replace this with metadata gained from executor
   min = 1;
-  max = 2;
+  max = 4;
   //TODO[mtottenh]: Replace this with data from perf model
   cost_func = defaultCostFunction;
   //TODO[mtottenh]: Replace this with data from perf model
