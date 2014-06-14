@@ -33,8 +33,8 @@ class Job {
     void   copyRsp(char* buff,size_t sizeBytes) {
       msg_t* r = (msg_t*)buff;
 //      this->rsp = std::make_shared<msg_t>();
-            
-      memcpy(this->rsp->data,r->data,r->dataBytes());
+
+      memcpy(this->rsp->data,r->data,r->dataBytes);
     }
     inline int getStatus() const { return status; }
     inline size_t getMin() const { return min;}
@@ -62,21 +62,21 @@ class Job {
       actualExecutionTime = tp;
     }
 
-   
+
 
 
     /* setters */
-    inline void setIssueTime(bc::system_clock::time_point a) { 
-    //  std::cout << *this << " Issued\n";// at: " << a << "\n"; 
+    inline void setIssueTime(bc::system_clock::time_point a) {
+    //  std::cout << *this << " Issued\n";// at: " << a << "\n";
       issueTime = a;
     }
-    inline void setDispatchTime(bc::system_clock::time_point a) { 
-//      std::cout << "(ERR): " << *this << " Dispatched at: " << a << "\n"; 
+    inline void setDispatchTime(bc::system_clock::time_point a) {
+//      std::cout << "(ERR): " << *this << " Dispatched at: " << a << "\n";
       dispatchTime = a;
     }
-    inline void setFinishTime(bc::system_clock::time_point a) { 
+    inline void setFinishTime(bc::system_clock::time_point a) {
   //    std::cout << "(ERR): " << *this << " Finished at: " << a << "\n";
-      finishTime = a; 
+      finishTime = a;
     }
     inline void setMax(size_t a) {max = a;}
     inline void setMin(size_t a) {min = a;}
@@ -112,8 +112,8 @@ class Job {
     int status;
     int priority;
     float defaultJobTime;
-    
-    
+
+
     bc::system_clock::time_point issueTime;
     bc::system_clock::time_point dispatchTime;
     bc::system_clock::time_point finishTime;

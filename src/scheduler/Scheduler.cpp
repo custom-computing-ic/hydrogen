@@ -130,7 +130,7 @@ Allocations* Scheduler::schedule(size_t choice, bool flag) {
   if (readyQ->size() <= 0) {
 //    std::cout << "(DEBUG): No waiting jobs.\n";
   }
-  
+
   if (resPool->size() > 0 && readyQ->size() > 0) {
     a = this->algVec[choice](*this);
   }
@@ -177,16 +177,25 @@ msg_t* Scheduler::handle_request(msg_t* request) {
   //TODO: Lookup requestID/Implementation ID in a map and return error if not
   //found
   msg_t* response;
+  unsigned long sizeBytes = 0;
   switch(request->msgId) {
     case MSG_TERM:
         stop();
         return (msg_t*)NULL;
-    case MSG_DONE:
-      return msg_ack();
-    case MSG_MOVING_AVG:
-    default:
+    case MSG_OPTION_PRICE:
       // XXX TODO[paul-g]: need to actually determine data size here
-      unsigned long sizeBytes = sizeof(msg_t) + sizeof(int) * request->dataSize;
+      sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
+      response = (msg_t*)calloc(sizeBytes, 1);
+      cout << "Scheduler:: Handling msg_option request" << endl;
+      concurrentHandler(*request, *response, sizeBytes);
+#ifdef DEBUG
+      response->print();
+      cout << "Returning from Scheduler::handle_request()\n";
+#endif
+      return response;
+    case MSG_MOVING_AVG:
+      // XXX TODO[paul-g]: need to actually determine data size here
+      sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
       response = (msg_t*)calloc(sizeBytes, 1);
       concurrentHandler(*request, *response, sizeBytes);
 #ifdef DEBUG
@@ -194,6 +203,10 @@ msg_t* Scheduler::handle_request(msg_t* request) {
       cout << "Returning from Scheduler::handle_request()\n";
 #endif
       return response;
+    default:
+      cerr << "Error! Unsuported msg_id " << request->msgId << endl;
+    case MSG_DONE:
+      return msg_ack();
   }
 }
 
@@ -208,13 +221,13 @@ void Scheduler::schedLoop() {
       //  std::cout << "Scheduler Thread woke up\n";
       }
       lock.unlock();
-       
+
       //A job was deposited in the readyQ
       if (QStatus.getReadyQStatus() == true) {
         QStatus.setReadyQStatus(false);
         auto start = bc::system_clock::now();
 //        std::cout << "(DEBUG): Event on readyQ\n";
-        boost::unique_lock<boost::mutex> rqLk(readyQMtx);                  
+        boost::unique_lock<boost::mutex> rqLk(readyQMtx);
         Allocations* a = schedule(MODE_MANAGED,true);
         rqLk.unlock();
         if (a == nullptr) {
@@ -223,7 +236,7 @@ void Scheduler::schedLoop() {
         boost::this_thread::yield();
 
         QStatus.setRunQStatus(true);
-        QCondVar.notify_all();        
+        QCondVar.notify_all();
         } else {
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
@@ -244,20 +257,20 @@ void Scheduler::schedLoop() {
           totalJobsScheduled += numJobsScheduled;
           if (numJobsScheduled > 1)
             std::cout <<" Jobs";
-          else 
+          else
             std::cout <<" Job";
           size_t waitingJobs = readyQ->size();
           std::cout << "\t(" << waitingJobs;
           if (waitingJobs> 1 || waitingJobs == 0)
             std::cout <<" Jobs left)\n";
-          else 
+          else
             std::cout <<" Job left)\n";
 
         }
         QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
       }
     }
-  } 
+  }
   catch (boost::thread_interrupted &) {
     std::cout << "(DEBUG):\t\t* Scheduling thread recieved interrupt"  << std::endl;
     return;
@@ -304,9 +317,9 @@ void Scheduler::runJob(JobResPairPtr j) {
     char packed_rids = 0x0;
     std::cout << "(DEBUG):\t\t* Rids: { ";
     for (auto &r : *resourceList) {
-      std::cout << r.getId() << ", "; 
+      std::cout << r.getId() << ", ";
       switch(r.getId()) {
-        
+
         case 1:
           packed_rids |= RID1;
           break;
@@ -327,9 +340,9 @@ void Scheduler::runJob(JobResPairPtr j) {
     int portNumber = r.getPort();
     msg_t* req = jobPtr->getReq();
 
-    std::cout << "(DEBUG):\t\t* Opening connection to: " 
+    std::cout << "(DEBUG):\t\t* Opening connection to: "
               << name << ":" << portNumber << "\n";
-  
+
    //TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
    //TODO[mtottenh]: Quick hack for now, need to make this scaleable
     Client c(portNumber,name);
@@ -339,7 +352,7 @@ void Scheduler::runJob(JobResPairPtr j) {
 
     boost::this_thread::interruption_point();
     #ifdef DEBUG
-      req.print();
+      req->print();
     #endif
     if (req != NULL) {
  //     std::cout << "(DEBUG):\t\t* Scheduler::runJob() - Sending Request\n";
@@ -347,7 +360,7 @@ void Scheduler::runJob(JobResPairPtr j) {
       c.send(req);
     }
 
-    int sizeBytes = sizeof(msg_t) + sizeof(int) * req->dataSize;
+    int sizeBytes = sizeof(msg_t) + req->expDataSizeBytes;
     char* buff = (char *)calloc(sizeBytes, 1);
 
     if (buff == NULL) {
@@ -360,7 +373,8 @@ void Scheduler::runJob(JobResPairPtr j) {
     msg_t* rsp = (msg_t*)buff;
 
     do {
-      c.read(buff,sizeBytes);
+      std::cout << "(INFO):\t Reading reply, size: " << sizeBytes << endl;
+      c.read(buff, sizeBytes);
       #ifdef DEBUG
         rsp->print();
       #endif
@@ -382,8 +396,8 @@ void Scheduler::runJob(JobResPairPtr j) {
 
 }
 void Scheduler::removeJobFromRunQ(int jid) {
-  boost::lock_guard<boost::mutex> lk(runQMtx); 
-  auto it = std::find_if(runQ->begin(), runQ->end(), 
+  boost::lock_guard<boost::mutex> lk(runQMtx);
+  auto it = std::find_if(runQ->begin(), runQ->end(),
                           std::bind(&idEq,jid,std::placeholders::_1));
   if (it != runQ->end())
     runQ->erase(it);
@@ -411,7 +425,7 @@ void Scheduler::dispatcherLoop() {
         QStatus.setRunQStatus(false);
       }
     }
-  } 
+  }
   catch (boost::thread_interrupted &) {
     std::cout << "(DEBUG):\t\t* Dispatcher thread recieved interrupt"  << std::endl;
     return;
@@ -435,7 +449,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   jInfo->setFinished(false);
   jInfo->setStarted(false);
   std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
-  std::cout << "(DEBUG):\t- New Connection on Thread: " 
+  std::cout << "(DEBUG):\t- New Connection on Thread: "
             << boost::this_thread::get_id() << "\n";
 
 #ifdef DEBUG
@@ -458,7 +472,9 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
       response.msgId = rsp->msgId;
       response.dataSize = rsp->dataSize;
       response.paramsSize = 0;
-      memcpy(&response.data,rsp->data ,rsp->dataBytes());
+      response.totalBytes = rsp->totalBytes;
+      response.dataBytes = rsp->dataBytes;
+      memcpy(&response.data, rsp->data, rsp->dataBytes);
       free(rsp);
     }
   } catch (boost::thread_interrupted &)  {
@@ -477,7 +493,7 @@ void Scheduler::finishedLoop() {
     while (true) {
       boost::unique_lock<boost::mutex> lock(qMutex);
       while (!QStatus.getFinishedQStatus() ) {
-        QCondVar.wait(lock);      
+        QCondVar.wait(lock);
       }
       lock.unlock();
       if (QStatus.getFinishedQStatus() == true) {
@@ -510,9 +526,3 @@ void Scheduler::start() {
   finishedQThread = new boost::thread(&Scheduler::finishedLoop, this);
   run();
 }
-
-
-
-
-
-

@@ -11,7 +11,7 @@ using namespace std;
 int main() {
 
   /** Ask for a simple option pricings a few times */
-  int t = 100;
+  int t = 5;
 
   double strike = 0.01;
   double sigma = 0.02;

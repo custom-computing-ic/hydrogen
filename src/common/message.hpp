@@ -19,12 +19,14 @@ typedef struct msg {
   int priority;
   int predicted_time;
   char rids;
+  size_t expDataSizeBytes; // data size of the expected reply
   size_t dataSize;
   size_t paramsSize;
+
+  size_t totalBytes;
+  size_t dataBytes;
   char data[];
 
-  size_t sizeBytes();
-  size_t dataBytes();
   int firstParam();
   void print();
 

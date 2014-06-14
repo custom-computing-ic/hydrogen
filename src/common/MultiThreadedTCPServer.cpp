@@ -44,7 +44,7 @@ void MultiThreadedTCPServer::run() {
     worker_threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service_));
   }
   cout << "(DEBUG): Calling join_all()\n";
-  worker_threads.join_all(); 
+  worker_threads.join_all();
 }
 
 void MultiThreadedTCPServer::start_accept() {
@@ -90,7 +90,7 @@ void connection::start() {
   // solution is to wait for sizeof(msg_t) so that we are sure we read
   // all the fields of the struct correctly
   socket_.async_read_some(ba::buffer(buffer_),
-                          strand_.wrap(boost::bind(&connection::handle_read, 
+                          strand_.wrap(boost::bind(&connection::handle_read,
                                                    shared_from_this(),
                                     						   ba::placeholders::error,
                                     						   ba::placeholders::bytes_transferred)));
@@ -107,7 +107,7 @@ void connection::handle_read(const boost::system::error_code& e,
 
   // XXX TODO[paul-g]: Need to do this async
   msg_t* request = NULL;
-  msg_t* reply = NULL; 
+  msg_t* reply = NULL;
   do {
     // unpack request
     request = (msg_t*)buffer_.data();
@@ -118,7 +118,7 @@ void connection::handle_read(const boost::system::error_code& e,
     // least the first few bytes storing the msg size (a bit of a hack
     // for now)
 
-    int expectedBytes = request->sizeBytes();
+    int expectedBytes = request->totalBytes;
 
     msg_t* fullRequest;
     bool resized = false;
@@ -144,14 +144,15 @@ void connection::handle_read(const boost::system::error_code& e,
     // write reply back
     if (reply != NULL) {
       try {
-        ba::write(socket_, ba::buffer((char *)reply, reply->sizeBytes()));
+	std::cout << "(INFO): writing reply back - size: " << reply->totalBytes << std::endl;
+        ba::write(socket_, ba::buffer((char *)reply, reply->totalBytes));
         socket_.read_some(ba::buffer(buffer_));
       } catch (std::exception& e) {
         std::cout << "(ERROR): handle_read - " << e.what() << std::endl;
       }
     }
-  } while (request != NULL && 
-           request->msgId != MSG_DONE && 
+  } while (request != NULL &&
+           request->msgId != MSG_DONE &&
            request->msgId != MSG_TERM);
   if (reply != NULL)
     free(reply);

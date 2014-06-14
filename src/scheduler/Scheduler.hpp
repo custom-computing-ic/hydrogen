@@ -19,6 +19,7 @@ class Scheduler;
 #define NUM_THREADS 4
 #include <algs.hpp>
 
+
 /** The scheduler is a server for the client API and a client of the dispatcher **/
 
 //TODO[mtottenh]: clean this up a bit
@@ -86,13 +87,13 @@ public:
     clientPriorities[2] = 2;
     clientPriorities[3] = 3;
     clientPriorities[4] = 4;
-    meanWaitTime = bc::seconds(0); 
-    meanServiceTime = bc::seconds(0); 
-    totalWaitTime = bc::seconds(0); 
-    totalServiceTime = bc::seconds(0); 
-    totalSchedTime = bc::seconds(0); 
+    meanWaitTime = bc::seconds(0);
+    meanServiceTime = bc::seconds(0);
+    totalWaitTime = bc::seconds(0);
+    totalServiceTime = bc::seconds(0);
+    totalSchedTime = bc::seconds(0);
 
-    totalLatency = bc::seconds(0); 
+    totalLatency = bc::seconds(0);
     meanLatency = bc::seconds(0);
     meanThroughput = 0;
     meanUtilization = 0;
@@ -101,7 +102,7 @@ public:
     startTime = bc::system_clock::now();
   }
 
-  template <typename T> void enqueue(typename ContainerPtr<std::shared_ptr<T>>::deque container, 
+  template <typename T> void enqueue(typename ContainerPtr<std::shared_ptr<T>>::deque container,
                                       std::shared_ptr<T> elem, boost::mutex &lock, const std::string& name)
   {
     //Check that this shouldn't be the lock passed in.
@@ -143,7 +144,7 @@ public:
     QCondVar.notify_all();
   }
   /* Server functions */
-  int getNextId() { 
+  int getNextId() {
     boost::lock_guard<boost::mutex> lk(jidMtx);
     return nextJid++;
   }
@@ -152,16 +153,16 @@ public:
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
   msg_t* concurrentHandler(msg_t& request, msg_t& response, unsigned long responseSize);
 
-   
+
   void notifyClientsOfResults();
   /* Thread functions */
   void schedLoop();
   void dispatcherLoop();
 
   virtual void start();
-  void stop() {   
+  void stop() {
     /* If not using priorities: */
-    std::cout << std::dec << "(INFO): Uptime: " 
+    std::cout << std::dec << "(INFO): Uptime: "
               << bc::duration_cast<bc::seconds>(bc::system_clock::now() - startTime)
               << std::endl;
 
@@ -171,20 +172,20 @@ public:
     std::cout << std::dec << "(INFO): Mean Throughput " << meanThroughput << "  (Jobs/sec)\n";
     std::cout << std::dec << "(INFO): Mean Utilization " << meanUtilization << "\n";
     std::cout << std::dec << "(INFO): Mean Scheduling Overhead " << totalSchedTime / numSchedules << "\n";
-    std::cout << std::dec << "(INFO): Total Jobs : " << totalCompletions + 
-                                            readyQ->size() + 
-                                            runQ->size() 
+    std::cout << std::dec << "(INFO): Total Jobs : " << totalCompletions +
+                                            readyQ->size() +
+                                            runQ->size()
                                          << "\tTotal Completions: "
                                          << totalCompletions;
-    std::cout << std::dec<< "\tAvg. # Jobs/Schedule: " 
+    std::cout << std::dec<< "\tAvg. # Jobs/Schedule: "
               << (double)totalJobsScheduled / (double) numSchedules << "\n";
  //   add per resource Utilization Statistics
 
-    /* Otherwise 
+    /* Otherwise
     int i = 0;
     for(priorityWt: meanWaitTimes) {
       i++;
-      std::cout << "Mean waiting time for priority[" << i << "]: " 
+      std::cout << "Mean waiting time for priority[" << i << "]: "
                 << priorityWt << "\n";
     }
     */
@@ -193,7 +194,7 @@ public:
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
   {
-//    boost::lock_guard<boost::mutex> lk(runQMtx); 
+//    boost::lock_guard<boost::mutex> lk(runQMtx);
     if (i > rq->size()) {
       return nullptr;
     }
@@ -208,7 +209,7 @@ public:
   /* Scheduling Strategies */
   Allocations* schedule(size_t,bool);
   void returnResources(Allocations &a);
-  
+
   std::deque<Resource>  allocate(Job &j, size_t m, size_t n);
   JobPtr realloc(JobPtr j);
 
@@ -216,7 +217,7 @@ public:
   inline void addSchedAlg(AlgType f) { algVec.push_back(f);}
   void runJobs();
   void runJob(JobResPairPtr j);
-  
+
   inline static bool idEq (const int& jid, const JobResPairPtr & item) {
     return jid == std::get<0>(*std::get<0>(*item))->getId();
   }
@@ -233,7 +234,7 @@ public:
       if (elem != readyQ->end()) {
         readyQ->erase(elem);
       }
-    } 
+    }
 /*    JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
     JobQueue::iterator a = readyQ->begin();
     for(;a != readyQ->end(); a++) {
@@ -242,13 +243,13 @@ public:
       }
     }
     readyQ = preserve_list;
-  */ 
-   QCondVar.notify_all(); 
+  */
+   QCondVar.notify_all();
     return j;
   }
   void removeJobFromRunQ(int jid);
 
-  /* TODO[mtottenh]: Deprecate these. access to Ptrs of these Q's is bad 
+  /* TODO[mtottenh]: Deprecate these. access to Ptrs of these Q's is bad
    * now that everything is multithreaded
    */
   JobQueuePtr getReadyQPtr() { return readyQ;}
@@ -257,7 +258,7 @@ public:
 
   void claimResources(JobResPairPtr elem);
   void returnResources(ResourceListPtr res);
-  
+
   void updateStatistics(JobPtr j) {
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);
     totalCompletions++;
@@ -272,13 +273,13 @@ public:
     totBusyTime += j->getActualExecutionTime();
     auto tp = bc::system_clock::now();
     auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
-    auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime); 
+    auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count();
   }
     void updateMeanWaitTime(JobPtr j) {
     //LOCK
     totalWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
-    meanWaitTime =  totalWaitTime  /  totalCompletions;  
+    meanWaitTime =  totalWaitTime  /  totalCompletions;
   }
 
   void updateMeanServiceTime(JobPtr j) {
@@ -292,7 +293,7 @@ public:
   }
   void updateLateJobs(JobPtr j) {
  bc::duration<double> actualExecutionTime = bc::duration_cast<bc::seconds>(j->getFinishTime() - j->getDispatchTime());
-    auto lateness = actualExecutionTime - estimateExecutionTime(j);      
+    auto lateness = actualExecutionTime - estimateExecutionTime(j);
  //   if ( lateness > bc::seconds(0)) {
       std::cout << "(DEBUG): Estimate off by : "<< lateness << " seconds\n";
 //    }
@@ -307,7 +308,7 @@ public:
 
   inline void addResource(Resource& r){
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
-    int portNo = r.getPort(); 
+    int portNo = r.getPort();
     std::string hostName = r.getName();
     int Rid = r.getId();
     std::string type = r.getType();
@@ -340,7 +341,7 @@ private:
   inline  AlgType getAlg(size_t i) { return algVec[i];}
   inline  size_t noAlgs() {return algVec.size();}
   inline  JobTuplePtr getFirstReadyProc() {
- 
+
     boost::lock_guard<boost::mutex> lk(readyQMtx);
     JobTuplePtr j = std::move( readyQ->front() ) ;
     readyQ->pop_front();
@@ -409,7 +410,7 @@ private:
   bc::time_point<bc::system_clock,bc::duration<double> > startTime;
 
   double meanThroughput;
-  double meanUtilization; 
+  double meanUtilization;
 
   std::string strat;
   int nextJid;

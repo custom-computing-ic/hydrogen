@@ -24,8 +24,8 @@ int main() {
     c.start();
 
     msg_t* msg = msg_moving_avg(n, 3, a);
-    char* buf = (char* )calloc(msg->sizeBytes(), 1);
-    memcpy(buf, msg, msg->sizeBytes());
+    char* buf = (char* )calloc(msg->totalBytes, 1);
+    memcpy(buf, msg, msg->totalBytes);
     c.send(msg);
     c.getResult(out, n * sizeof(int));
     c.stop();

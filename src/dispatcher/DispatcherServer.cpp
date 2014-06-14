@@ -115,11 +115,14 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 #endif
 
     // write the response
-    size_t sizeBytes = sizeof(msg_t) + request->dataSize * sizeof(int);
+    int dataBytes = request->dataSize * sizeof(int);
+    size_t sizeBytes = sizeof(msg_t) + dataBytes;
     msg_t* response = (msg_t*)calloc(sizeBytes, 1);
     response->msgId = MSG_RESULT;
     response->dataSize = n;
     response->paramsSize = 0;
+    response->totalBytes = sizeBytes;
+    response->dataBytes = dataBytes;
     response->predicted_time = bc::duration_cast<bc::milliseconds>(end-start).count();
     memcpy(response->data, out, nBytes);
     free(out);
@@ -133,13 +136,15 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     double sigma = 0.02;
     double timestep = 0.05;
     int numTimeStep = (int)(10/0.05);
-    int numMaturity = 2000000;
+    int numMaturity = 1000000;
     int paraNode = 50;
     int numPathGroup = 20;
     int numPE = 4;
     double T = 10;
 
+    cerr << "Making request " << endl;
     double res;
+
     this->optionPricing_dfe(strike,
 			    sigma,
 			    timestep,
@@ -155,7 +160,12 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->msgId = MSG_RESULT;
     response->dataSize = 1;
     response->paramsSize = 0;
+    response->totalBytes = sizeBytes;
+    response->dataBytes = sizeof(double);
     memcpy(response->data, &res, sizeof(double));
+
+    cerr << "Got reply " << endl;
+    response->print();
     return response;
   }
 

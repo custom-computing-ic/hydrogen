@@ -20,10 +20,10 @@ Client::Client(Resource &r) :
 void Client::send(msg_t *message) {
   if (message->msgId != MSG_DONE)
     cout << "(DEBUG):\t\t* Sending Request" << endl;
-  size_t byteSize= message->sizeBytes();
+  size_t byteSize= message->totalBytes;
   float kb = (float)byteSize / 1024;
   float mb = kb / 1024;
-  cout << "(DEBUG):\t\t\t->Sending "; 
+  cout << "(DEBUG):\t\t\t->Sending ";
   if ( mb >= 1) {
     cout << mb << " MB" << endl;
   } else {
@@ -33,8 +33,8 @@ void Client::send(msg_t *message) {
      cout << byteSize << " Bytes" << endl;
     }
   }
-  ba::write(*socket_, 
-            ba::buffer((char *)message, message->sizeBytes())
+  ba::write(*socket_,
+            ba::buffer((char *)message, message->totalBytes)
            );
 }
 
@@ -64,11 +64,9 @@ void Client::stop() {
   cout << "(DEBUG):\t\t* Closing connection" << endl;
 
   // let the server know we're done
-  msg_t msg;
-  msg.msgId = MSG_DONE;
-  msg.dataSize = 0;
-  msg.paramsSize = 0;
-  send(&msg);
+  msg_t* msg = msg_done();
+  send(msg);
+  free(msg);
 
   boost::system::error_code ignored_ec;
   socket_->shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
@@ -83,18 +81,18 @@ void Client::getResult(void* out, int sizeBytes) {
 //  try {
     ba::read(*socket_, boost::asio::buffer(buf, size));
 //  } catch (std::exception& e) {
-//    std::cout << "(ERROR):\t\t* Failed to read from socket." 
+//    std::cout << "(ERROR):\t\t* Failed to read from socket."
 //              << "Check if remote host crashed\n";
 //  }
 
 
 
   msg_t* rsp = (msg_t*)buf;
-  if (sizeBytes != rsp->dataBytes()) {
+  if (sizeBytes != rsp->dataBytes) {
     cerr << "(ERROR):\t\t* Error: reply size different than expected! ";
-    cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes();
+    cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes;
   }
-  memcpy(out, rsp->data, rsp->dataBytes());
+  memcpy(out, rsp->data, rsp->dataBytes);
   free(buf);
 }
 
@@ -103,7 +101,7 @@ int Client::read(char* buffer, size_t sizeBytes) {
 //  try {
     ba::read(*socket_, ba::buffer(buffer, sizeBytes));
 //  } catch (std::exception& e) {
-//    std::cout << "(ERROR):\t\t* Failed to read from socket." 
+//    std::cout << "(ERROR):\t\t* Failed to read from socket."
 //              << "Check if remote host crashed\n";
 //    return 1;
 //  }
