@@ -15,16 +15,20 @@ int main() {
   int *data = mavg_data(n);
   int *exp = mavg_threept_exp(n, data);
 
-  int p = 1;
+  int p = 30;
+  int numJobs = 10;
   for (int i = 0; i < p; i++) {
     int pid = fork();
 
     if (pid == 0) {
       // child process
-      int* out = (int*)calloc(n, sizeof(int));
-      movingAverage(n, 3, data, out);
-      bool correct = mavg_check(n, out, exp);
-      free(out);
+         bool correct = true;
+      for (int j = 0; j < numJobs; j++) {
+        int* out = (int*)calloc(n, sizeof(int));
+        movingAverage(n, 3, data, out);
+        correct &= mavg_check(n, out, exp);
+        free(out);
+      }
       exit(correct ? EXIT_SUCCESS : EXIT_FAILURE);
     } else if (pid < 0) {
       // parent process
