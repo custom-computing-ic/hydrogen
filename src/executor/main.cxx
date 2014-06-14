@@ -61,9 +61,11 @@ int main(int argc, char** argv) {
   /* Adding some tasks... */
   e.AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
-  PerfModel perf(mav_DFE,4e-18,1e2,2,1);
-  
-/*  perf.CreateModel(38400000, [&](const int size) -> double {
+  Implementation *mav_CPU = new Implementation("MAV","mavCPU","MOVING_AVERAGE","","","CPU");
+
+  PerfModel perf_CPU(mav_CPU,4e-18,1e2,2,1);
+  PerfModel perf_DFE(mav_DFE,4e-18,1e2,2,1);
+/*  perf.CreateModel(384000000, [&](const long size) -> double {
                   if (size == 0) 
                     return 0.0;
                   std::default_random_engine gen;
@@ -75,10 +77,12 @@ int main(int argc, char** argv) {
                   }
                   SimpleTimer test_t;
                   test_t.start();
-                  movingAverage(size,3,a1,out,1);
+                  movingAverage(size,3,a1,out,2);
                   uint64_t ms = test_t.end();
                   std::stringstream ss;
-                  std::cout << "(INFO): Size: " << size << "\t ms: " << ms << "\n";
+                  auto mb = (((size*sizeof(int))/1024)/1024);
+                  std::cout << "(INFO): Size: " << size << " (" << mb << "MB)"
+                            << "\t ms: " << ms << "\n";
                   ss << ms;
                   free(a1);
                   free(out);
@@ -87,15 +91,24 @@ int main(int argc, char** argv) {
                   return msd;
                 });*/
  // std::cout << "(INFO)" << perf << "\n";
-  perf.LoadFromDisk("MAV_DFE");
-  std::cout << "(INFO)" << perf << "\n";
+  perf_CPU.LoadFromDisk("MAV_CPU");
+  perf_DFE.LoadFromDisk("MAV_DFE");
+  std::cout << "(INFO)" << perf_CPU << "\n";
+  std::cout << "(INFO)" << perf_DFE << "\n";
+
+//  perf.setAlpha(1e-19);
+//  perf.setIter(1e4);
+//  perf.LinearRegression();
+
+//  std::cout << "\n(INFO)" << perf << "\n";
 
 /*  for (int i = 0; i < 38400000; i+= 384000) {
     std::cout << "(DEBUG): perf.QueryModel("<< i 
               << ") = " << perf.QueryModel(i) << "ms\n";
   }*/
-//  perf.SaveToDisk("MAV_DFE");
+//  perf.SaveToDisk("MAV_CPU");
   e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_DFE);
+  e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_CPU);
 //  e.AddImp(e.FindTask("MOVING_AVERAGE"),
 //           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
  
