@@ -37,5 +37,12 @@ msg_t* msg_ack();
 msg_t* msg_done();
 
 msg_t* msg_moving_avg(int n, size_t width, int* dataIn);
+msg_t* msg_option_pricing(double strike,
+			  double sigma,
+			  double timestep,
+			  int numMaturity,
+			  int paraNode,
+			  int numPathGroup,
+			  double T);
 
 #endif /* _MESSAGE_H_ */

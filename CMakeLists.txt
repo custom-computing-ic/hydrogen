@@ -84,6 +84,10 @@ target_link_libraries (executor Executor ${EXTRA_LIBS})
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
 
+add_executable (OptionPricing test/OptionPricingTest.cpp)
+target_link_libraries (OptionPricing ${EXTRA_LIBS} TestLib)
+
+
 add_executable (TerminateServer test/TerminateServer.cpp)
 target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
 
@@ -106,3 +110,4 @@ add_test ("DispatcherTest" DispatcherTest)
 add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
 add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 add_test ("TerminateServer" TerminateServer)
+add_test ("OptionPricing" OptionPricing)

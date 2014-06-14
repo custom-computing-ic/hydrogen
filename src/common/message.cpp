@@ -60,3 +60,27 @@ msg_t* msg_moving_avg(int n, size_t width, int* dataIn) {
   memcpy(msg->data + sizeof(int) * n, (char *)&width, sizeof(size_t));
   return msg;
 }
+
+msg_t* msg_option_pricing(double strike,
+			  double sigma,
+			  double timestep,
+			  int numMaturity,
+			  int paraNode,
+			  int numPathGroup,
+			  double T) {
+  int sizeBytes = sizeof(msg_t) + 4 * sizeof(double) + 3 * sizeof(int);
+  msg_t* msg = (msg_t *)calloc(sizeBytes, 1);
+  msg->msgId = MSG_OPTION_PRICE;
+  msg->dataSize = 0;
+  msg->paramsSize = 7;
+
+  // XXX find a better way for this...
+  memcpy(msg->data, &strike, sizeof(double));
+  memcpy(msg->data + sizeof(double), &sigma, sizeof(double));
+  memcpy(msg->data + 2 * sizeof(double), &timestep, sizeof(double));
+  memcpy(msg->data + 3 * sizeof(double), &numMaturity, sizeof(int));
+  memcpy(msg->data + 3 * sizeof(double) + sizeof(int), &paraNode, sizeof(int));
+  memcpy(msg->data + 3 * sizeof(double) + 2 * sizeof(int), &numPathGroup, sizeof(int));
+  memcpy(msg->data + 3 * sizeof(double) + 3 * sizeof(int), &T, sizeof(double));
+  return msg;
+}

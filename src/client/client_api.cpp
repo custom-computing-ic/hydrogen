@@ -13,7 +13,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
   cout << "(DEBUG): Send job :: movingAverage" << endl;
 
   msg_t *msg = msg_moving_avg(n, size, data);
-  
+
   const string& name = "localhost";
   int client_id = 0;
   int portNumber = 8111;
@@ -24,7 +24,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to " 
+    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
@@ -39,11 +39,24 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
   free(msg);
 }
 
-void TerminateServer() {
-  cout << "(DEBUG): Send job :: Terminate Server" << endl;
+void optionPricing(double strike,
+		   double sigma,
+		   double timestep,
+		   int numMaturity,
+		   int paraNode,
+		   int numPathGroup,
+		   double T,
+		   double *out) {
+  cout << "(DEBUG): Send job :: optionPricing" << endl;
 
-  msg_t *msg = msg_empty();
-  
+  msg_t *msg = msg_option_pricing(strike,
+				  sigma,
+				  timestep,
+				  numMaturity,
+				  paraNode,
+				  numPathGroup,
+				  T);
+
   const string& name = "localhost";
   int client_id = 0;
   int portNumber = 8111;
@@ -54,7 +67,37 @@ void TerminateServer() {
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to " 
+    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
+         << client_id + 8110 << "\n";
+  }
+  /* hack to make the default port 8111 and client ports 8112-8120 */
+  portNumber += client_id > 0 ? client_id -1 : client_id;
+  msg->clientId = client_id;
+  Client c(portNumber, name);
+  c.start();
+  c.send(msg);
+  c.getResult(out, sizeof(double));
+  c.stop();
+
+  free(msg);
+}
+
+void TerminateServer() {
+  cout << "(DEBUG): Send job :: Terminate Server" << endl;
+
+  msg_t *msg = msg_empty();
+
+  const string& name = "localhost";
+  int client_id = 0;
+  int portNumber = 8111;
+
+  char* clientIdCh = getenv("CLIENT_ID");
+  if (clientIdCh == NULL) {
+    cout << "(ERROR): ClientAPI Call- Environmental Variable CLIENT_ID"
+         << " is not set!\n(ERROR): Using default port 8111\n";
+  } else {
+    client_id = atoi(clientIdCh);
+    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
@@ -98,7 +141,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out, int pNum) {
   c.start();
   msg_t* msg = msg_control_add_res(type,host,port);
 
-    
+
   msg->clientId = clientId;
   c.send(msg);
   c.stop();
