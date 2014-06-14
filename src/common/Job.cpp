@@ -15,7 +15,7 @@ Job::Job(msg_t* request,int id) :  req(request) {
   //TODO[mtottenh]: Replace this with data from perf model
   cost_func = defaultCostFunction;
   //TODO[mtottenh]: Replace this with data from perf model
-  defaultJobTime = 1.0;
+  defaultJobTime = (float)request->predicted_time;
   //TODO[mtottenh]: This works for now, but this needs to
   //change for after the demmo.
   priority = request->clientId;
