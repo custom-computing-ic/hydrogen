@@ -233,11 +233,15 @@ void Scheduler::schedLoop() {
             auto end = bc::system_clock::now();
             auto duration = bc::duration_cast<bc::microseconds>(end - start);
 
-            std::cout << "(INFO): Scheduling took: " << duration.count() << "us" << std::endl;
+            std::cout << "(DEBUG): Scheduling took: " << duration.count() << "us"
+                      << std::endl;
+            totalSchedTime += duration;
+            numSchedules++;
             QCondVar.notify_all();
           }
           delete a;
-          std::cout << "(INFO): Managed Mode scheduled " << numJobsScheduled;
+          std::cout << "(DEBUG): Managed Mode scheduled " << numJobsScheduled;
+          totalJobsScheduled += numJobsScheduled;
           if (numJobsScheduled > 1)
             std::cout <<" Jobs";
           else 
@@ -431,7 +435,7 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
   jInfo->setFinished(false);
   jInfo->setStarted(false);
   std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
-  std::cout << "(INFO): New Connection on Thread: " 
+  std::cout << "(DEBUG):\t- New Connection on Thread: " 
             << boost::this_thread::get_id() << "\n";
 
 #ifdef DEBUG

@@ -2,7 +2,8 @@
 #include "TestLib.hpp"
 
 #include <client_api.hpp>
-
+#include <sys/types.h>
+#include <unistd.h>
 #include <iostream>
 #include <cstring>
 
@@ -26,6 +27,6 @@ int main() {
     status &= mavg_check(n, out, exp);
     free(out);
   }
-
+  cout << "Proc: " << getpid()<< "ended\n";
   return status ? 0 : 1;
 }

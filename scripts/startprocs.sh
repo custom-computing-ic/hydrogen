@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-../build/dispatcher 8116 1> ./log/dispatcher.out  2> ./log/dispatcher.err&
+./dispatcher 8112 1> /dev/null &
 printf "Starting Dispatcher"
 sleep 1s
 printf "."
@@ -10,7 +10,7 @@ printf "."
 sleep 1s
 printf ".\n"
 
-../build/scheduler 8115 8116 1> ./log/scheduler.out  2> ./log/scheduler.err&
+../build/scheduler 8111 8112 2> ./log/scheduler.err | grep INFO &
 printf "Starting Scheduler"
 sleep 1s
 printf "."
@@ -18,7 +18,7 @@ sleep 1s
 printf "."
 sleep 1s
 printf ".\n"
-../build/executor -c 4 -s 8115 -n localhost 1> ./log/executor.out  2> ./log/executor.err&
+./executor -c 4 -p 8111 -n localhost  1> exe.out 2> exe.err &
 printf "Starting Executor"
 sleep 1s
 printf "."

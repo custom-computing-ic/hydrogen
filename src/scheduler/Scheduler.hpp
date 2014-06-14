@@ -16,7 +16,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 2
+#define NUM_THREADS 4
 #include <algs.hpp>
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
@@ -90,10 +90,14 @@ public:
     meanServiceTime = bc::seconds(0); 
     totalWaitTime = bc::seconds(0); 
     totalServiceTime = bc::seconds(0); 
+    totalSchedTime = bc::seconds(0); 
+
     totalLatency = bc::seconds(0); 
     meanLatency = bc::seconds(0);
     meanThroughput = 0;
     meanUtilization = 0;
+    numSchedules = 0;
+    totalJobsScheduled = 0;
     startTime = bc::system_clock::now();
   }
 
@@ -157,22 +161,23 @@ public:
   virtual void start();
   void stop() {   
     /* If not using priorities: */
-    std::cout << "(INFO): Uptime: " 
+    std::cout << std::dec << "(INFO): Uptime: " 
               << bc::duration_cast<bc::seconds>(bc::system_clock::now() - startTime)
               << std::endl;
 
-    std::cout << "(INFO): Mean waiting Time: " << meanWaitTime << "\n";
-    std::cout << "(INFO): Mean Service Time: " << meanServiceTime << "\n";
-    std::cout << "(INFO): Mean Latency : " << meanLatency << "\n";
-    std::cout << "(INFO): Mean Throughput " << meanThroughput << "  (Jobs/sec)\n";
-    std::cout << "(INFO): Mean Utilization " << meanUtilization << "\n";
-    
-    std::cout << "(INFO): Total Jobs : " << totalCompletions + 
+    std::cout << std::dec << "(INFO): Mean waiting Time: " << meanWaitTime << "\n";
+    std::cout << std::dec << "(INFO): Mean Service Time: " << meanServiceTime << "\n";
+    std::cout << std::dec << "(INFO): Mean Latency : " << meanLatency << "\n";
+    std::cout << std::dec << "(INFO): Mean Throughput " << meanThroughput << "  (Jobs/sec)\n";
+    std::cout << std::dec << "(INFO): Mean Utilization " << meanUtilization << "\n";
+    std::cout << std::dec << "(INFO): Mean Scheduling Overhead " << totalSchedTime / numSchedules << "\n";
+    std::cout << std::dec << "(INFO): Total Jobs : " << totalCompletions + 
                                             readyQ->size() + 
                                             runQ->size() 
                                          << "\tTotal Completions: "
-                                         << totalCompletions << std::endl;
-
+                                         << totalCompletions;
+    std::cout << std::dec<< "\tAvg. # Jobs/Schedule: " 
+              << (double)totalJobsScheduled / (double) numSchedules << "\n";
  //   add per resource Utilization Statistics
 
     /* Otherwise 
@@ -252,7 +257,7 @@ public:
 
   void claimResources(JobResPairPtr elem);
   void returnResources(ResourceListPtr res);
-
+  
   void updateStatistics(JobPtr j) {
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);
     totalCompletions++;
@@ -260,10 +265,17 @@ public:
     updateMeanServiceTime(j);
     updateLatency(j);
     updateThroughput(j);
-//    updateUtilization(j);
+    updateUtilization(j);
     updateLateJobs(j);
   }
-  void updateMeanWaitTime(JobPtr j) {
+  void updateUtilization(JobPtr j ) {
+    totBusyTime += j->getActualExecutionTime();
+    auto tp = bc::system_clock::now();
+    auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
+    auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime); 
+    meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count();
+  }
+    void updateMeanWaitTime(JobPtr j) {
     //LOCK
     totalWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
     meanWaitTime =  totalWaitTime  /  totalCompletions;  
@@ -282,7 +294,7 @@ public:
  bc::duration<double> actualExecutionTime = bc::duration_cast<bc::seconds>(j->getFinishTime() - j->getDispatchTime());
     auto lateness = actualExecutionTime - estimateExecutionTime(j);      
  //   if ( lateness > bc::seconds(0)) {
-      std::cout << "(INFO): Estimate off by : "<< lateness << " seconds\n";
+      std::cout << "(DEBUG): Estimate off by : "<< lateness << " seconds\n";
 //    }
   }
 
@@ -390,6 +402,10 @@ private:
   bc::duration<double> totalServiceTime;
   bc::duration<double> meanLatency;
   bc::duration<double> totalLatency;
+  bc::duration<long,boost::ratio<1l,1000000l>> totalSchedTime;
+  bc::duration<double,boost::ratio<1l,1000000l>> totBusyTime;
+  long numSchedules;
+  long totalJobsScheduled;
   bc::time_point<bc::system_clock,bc::duration<double> > startTime;
 
   double meanThroughput;
