@@ -84,6 +84,16 @@ target_link_libraries (executor Executor ${EXTRA_LIBS})
 add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
 target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
 
+
+add_executable (MovingAverageOneDfeSmall test/MovingAverageOneDfeSmall.cpp)
+target_link_libraries (MovingAverageOneDfeSmall ${EXTRA_LIBS} TestLib)
+
+add_executable (MovingAverageOneDfeMedium test/MovingAverageOneDfeMedium.cpp)
+target_link_libraries (MovingAverageOneDfeMedium ${EXTRA_LIBS} TestLib)
+
+add_executable (MovingAverageOneDfeLarge test/MovingAverageOneDfeLarge.cpp)
+target_link_libraries (MovingAverageOneDfeLarge ${EXTRA_LIBS} TestLib)
+
 add_executable (TerminateServer test/TerminateServer.cpp)
 target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
 
@@ -104,5 +114,8 @@ target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
 enable_testing ()
 add_test ("DispatcherTest" DispatcherTest)
 add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
+add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
+add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
+add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
 add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 add_test ("TerminateServer" TerminateServer)
