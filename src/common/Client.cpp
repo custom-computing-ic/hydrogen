@@ -64,12 +64,13 @@ void Client::stop() {
   cout << "(DEBUG):\t\t* Closing connection" << endl;
 
   // let the server know we're done
+  
   msg_t msg;
+  memset(&msg,0,sizeof(msg_t));
   msg.msgId = MSG_DONE;
   msg.dataSize = 0;
   msg.paramsSize = 0;
   send(&msg);
-
   boost::system::error_code ignored_ec;
   socket_->shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
 }
