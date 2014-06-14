@@ -15,7 +15,7 @@ int main() {
   int *data = mavg_data(n);
   int *exp = mavg_threept_exp(n, data);
 
-  int p = 2;
+  int p = 30;
   int numJobs = 100;
   for (int i = 0; i < p; i++) {
     int pid = fork();
@@ -37,12 +37,14 @@ int main() {
   }
 
   // wait for all children to finish and check status
+  cout << "\t[";
   bool ok = true;
   for (int i = 0; i < p; i++ ) {
     int st = 0;
+    cout << ".";
     wait(&st);
     ok = ok && (st == EXIT_SUCCESS);
   }
-
+  cout << "]\n";
   return ok ? 0 : 1;
 }
