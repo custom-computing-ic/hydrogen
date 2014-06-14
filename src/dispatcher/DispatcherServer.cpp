@@ -5,6 +5,7 @@
 #include <boost/chrono.hpp>
 using namespace std;
 namespace bc = boost::chrono;
+
 void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
   cout << "Dispatcher::MovingAverageCPU" << endl;
   cout << " n:    " << n << endl;
@@ -20,7 +21,12 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
   for (size_t i = n - size + 1; i < n; i++) {
     out[i] = 0;
   }
+  /* [TODO]: remove this hack to make DFE & CPU implmentations
+   * the same...
+   */
+  std::rotate(&out[0],&out[n-1],&out[n]);
 }
+<<<<<<< HEAD
 void DispatcherServer::movingAverage_dfe(int n, int size,
                                          int *data, int *out) {
   cout << "Dispatcher::MovingAverageDFE" << endl;

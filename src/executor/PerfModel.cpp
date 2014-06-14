@@ -22,18 +22,17 @@ PerfModel::PerfModel(Implementation *param, double alpha, uint64_t it, int feat,
   this->order = order;
   
 }
-
-int PerfModel::CreateModel(int maxsize,std::function<double(int)> f) {
-  std::cout << "Creating Performance Model." << std::endl;
+void PerfModel::GenerateTestData(uint64_t maxsize, 
+                                 std::function<double(uint64_t)> f) {
+  std::cout << "\t*Generating test data\n\t\t [";
   std::vector<double> tmp;
   for (int i = 0; i <= order; i++) {
     tmp.push_back(1.0);
   }
   features.push_back(tmp);
   milliseconds.push_back(1);  
-  std::cout << "\t*Generating test data\n\t\t [";
   fflush(stdout);
-  for(int i = 0; i < maxsize; i+=(maxsize/100)) {
+  for(uint64_t i = 0; i < maxsize; i+=(maxsize/100)) {
      tmp.clear();
      if ( i > 0) {
        for (int j = 0; j <= order; j++) {
@@ -47,24 +46,26 @@ int PerfModel::CreateModel(int maxsize,std::function<double(int)> f) {
        double ave = (test1 + test2 + test3) / 3.0;
        milliseconds.push_back(ave);    
      }
-     if ( i % (maxsize/10) == 0 ) {
+     if ( i % (maxsize/100) == 0 ) {
        std::cout << ".";
        fflush(stdout);
-//       std::cout << "\nInput of size [" << i << "] Took: " << milliseconds.back() << "ms\n";
      }
   }
   std::cout << "]\n";
-
-  std::cout << "\t*Starting Linear Regression\n\t\t [";
+}
+int PerfModel::CreateModel(uint64_t maxsize,std::function<double(int)> f) {
+  std::cout << "Creating Performance Model." << std::endl;
+  this->GenerateTestData(maxsize,f);
   fflush(stdout);
   this->LinearRegression();
-  std::cout << "]" << std::endl;
-  return 0;
+    return 0;
 }
 
 void PerfModel::LinearRegression() {
+  std::cout << "\t*Starting Linear Regression\n\t\t [";
   this->numberOfDataPoints = milliseconds.size();
   //initialize weights set to 0;
+  weights.clear();
   for (int i = 0; i < numberOfFeatures; i++) {
     weights.push_back(0.0f);
   }
@@ -74,7 +75,6 @@ void PerfModel::LinearRegression() {
         std::cout << ".";
         fflush(stdout);
       }
-//      std::cout << "****Iteration " << iter << "****\n";
     for(int f = 0; f < numberOfFeatures; f++) {
       double currentWeight = weights[f];
       double costDerivative(0);
@@ -85,16 +85,8 @@ void PerfModel::LinearRegression() {
           H+= weights[i]*features[m][i];
 
         }
-//        std::cout << "H: " << H << "\tY: " << Y <<  "\tF: " << features[m][0] << "\t" 
-//                  << features[m][1];
         costDerivative += (H-Y)*(features[m][f]);
       }
-  //    if (iter % 100 == 0)
- //       std::cout << "\tW[" << f << "]" <<": " << weights[f] << std::endl;
-
-//      std::cout << "-----------------------------------------------------\n";
-//      std::cout << " currentWeight: " << currentWeight << "\tcostDerivative: " << costDerivative << "\n";
-//      std::cout << "-----------------------------------------------------\n";
 
       newWeights.push_back(currentWeight - alpha*costDerivative);
     }
@@ -102,6 +94,7 @@ void PerfModel::LinearRegression() {
       weights[f] = newWeights[f];
     }
   }
+  std::cout << "]" << std::endl;
 
 }
 double PerfModel::QueryModel(double input) {

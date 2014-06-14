@@ -14,7 +14,6 @@
 
 class PerfModel {
     private:
-        void LinearRegression();
         double alpha;
         uint64_t iterations;
         int numberOfFeatures;
@@ -26,15 +25,39 @@ class PerfModel {
         std::vector<double> milliseconds;
     public:
         Implementation *imp; // Fix this 
+
         PerfModel(Implementation*);
-        PerfModel(Implementation *param, double alpha, uint64_t it, int feat, int order);
+        PerfModel(Implementation *param, 
+                  double alpha, uint64_t it, 
+                  int feat, int order);
+        int CreateModel(uint64_t, std::function<double(int)>);
+        void GenerateTestData(uint64_t, std::function<double(uint64_t)>);
+        void LinearRegression();
+
         double QueryModel(double);
-        int CreateModel(int, std::function<double(int)>);
+
         int SaveToDisk(const std::string& fname);
         int SaveToDisk();
         int LoadFromDisk(const std::string& fname);
         int LoadFromDisk(PerfModel& pm);
+
+        double getAlpha() const { return alpha;}
+        uint64_t getIter() const { return iterations;}
+        int getNoFeat() const { return numberOfFeatures;}
+        int getNoData() const { return numberOfDataPoints;}
+        int getOrder() const { return order;}
+
+
         Implementation* getImp() { return imp;}
+        
+        void setAlpha(double a)  { alpha = a;}
+        void setIter(uint64_t i) { iterations = i;}
+/*        void getNoFeat() const { return numberOfFeatures;}
+        void getNoData() const { return numberOfDataPoints;}
+        void getOrder() const { return order;}*/
+
+
+
         friend std::ostream& operator<<(std::ostream& os, const PerfModel& pm) {
           double projectedCost = 0.0;
           std::vector<double> input_data;

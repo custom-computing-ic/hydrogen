@@ -81,20 +81,22 @@ add_executable  (executor src/executor/main.cxx)
 target_link_libraries (executor Executor ${EXTRA_LIBS})
 
 # Tests - Can use these as client executables
-add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
-target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
-
-add_executable (OptionPricing test/OptionPricingTest.cpp)
-target_link_libraries (OptionPricing ${EXTRA_LIBS} TestLib)
-
-
-add_executable (TerminateServer test/TerminateServer.cpp)
-target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
-
 # Add resource Test - needs protobufs and currently segfaults. should find out
 # why
 #add_executable (AddResource test/AddResource.cpp)
 #target_link_libraries(AddResource ${EXTRA_LIBS} TestLib)
+
+add_executable (MovingAverageOneDfe test/MovingAverageOneDfe.cpp)
+target_link_libraries (MovingAverageOneDfe ${EXTRA_LIBS} TestLib)
+
+add_executable (MovingAverageOneDfeSmall test/MovingAverageOneDfeSmall.cpp)
+target_link_libraries (MovingAverageOneDfeSmall ${EXTRA_LIBS} TestLib)
+
+add_executable (MovingAverageOneDfeMedium test/MovingAverageOneDfeMedium.cpp)
+target_link_libraries (MovingAverageOneDfeMedium ${EXTRA_LIBS} TestLib)
+
+add_executable (MovingAverageOneDfeLarge test/MovingAverageOneDfeLarge.cpp)
+target_link_libraries (MovingAverageOneDfeLarge ${EXTRA_LIBS} TestLib)
 
 add_executable (MovingAverageOneDfePriority test/MovingAverageOneDfePriority.cpp)
 target_link_libraries (MovingAverageOneDfePriority ${EXTRA_LIBS} TestLib)
@@ -102,12 +104,32 @@ target_link_libraries (MovingAverageOneDfePriority ${EXTRA_LIBS} TestLib)
 add_executable (MultiUserSingleJobType test/MultiUserSingleJobType.cpp)
 target_link_libraries (MultiUserSingleJobType ${EXTRA_LIBS} TestLib)
 
+add_executable (MultiUserSingleJobTypeSmall test/MultiUserSingleJobTypeSmall.cpp)
+target_link_libraries (MultiUserSingleJobTypeSmall ${EXTRA_LIBS} TestLib)
+
+add_executable (MultiUserSingleJobTypeLarge test/MultiUserSingleJobTypeLarge.cpp)
+target_link_libraries (MultiUserSingleJobTypeLarge ${EXTRA_LIBS} TestLib)
+
 add_executable (DispatcherTest test/DispatcherTest.cpp)
 target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
+
+add_executable (OptionPricing test/OptionPricingTest.cpp)
+target_link_libraries (OptionPricing ${EXTRA_LIBS} TestLib)
+
+add_executable (TerminateServer test/TerminateServer.cpp)
+target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
+
 
 enable_testing ()
 add_test ("DispatcherTest" DispatcherTest)
 add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
+add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
+add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
+add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
 add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
+
+add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
+add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
+
 add_test ("TerminateServer" TerminateServer)
 add_test ("OptionPricing" OptionPricing)
