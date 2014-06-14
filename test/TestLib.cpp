@@ -26,8 +26,8 @@ bool mavg_check(int n, int* out, int* exp) {
   int correct = true;
   for (int i = 1; i < n - 1; i++) {
     if (out[i] != exp[i]) {
-//      cout << "(ERROR): " << i << " expected: " << exp[i] << " got: " << out[i];
-//      cout << endl;
+      cout << "(ERROR): " << i << " expected: " << exp[i] << " got: " << out[i];
+      cout << endl;
       correct = false;
     }
   }
