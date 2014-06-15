@@ -17,22 +17,22 @@ class Task {
 
     std::list<Implementation *> GetImplementations();
 
-    void AddImp(Implementation *imp) { 
+    void AddImp(Implementation *imp) {
       this->Implementations.push_back(imp);
     }
-  	void DelImp(Implementation *imp) { 
-            this->Implementations.remove(imp); 
+  	void DelImp(Implementation *imp) {
+            this->Implementations.remove(imp);
             delete(imp);
-    } 
-    void AddPerfModel(PerfModel* p) { 
+    }
+    void AddPerfModel(PerfModel* p) {
       this->PerformanceModels.push_back(p);
     }
-    void DelPerfModel(PerfModel* p){ 
+    void DelPerfModel(PerfModel* p){
       this->PerformanceModels.remove(p);
       delete p;
     }
-    std::pair<Implementation*,double> SelectImplementation(size_t);
-	  friend std::ostream& operator<<(std::ostream& os, const Task& obj) { 
+    std::pair<Implementation*,double> SelectImplementation(size_t,size_t);
+	  friend std::ostream& operator<<(std::ostream& os, const Task& obj) {
 	    os << obj.getName();
 	    return os;
 	  }
@@ -54,8 +54,8 @@ class Task {
 	  friend bool operator>=(const Task& lhs, const Task& rhs) {
       return !operator< (lhs,rhs);
     }
-	  std::string getName() const { 
-      return name; 
+	  std::string getName() const {
+      return name;
     }
   private:
 	  std::list<Implementation *> Implementations;

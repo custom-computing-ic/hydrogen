@@ -30,7 +30,7 @@ class Allocations {
       return 1.0;
     }
    size_t noJobs() {
-     size_t count;
+     size_t count = 0;
      JobTuplePtr j;
      ResourceListPtr rl;
      JobResPairQ::iterator it = jobs.begin();
@@ -41,7 +41,6 @@ class Allocations {
        }
      }
      return count;
-
    }
    int getScore() { return score;}
    void setScore(int a ) { score  = a; }

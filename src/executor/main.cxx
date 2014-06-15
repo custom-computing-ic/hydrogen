@@ -51,22 +51,22 @@ int main(int argc, char** argv) {
     client_id = atoi(clientIdCh);
     std::cout << "(DEBUG): Environmental Variable CLIENT_ID = " << client_id << "\n";
   }
-  
-  Executor e("localhost",clientIdCh);  
+
+  Executor e("localhost",clientIdCh);
   /* Add a local CPU and the shared DFE's from the cmd line */
   e.AddResource(new Resource(1, vm["scheduler_port"].as<int>(),
-                             vm["hostname"].as<std::string>(), 
+                             vm["hostname"].as<std::string>(),
                              "SHARED_DFE"));
-  e.AddResource(new Resource(2, 8114, "localhost", "CPU"));
+  e.AddResource(new Resource(2, 8122, "localhost", "CPU"));
   /* Adding some tasks... */
   e.AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
   Implementation *mav_CPU = new Implementation("MAV","mavCPU","MOVING_AVERAGE","","","CPU");
 
-  PerfModel perf_CPU(mav_CPU,4e-18,1e2,2,1);
-  PerfModel perf_DFE(mav_DFE,4e-18,1e2,2,1);
+  PerfModel* perf_CPU = new PerfModel(mav_CPU,4e-18,1e2,2,1);
+  PerfModel* perf_DFE = new PerfModel(mav_DFE,4e-18,1e2,2,1);
 /*  perf.CreateModel(384000000, [&](const long size) -> double {
-                  if (size == 0) 
+                  if (size == 0)
                     return 0.0;
                   std::default_random_engine gen;
                   std::uniform_int_distribution<int> dist(0,10000);
@@ -91,10 +91,10 @@ int main(int argc, char** argv) {
                   return msd;
                 });*/
  // std::cout << "(INFO)" << perf << "\n";
-  perf_CPU.LoadFromDisk("MAV_CPU");
-  perf_DFE.LoadFromDisk("MAV_DFE");
-  std::cout << "(INFO)" << perf_CPU << "\n";
-  std::cout << "(INFO)" << perf_DFE << "\n";
+  perf_CPU->LoadFromDisk("MAV_CPU");
+  perf_DFE->LoadFromDisk("MAV_DFE");
+  std::cout << "(INFO)" << *perf_CPU << "\n";
+  std::cout << "(INFO)" << *perf_DFE << "\n";
 
 //  perf.setAlpha(1e-19);
 //  perf.setIter(1e4);
@@ -103,15 +103,15 @@ int main(int argc, char** argv) {
 //  std::cout << "\n(INFO)" << perf << "\n";
 
 /*  for (int i = 0; i < 38400000; i+= 384000) {
-    std::cout << "(DEBUG): perf.QueryModel("<< i 
+    std::cout << "(DEBUG): perf.QueryModel("<< i
               << ") = " << perf.QueryModel(i) << "ms\n";
   }*/
 //  perf.SaveToDisk("MAV_CPU");
-  e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_DFE);
-  e.AddImp(e.FindTask("MOVING_AVERAGE"), mav_CPU);
+  e.AddImp(e.FindTask("MOVING_AVERAGE"), perf_DFE);
+  e.AddImp(e.FindTask("MOVING_AVERAGE"), perf_CPU);
 //  e.AddImp(e.FindTask("MOVING_AVERAGE"),
 //           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
- 
+
 
 
   e.start();
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
 
 /* Adding tasks */
 /*  e.AddTask(new Task("MatrixMultiply"));
-  Task *t = e.FindTask("MatrixMultiply");	
+  Task *t = e.FindTask("MatrixMultiply");
 
   if (t) {
     std::cout << *t << std::endl;
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
                         a1[i*size + j] = dist(gen);
                         b1[i*size + j] = dist(gen);
                       }
-                    }              
+                    }
                     SimpleTimer test_t;
                     test_t.start();
                     perf.imp->run<double>(size,a1,b1,c1);

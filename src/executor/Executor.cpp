@@ -20,7 +20,7 @@ Executor::~Executor() {
 }
 
 
-    /* 
+    /*
      * Manipulate the Resources list
      */
 int Executor::SetResources(std::list<Resource*> res) {
@@ -38,7 +38,7 @@ int Executor::DelResource(Resource *res) {
   return 0;
 }
 
-/* 
+/*
  * Manipulate the Task list
  */
 int Executor::SetTasks(std::list<Task*> tsk) {
@@ -65,14 +65,14 @@ Task* Executor::FindTask(std::string name) {
   using namespace std::placeholders;
   Task *t1 = new Task(name);
   typedef std::list<Task *>::iterator it;
-  it found = std::find_if(Tasks.begin(), 
- 		                      Tasks.end(), 
+  it found = std::find_if(Tasks.begin(),
+ 		                      Tasks.end(),
                           std::bind(task_ptr_eq,t1,std::placeholders::_1)
                        );
 	//	          [&] (Task *t) { return *t == *t1; } );
   delete(t1);
-  return Tasks.end() != found ? *found : NULL;  
-	
+  return Tasks.end() != found ? *found : NULL;
+
 }
 bool res_type_eq(std::string type, Resource* res) {
   return type == res->getType();
@@ -81,23 +81,28 @@ Resource* Executor::FindResource(std::string type) {
 
   using namespace std::placeholders;
   typedef std::list<Resource *>::iterator it;
-  it found = std::find_if(AvailableRes.begin(), 
- 		                      AvailableRes.end(), 
+  it found = std::find_if(AvailableRes.begin(),
+ 		                      AvailableRes.end(),
                           std::bind(res_type_eq,type,std::placeholders::_1)
                        );
 	//	          [&] (Task *t) { return *t == *t1; } );
-  return AvailableRes.end() != found ? *found : NULL;  
+  return AvailableRes.end() != found ? *found : NULL;
 
 }
 
-/* 
+/*
  * Add/Remove Implementations
  */
 int Executor::AddImp(Task *tsk,Implementation *imp) {
   std::cout << "Executor::AddImp()\n";
   PerfModel* p = new PerfModel(imp);
-  tsk->AddPerfModel(p);	
+  tsk->AddPerfModel(p);
   p->LoadFromDisk("MAV_DFE");
+  return 0;
+}
+int Executor::AddImp(Task *tsk,PerfModel *p) {
+  std::cout << "Executor::AddImp()\n";
+  tsk->AddPerfModel(p);
   return 0;
 }
 
@@ -159,7 +164,7 @@ msg_t* Executor::handle_request(msg_t* request) {
   Client c(8111,"localhost");
 
   if (request->clientId != atoi(cid.c_str())) {
-    std::cout << "Error: Got a request from incorrect clientId[" 
+    std::cout << "Error: Got a request from incorrect clientId["
               << request->clientId << "]\n";
       return msg_ack();
   }
@@ -181,15 +186,16 @@ msg_t* Executor::handle_request(msg_t* request) {
     case MSG_MOVING_AVG:
       /* TODO[mtottenh]: Add error checking/lookup msgId in task map
        */
-      std::tie(imp,runtime) = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize);
+      std::tie(imp,runtime) = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize,avg_wt);
       request->predicted_time = (int)runtime;
       rsp = runImp(imp,request);
+      avg_wt = rsp->avg_wt;
       return rsp;
       break;
     default:
       // Consult Map to get Task string
       // Find the Corresponding Task
-      // Query Models 
+      // Query Models
       // Get Best Result's impelementation
       // Run Implementation
       // Return Results

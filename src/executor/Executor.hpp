@@ -22,31 +22,32 @@ class Executor : public MultiThreadedTCPServer {
              const std::string& clientId) :
       MultiThreadedTCPServer::super(hostname,"811"+clientId,NUM_THREADS)
     {
-      //MISC 
+      //MISC
       cid = clientId;
-      
+      avg_wt = 0;
     }
-    ~Executor(); 
-    /* 
+    ~Executor();
+    /*
      * Manipulate the Resources list
      */
     int SetResources(std::list<Resource *> res);
     int AddResource(Resource *res);
     int DelResource(Resource *res);
     Resource* FindResource(std::string);
-    std::list<Resource *> GetResources(); 
-    /* 
+    std::list<Resource *> GetResources();
+    /*
      * Manipulate the Task list
      */
     int SetTasks(std::list<Task *> tsk);
     Task* FindTask(std::string name);
     int AddTask(Task *tsk);
     int DelTask(Task *tsk);
-    std::list<Task *> GetTasks();    
-    /* 
+    std::list<Task *> GetTasks();
+    /*
      * Add/Remove Implementations
      */
     int AddImp(Task *tsk,Implementation *imp);
+    int AddImp(Task *tsk,PerfModel *p);
     int DelImp(Task *tsk,Implementation *imp);
     std::list<Implementation *> GetImplementations(Task *tsk);
     //TODO[mtottenh]: Implement this..
@@ -58,11 +59,11 @@ class Executor : public MultiThreadedTCPServer {
 
     int CreatePerfomanceModels();
     void CreatePerfModelForTask(Task *tsk);
-    
+
     Implementation SelectImplementation(Task *tsk, void* input);
  private:
     void parse_protobuf(msg_t* m);
-    /* 
+    /*
      * Given:
      *    - Set of Tasks
      *    - Set of Implementations
@@ -74,6 +75,7 @@ class Executor : public MultiThreadedTCPServer {
     std::list<Task *> Tasks;
 //    std::list<PerfModel<std::map<Implementation,int>,int>> PerfModels;
     int schedPort;
+    size_t avg_wt;
     std::string cid;
     std::string schedName;
 };

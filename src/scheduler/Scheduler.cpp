@@ -198,10 +198,12 @@ msg_t* Scheduler::handle_request(msg_t* request) {
       sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
       response = (msg_t*)calloc(sizeBytes, 1);
       concurrentHandler(*request, *response, sizeBytes);
+      response->avg_wt = (int)bc::duration_cast<bc::milliseconds>(meanWaitTime).count();
 #ifdef DEBUG
       response->print();
       cout << "Returning from Scheduler::handle_request()\n";
 #endif
+
       return response;
     default:
       cerr << "Error! Unsuported msg_id " << request->msgId << endl;

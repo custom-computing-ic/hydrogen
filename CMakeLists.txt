@@ -131,5 +131,5 @@ add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
 add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
 
-add_test ("TerminateServer" TerminateServer)
 add_test ("OptionPricing" OptionPricing)
+add_test ("TerminateServer" TerminateServer)
