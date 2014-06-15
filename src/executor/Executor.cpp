@@ -161,7 +161,8 @@ msg_t* Executor::handle_request(msg_t* request) {
   msg_t* rsp = NULL;
   Implementation* imp = NULL;
   int runtime = 0;
-  Client c(8111,"localhost");
+  const std::string& host = std::string("localhost");
+  Client c(8121,host);
 
   if (request->clientId != atoi(cid.c_str())) {
     std::cout << "Error: Got a request from incorrect clientId["
@@ -204,16 +205,16 @@ msg_t* Executor::handle_request(msg_t* request) {
       int sizeBytes = sizeof(msg_t) + sizeof(int) * (request->dataSize);
       char* buff = (char *)calloc(sizeBytes, 1);
       rsp = (msg_t *) buff;
-      std::cout << "Sending request to client\n";
+      request->predicted_time = 1;
+      std::cout << "(DEBUG): Sending request to client\n";
       c.start();
       c.send(request);
 
-      std::cout << "Getting result\n";
+      std::cout << "(DEBUG): Getting result\n";
       do {
         c.read(buff,sizeBytes);
         rsp->print();
       } while ( rsp->msgId != MSG_RESULT);
-      std::cout << "Shutting down\n";
       c.stop();
       return rsp;
   }

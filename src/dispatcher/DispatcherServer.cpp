@@ -101,7 +101,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 
     // do computation
     // TODO check resource type
-    if (/*request->resourceType == "DFE" &&*/ useDfe) {
+    if (request->resourceType == DFE && useDfe) {
       // TODO pass in other arguments (e.g. nDfes, dfeIDs)
       if (nDFEs != 0)
         movingAverage_dfe(n, request->firstParam(), data_in, out, dfeIds.data(),nDFEs);
@@ -138,15 +138,15 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
   } else if (request->msgId == MSG_OPTION_PRICE) {
 
     // -- Dummy Parameters --
-    double strike = 0.01;
-    double sigma = 0.02;
-    double timestep = 0.05;
+    double strike = *(double*)request->data;
+    double sigma = *(double*)(request->data + sizeof(double));
+    double timestep = *(double*)(request->data + 2* sizeof(double));
     int numTimeStep = (int)(10/0.05);
-    int numMaturity = 1000000;
-    int paraNode = 50;
-    int numPathGroup = 20;
+    int numMaturity = *(int*)(request->data + 3*sizeof(double));
+    int paraNode = *(int*)(request->data + 3*sizeof(double) + sizeof(int));
+    int numPathGroup = *(int*)(request->data + 3*sizeof(double) + 2*sizeof(int));
     int numPE = 4;
-    double T = 10;
+    double T = *(double*)(request->data + 3*sizeof(double) + 3*sizeof(int));
 
     cerr << "Making request " << endl;
     double res;

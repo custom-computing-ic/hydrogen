@@ -11,6 +11,10 @@ msg_t* Resource::dispatch(msg_t* m) {
   int sizeBytes = sizeof(msg_t) + sizeof(int)*(m->dataSize);
   char* buff = (char*) calloc(sizeBytes,1);
   msg_t* rsp = (msg_t*) buff;
+  if (type == "SHARED_DFE" || type == "DFE")
+    m->resourceType = DFE;
+  if (type == "CPU")
+    m->resourceType = CPU;
 //  int iport;
 //  std::stringstream ss(port);
 //  ss >> iport;
