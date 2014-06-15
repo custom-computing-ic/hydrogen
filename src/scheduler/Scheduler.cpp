@@ -314,6 +314,7 @@ void Scheduler::runJob(JobResPairPtr j) {
     std::tie(jobTuplePtr,resourceList) = *j;
     JobPtr jobPtr = std::get<0>(*jobTuplePtr);
     std::cout << "(DEBUG):\t- Scheduler::runJob(" << *jobPtr  << ")\n";
+    std::cout << "(DEBUG):\t- Allocated[" << resourceList->size() <<"]\n";
     char packed_rids = 0x0;
     std::cout << "(DEBUG):\t\t* Rids: { ";
     for (auto &r : *resourceList) {
