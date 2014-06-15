@@ -55,6 +55,10 @@ void DispatcherServer::optionPricing_dfe(double strike,
                                          double T,
 					 double *out
                                          ) {
+  std::cout << "sigma: " << sigma << "\ttimestep: " << timestep
+            << "\t\tnumMaturity: " << numMaturity << "\n";
+  std::cout << "paraNode: " << paraNode << "\tnumPathGroup: " << numPathGroup
+            << "\tT: " << T << "\n";
 #ifdef USEDFE
   *out = optionPricing(strike,
 		       sigma,
