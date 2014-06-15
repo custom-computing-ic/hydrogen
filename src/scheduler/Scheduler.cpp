@@ -186,7 +186,7 @@ msg_t* Scheduler::handle_request(msg_t* request) {
       // XXX TODO[paul-g]: need to actually determine data size here
       sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
       response = (msg_t*)calloc(sizeBytes, 1);
-      cout << "Scheduler:: Handling msg_option request" << endl;
+      cout << "(DEBUG): Scheduler:: Handling msg_option request" << endl;
       concurrentHandler(*request, *response, sizeBytes);
 #ifdef DEBUG
       response->print();
@@ -253,8 +253,11 @@ void Scheduler::schedLoop() {
             totalSchedTime += duration;
             numSchedules++;
             QCondVar.notify_all();
+          } else {
+            boost::this_thread::yield();
           }
           delete a;
+
           std::cout << "(DEBUG): Managed Mode scheduled " << numJobsScheduled;
           totalJobsScheduled += numJobsScheduled;
           if (numJobsScheduled > 1)
@@ -263,7 +266,7 @@ void Scheduler::schedLoop() {
             std::cout <<" Job";
           size_t waitingJobs = readyQ->size();
           std::cout << "\t(" << waitingJobs;
-          if (waitingJobs> 1 || waitingJobs == 0)
+          if (waitingJobs > 1 || waitingJobs == 0)
             std::cout <<" Jobs left)\n";
           else
             std::cout <<" Job left)\n";
