@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 2.6)
 project (elastic-dfe)
 SET (BOOST_MIN_VERSION "1.49.0")
 
-# XXX This is a really bad hack...
-
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
   message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.")
@@ -11,7 +9,7 @@ endif (NOT Boost_FOUND)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
-  message(STATUS "OpenMP supported, compiling parllel bitstreams!")
+  message(STATUS "OpenMP supported, compiling parallel bitstreams!")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
