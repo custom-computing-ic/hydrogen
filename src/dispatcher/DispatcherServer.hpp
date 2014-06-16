@@ -40,7 +40,8 @@ public:
 			 int paraNode,
 			 int numPathGroup,
 			 double T,
-			 double *out
+			 double *out,
+			 int nDFEs
 			 );
 
   msg_t* handle_request(msg_t* request);

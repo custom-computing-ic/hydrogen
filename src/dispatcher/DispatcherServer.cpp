@@ -53,7 +53,8 @@ void DispatcherServer::optionPricing_dfe(double strike,
                                          int paraNode,
                                          int numPathGroup,
                                          double T,
-					 double *out
+					 double *out,
+					 int nDFEs
                                          ) {
 #ifdef USEDFE
   *out = optionPricing(strike,
@@ -64,7 +65,8 @@ void DispatcherServer::optionPricing_dfe(double strike,
 		       numPathGroup,
 		       T,
 		       NULL,
-		       NULL);
+		       NULL,
+		       nDFEs);
 #endif
 }
 
@@ -151,6 +153,9 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     cerr << "Making request " << endl;
     double res;
 
+    // TODO add nDFEs
+    int nDFEs = 1;
+
     this->optionPricing_dfe(strike,
 			    sigma,
 			    timestep,
@@ -158,7 +163,8 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 			    paraNode,
 			    numPathGroup,
 			    T,
-			    &res);
+			    &res,
+			    nDFEs);
 
     // write the response
     size_t sizeBytes = sizeof(msg_t) + sizeof(double);
