@@ -223,6 +223,7 @@ void Scheduler::schedLoop() {
         //        std::cout << "(DEBUG): Event on readyQ\n";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);
         Allocations *a = schedule(MODE_MANAGED, true);
+	elasticityManager.updateResourcePool(*this, *a);
         rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
