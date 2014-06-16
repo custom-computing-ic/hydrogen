@@ -194,7 +194,6 @@ msg_t* Scheduler::handle_request(msg_t* request) {
 #endif
       return response;
     case MSG_MOVING_AVG:
-      // XXX TODO[paul-g]: need to actually determine data size here
       sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
       response = (msg_t*)calloc(sizeBytes, 1);
       concurrentHandler(*request, *response, sizeBytes);
@@ -401,14 +400,16 @@ void Scheduler::runJob(JobResPairPtr j) {
     removeJobFromRunQ(jobPtr->getId());
 
 }
+
 void Scheduler::removeJobFromRunQ(int jid) {
   boost::lock_guard<boost::mutex> lk(runQMtx);
   auto it = std::find_if(runQ->begin(), runQ->end(),
-                          std::bind(&idEq,jid,std::placeholders::_1));
+                          std::bind(&idEq, jid, std::placeholders::_1));
   if (it != runQ->end())
     runQ->erase(it);
   QCondVar.notify_all();
 }
+
 void Scheduler::dispatcherLoop() {
   try {
     while (true) {

@@ -16,8 +16,15 @@ int main(int argc, char** argv) {
 
   int dispatcherPortNumber = atoi(argv[2]);
 
-  const string& localhost = string("localhost");
-  Scheduler s(argv[1], localhost, dispatcherPortNumber, localhost);
+  auto localhost = string("localhost");
+
+  auto elasticityManager = ElasticityManager();
+
+  Scheduler s(elasticityManager,
+	      argv[1],
+	      localhost,
+	      dispatcherPortNumber,
+	      localhost);
 
   /* Add some scheduling algorithms */
   /* 0 */

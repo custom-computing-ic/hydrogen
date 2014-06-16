@@ -18,7 +18,7 @@
 class Scheduler;
 #define NUM_THREADS 4
 #include <algs.hpp>
-
+#include "ElasticityManager.hpp"
 
 /** The scheduler is a server for the client API and a client of the dispatcher **/
 
@@ -63,17 +63,19 @@ public:
     }
     std::cout << "(DEBUG): ~Scheduler() Deconstructed\n";
   }
-  Scheduler(const std::string& port,
+  Scheduler(const ElasticityManager& _elasticityManager,
+	    const std::string& port,
 	    const std::string& name,
 	    int dispatcherPortNumber,
 	    const std::string& dispatcherHostname) :
-    MultiThreadedTCPServer::super(name, port, NUM_THREADS)
+    MultiThreadedTCPServer::super(name, port, NUM_THREADS),
+    elasticityManager(_elasticityManager)
   {
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
     runQ = JobResPairQPtr(new JobResPairQ());
     finishedQ = JobQueuePtr(new JobQueue());
-    //TODO[mtottenh]: Change Resource so that it doesn't inherit from client
+
     addResource(dispatcherPortNumber,dispatcherHostname,1);
     addResource(dispatcherPortNumber,dispatcherHostname,2);
     addResource(dispatcherPortNumber,dispatcherHostname,3);
@@ -416,6 +418,8 @@ private:
   int nextJid;
   uint64_t totalCompletions;
   std::unordered_map<int,int> clientPriorities;
+
+  const ElasticityManager& elasticityManager;
 };
 
 #endif /* _SCHEDULER_H_ */
