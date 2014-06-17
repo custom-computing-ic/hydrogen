@@ -13,13 +13,11 @@ MultiThreadedTCPServer::~MultiThreadedTCPServer() {
   std::cout << "(DEBUG): ~MultiThradedTCPServer() Deconstructed\n";
 }
 
-MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const string& port,
+MultiThreadedTCPServer::MultiThreadedTCPServer(const string &address,
+                                               const string &port,
                                                size_t thread_pool_size)
-  : thread_pool_size_(thread_pool_size),
-    signals_(io_service_),
-    acceptor_(io_service_),
-    new_connection_()
-{
+    : thread_pool_size_(thread_pool_size), signals_(io_service_),
+      acceptor_(io_service_), new_connection_() {
   signals_.add(SIGINT);
   signals_.add(SIGTERM);
 #if defined(SIGQUIT)
@@ -41,7 +39,8 @@ MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const stri
 void MultiThreadedTCPServer::run() {
   cout << "(DEBUG): Creating thread pool size " << thread_pool_size_ << endl;
   for (size_t i = 0; i < thread_pool_size_; ++i) {
-    worker_threads.create_thread(boost::bind(&boost::asio::io_service::run, &io_service_));
+    worker_threads.create_thread(
+        boost::bind(&boost::asio::io_service::run, &io_service_));
   }
   cout << "(DEBUG): Calling join_all()\n";
   worker_threads.join_all();
@@ -52,8 +51,9 @@ void MultiThreadedTCPServer::start_accept() {
   cout << "(DEBUG): Start accept\n";
 #endif
   new_connection_.reset(new connection(io_service_, *this));
-  acceptor_.async_accept(new_connection_->socket(),
-                         boost::bind(&MultiThreadedTCPServer::handle_accept, this));
+  acceptor_.async_accept(
+      new_connection_->socket(),
+      boost::bind(&MultiThreadedTCPServer::handle_accept, this));
 }
 
 void MultiThreadedTCPServer::handle_accept() {
@@ -69,48 +69,40 @@ void MultiThreadedTCPServer::handle_stop() {
   io_service_.stop();
   cout << "(DEBUG): interrupting worker_threads" << endl;
   worker_threads.interrupt_all();
-//  cout << "(DEBUG): joining worker_threads" << endl;
-//  worker_threads.join_all();
+  //  cout << "(DEBUG): joining worker_threads" << endl;
+  //  worker_threads.join_all();
 }
 
-connection::connection(ba::io_service& io_service,
-                       MultiThreadedTCPServer& server)
-  : strand_(io_service),
-    socket_(io_service),
-    server_(server)
-{
-}
+connection::connection(ba::io_service &io_service,
+                       MultiThreadedTCPServer &server)
+    : strand_(io_service), socket_(io_service), server_(server) {}
 
-ba::ip::tcp::socket& connection::socket() {
-  return socket_;
-}
+ba::ip::tcp::socket &connection::socket() { return socket_; }
 
 void connection::start() {
   // XXX This doesn't wait for a specific number of bytes; a simple
   // solution is to wait for sizeof(msg_t) so that we are sure we read
   // all the fields of the struct correctly
-  socket_.async_read_some(ba::buffer(buffer_),
-                          strand_.wrap(boost::bind(&connection::handle_read,
-                                                   shared_from_this(),
-                                    						   ba::placeholders::error,
-                                    						   ba::placeholders::bytes_transferred)));
+  socket_.async_read_some(
+      ba::buffer(buffer_),
+      strand_.wrap(boost::bind(&connection::handle_read, shared_from_this(),
+                               ba::placeholders::error,
+                               ba::placeholders::bytes_transferred)));
 }
 
-void connection::handle_read(const boost::system::error_code& e,
-			     std::size_t bytes_transferred)
-{
+void connection::handle_read(const boost::system::error_code &e,
+                             std::size_t bytes_transferred) {
 #ifdef DEBUG
   cout << "(DEBUG): TCPServer::Bytes transferred: ";
   cout << bytes_transferred << endl;
 #endif
 
-
   // XXX TODO[paul-g]: Need to do this async
-  msg_t* request = NULL;
-  msg_t* reply = NULL;
+  msg_t *request = NULL;
+  msg_t *reply = NULL;
   do {
     // unpack request
-    request = (msg_t*)buffer_.data();
+    request = (msg_t *)buffer_.data();
 
     // first check we read all data; we have to do this since we don't
     // know the size a priori and read_some does not guarantee to read
@@ -120,13 +112,13 @@ void connection::handle_read(const boost::system::error_code& e,
 
     int expectedBytes = request->totalBytes;
 
-    msg_t* fullRequest;
+    msg_t *fullRequest;
     bool resized = false;
     if (expectedBytes > bytes_transferred) {
       int size = expectedBytes - bytes_transferred;
-      fullRequest = (msg_t*)malloc(expectedBytes);
+      fullRequest = (msg_t *)malloc(expectedBytes);
       memcpy((char *)fullRequest, (char *)request, bytes_transferred);
-      char* buff = (char *)calloc(size, 1);
+      char *buff = (char *)calloc(size, 1);
       ba::read(socket_, ba::buffer(buff, size));
       memcpy(((char *)fullRequest) + bytes_transferred, buff, size);
       free(buff);
@@ -144,15 +136,16 @@ void connection::handle_read(const boost::system::error_code& e,
     // write reply back
     if (reply != NULL) {
       try {
-	std::cout << "(INFO): writing reply back - size: " << reply->totalBytes << std::endl;
+        std::cout << "(INFO): writing reply back - size: " << reply->totalBytes
+                  << std::endl;
         ba::write(socket_, ba::buffer((char *)reply, reply->totalBytes));
         socket_.read_some(ba::buffer(buffer_));
-      } catch (std::exception& e) {
+      }
+      catch (std::exception &e) {
         std::cout << "(ERROR): handle_read - " << e.what() << std::endl;
       }
     }
-  } while (request != NULL &&
-           request->msgId != MSG_DONE &&
+  } while (request != NULL && request->msgId != MSG_DONE &&
            request->msgId != MSG_TERM);
   if (reply != NULL)
     free(reply);
@@ -162,10 +155,9 @@ void connection::handle_read(const boost::system::error_code& e,
   }
   boost::system::error_code ignored_ec;
   socket_.shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);
-
 }
 
-void connection::handle_write(const boost::system::error_code& e) {
+void connection::handle_write(const boost::system::error_code &e) {
   if (!e) {
     boost::system::error_code ignored_ec;
     socket_.shutdown(ba::ip::tcp::socket::shutdown_both, ignored_ec);

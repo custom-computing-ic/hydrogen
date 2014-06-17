@@ -2,29 +2,29 @@
 /*
  *
  */
-msg_t* Resource::dispatch(msg_t* m) {
+msg_t *Resource::dispatch(msg_t *m) {
   if (m == NULL) {
     std::cout << "(ERROR): Recieved ((msg_t*)NULL) when trying to run "
               << "Implementation.\n";
-    return (msg_t*)NULL;
+    return (msg_t *)NULL;
   }
-  int sizeBytes = sizeof(msg_t) + sizeof(int)*(m->dataSize);
-  char* buff = (char*) calloc(sizeBytes,1);
-  msg_t* rsp = (msg_t*) buff;
+  int sizeBytes = sizeof(msg_t) + sizeof(int) * (m->dataSize);
+  char *buff = (char *)calloc(sizeBytes, 1);
+  msg_t *rsp = (msg_t *)buff;
   if (type == "SHARED_DFE" || type == "DFE")
     m->resourceType = DFE;
   if (type == "CPU")
     m->resourceType = CPU;
-//  int iport;
-//  std::stringstream ss(port);
-//  ss >> iport;
-  Client c (port,url);
+  //  int iport;
+  //  std::stringstream ss(port);
+  //  ss >> iport;
+  Client c(port, url);
   c.start();
   c.send(m);
   /* TODO[mtottenh]: Check this recv code against pauls implementation*/
   do {
-    c.read(buff,sizeBytes);
-  } while ( rsp->msgId != MSG_RESULT);
+    c.read(buff, sizeBytes);
+  } while (rsp->msgId != MSG_RESULT);
   c.stop();
   return rsp;
 }
