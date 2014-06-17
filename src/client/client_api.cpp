@@ -7,11 +7,11 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <Logging.hpp>
+
 using namespace std;
 
 void movingAverage(size_t n, size_t size, int* data, int* out) {
-  cout << "(DEBUG): Send job :: movingAverage" << endl;
-
   msg_t *msg = msg_moving_avg(n, size, data);
 
   const string& name = "localhost";
@@ -24,7 +24,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
+    LOG(debug) << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
@@ -47,7 +47,8 @@ void optionPricing(double strike,
 		   int numPathGroup,
 		   double T,
 		   double *out) {
-  cout << "(DEBUG): Send job :: optionPricing" << endl;
+
+  LOG(debug) << "Send optionPricing request ";
 
   msg_t *msg = msg_option_pricing(strike,
 				  sigma,
@@ -57,7 +58,7 @@ void optionPricing(double strike,
 				  numPathGroup,
 				  T);
 
-  const string& name = "localhost";
+  auto name = "localhost";
   int client_id = 0;
   int portNumber = 8111;
 
@@ -83,11 +84,11 @@ void optionPricing(double strike,
 }
 
 void TerminateServer() {
-  cout << "(DEBUG): Send job :: Terminate Server" << endl;
+  LOG(debug) << "Start";
 
   msg_t *msg = msg_empty();
 
-  const string& name = "localhost";
+  auto name = "localhost";
   int client_id = 0;
   int portNumber = 8111;
 

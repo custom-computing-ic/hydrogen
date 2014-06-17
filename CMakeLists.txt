@@ -1,10 +1,23 @@
 cmake_minimum_required (VERSION 2.6)
 project (elastic-dfe)
-SET (BOOST_MIN_VERSION "1.49.0")
 
+SET (BOOST_ROOT "/usr/local/boost_1_55_0")
+SET (BOOST_MIN_VERSION "1.55.0")
+SET (BOOST_INCLUDEDIR "/usr/local/boost_1_55_0/include")
+SET (BOOST_LIBRARYDIR "/usr/local/boost_1_55_0/lib")
+SET (Boost_NO_SYSTEM_PATH ON)
+
+ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
+SET(Boost_USE_STATIC_LIBS ON)
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
-  message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.")
+  message(FATAL_ERROR "Fatal error: Boost (version >= 1.55) required.")
+else()
+  message(STATUS "Setting up boost")
+  message(STATUS "   ${Boost_INCLUDE_DIRS}")
+  message(STATUS "   ${Boost_LIBRARY_DIRS}")
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIRS})
 endif (NOT Boost_FOUND)
 
 find_package(OpenMP)
@@ -46,8 +59,6 @@ endif ()
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)
-
-
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/dispatcher")
 add_subdirectory (src/dispatcher)

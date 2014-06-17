@@ -2,16 +2,15 @@
 #include "TestLib.hpp"
 
 #include <client_api.hpp>
-
 #include <iostream>
-#include <cstring>
+#include <Logging.hpp>
 
-using namespace std;
-
-int main() {
+int main(int argc, char* argv[])
+{
+  initLogging("OptionPricingTest.log");
 
   /** Ask for a simple option pricings a few times */
-  int t = 5;
+  int t = 1;
 
   double strike = 0.01;
   double sigma = 0.02;
@@ -26,13 +25,13 @@ int main() {
   for (int k = 0; k < t; k++) {
     double res;
     optionPricing(strike,
-		  sigma,
-		  timestep,
-		  numMaturity,
-		  paraNode,
-		  numPathGroup,
-		  T,
-		  &res);
+  		  sigma,
+  		  timestep,
+  		  numMaturity,
+  		  paraNode,
+  		  numPathGroup,
+  		  T,
+  		  &res);
     printf("res = %d\n", res);
   }
 

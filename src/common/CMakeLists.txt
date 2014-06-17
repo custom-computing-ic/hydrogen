@@ -1,5 +1,12 @@
-add_library(Common Client.cpp Job.cpp MultiThreadedTCPServer.cpp Resource.cpp
-        Implementation.cpp utils.cpp message.cpp)
+add_library(Common
+  Client.cpp
+  Job.cpp
+  MultiThreadedTCPServer.cpp
+  Resource.cpp
+  Implementation.cpp
+  utils.cpp
+  message.cpp
+  Logging.cpp)
 
 #Need to add Pbuf for protobuf control messages.. see subdir protobuf/ cmake
 #file
