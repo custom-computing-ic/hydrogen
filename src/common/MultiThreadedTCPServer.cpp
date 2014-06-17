@@ -2,6 +2,7 @@
 #include <boost/bind.hpp>
 #include <signal.h>
 #include <vector>
+#include <Logging.hpp>
 
 #include "message.hpp"
 
@@ -9,8 +10,7 @@ using namespace std;
 namespace ba = boost::asio;
 
 MultiThreadedTCPServer::~MultiThreadedTCPServer() {
-  std::cout << "(DEBUG): ~MultiThradedTCPServer()...\n";
-  std::cout << "(DEBUG): ~MultiThradedTCPServer() Deconstructed\n";
+  LOG(debug)<< "Deconstructed";
 }
 
 MultiThreadedTCPServer::MultiThreadedTCPServer(const string &address,
@@ -37,19 +37,17 @@ MultiThreadedTCPServer::MultiThreadedTCPServer(const string &address,
 }
 
 void MultiThreadedTCPServer::run() {
-  cout << "(DEBUG): Creating thread pool size " << thread_pool_size_ << endl;
+  LOG(debug) << "Creating thread pool size " << thread_pool_size_;
   for (size_t i = 0; i < thread_pool_size_; ++i) {
     worker_threads.create_thread(
         boost::bind(&boost::asio::io_service::run, &io_service_));
   }
-  cout << "(DEBUG): Calling join_all()\n";
+  LOG(debug) << "Calling join_all()";
   worker_threads.join_all();
 }
 
 void MultiThreadedTCPServer::start_accept() {
-#ifdef DEBUG
-  cout << "(DEBUG): Start accept\n";
-#endif
+  LOG(debug) << "Start accept";
   new_connection_.reset(new connection(io_service_, *this));
   acceptor_.async_accept(
       new_connection_->socket(),
@@ -57,20 +55,16 @@ void MultiThreadedTCPServer::start_accept() {
 }
 
 void MultiThreadedTCPServer::handle_accept() {
-#ifdef DEBUG
-  cout << "(DEBUG): Server:: handle_accept" << endl;
-#endif
+  LOG(debug) << "handle_accept";
   new_connection_->start();
   start_accept();
 }
 
 void MultiThreadedTCPServer::handle_stop() {
-  cout << "(DEBUG): Server::handle_stop()" << endl;
+  LOG(debug) << "Stoping TCP Server";
   io_service_.stop();
-  cout << "(DEBUG): interrupting worker_threads" << endl;
+  LOG(debug) << "interrupting worker_threads";
   worker_threads.interrupt_all();
-  //  cout << "(DEBUG): joining worker_threads" << endl;
-  //  worker_threads.join_all();
 }
 
 connection::connection(ba::io_service &io_service,
@@ -92,10 +86,7 @@ void connection::start() {
 
 void connection::handle_read(const boost::system::error_code &e,
                              std::size_t bytes_transferred) {
-#ifdef DEBUG
-  cout << "(DEBUG): TCPServer::Bytes transferred: ";
-  cout << bytes_transferred << endl;
-#endif
+  LOGF(debug, " Bytes transferred %1%") % bytes_transferred;
 
   // XXX TODO[paul-g]: Need to do this async
   msg_t *request = NULL;
@@ -136,13 +127,12 @@ void connection::handle_read(const boost::system::error_code &e,
     // write reply back
     if (reply != NULL) {
       try {
-        std::cout << "(INFO): writing reply back - size: " << reply->totalBytes
-                  << std::endl;
+	LOGF(info, "Writing reply %1% bytes ") % reply->totalBytes;
         ba::write(socket_, ba::buffer((char *)reply, reply->totalBytes));
         socket_.read_some(ba::buffer(buffer_));
       }
       catch (std::exception &e) {
-        std::cout << "(ERROR): handle_read - " << e.what() << std::endl;
+	LOGF(error, " %1% ") % e.what();
       }
     }
   } while (request != NULL && request->msgId != MSG_DONE &&
@@ -150,7 +140,7 @@ void connection::handle_read(const boost::system::error_code &e,
   if (reply != NULL)
     free(reply);
   if (request->msgId == MSG_TERM) {
-    std::cout << "(DEBUG): Terminating in handle_read (msgId == MSG_TERM)\n";
+    LOG(debug) << "Terminating (msgId == MSG_TERM)";
     raise(SIGINT);
   }
   boost::system::error_code ignored_ec;
