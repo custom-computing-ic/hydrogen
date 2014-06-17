@@ -2,6 +2,8 @@
 #include <Client.hpp>
 #include <message.hpp>
 
+#include <boost/current_function.hpp>
+
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -47,7 +49,6 @@ void optionPricing(double strike,
 		   int numPathGroup,
 		   double T,
 		   double *out) {
-
   LOG(debug) << "Send optionPricing request ";
 
   msg_t *msg = msg_option_pricing(strike,
@@ -58,7 +59,7 @@ void optionPricing(double strike,
 				  numPathGroup,
 				  T);
 
-  auto name = "localhost";
+  const string& name = "localhost";
   int client_id = 0;
   int portNumber = 8111;
 
@@ -68,12 +69,18 @@ void optionPricing(double strike,
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
+    LOG(debug) << "\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
   portNumber += client_id > 0 ? client_id -1 : client_id;
   msg->clientId = client_id;
+  /** For running without executor */
+  msg->priority = 1;
+  msg->avg_wt = 1;
+  msg->predicted_time = 1;
+  msg->resourceType = DFE;
+
   Client c(portNumber, name);
   c.start();
   c.send(msg);

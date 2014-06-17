@@ -8,6 +8,9 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 #include <Resource.hpp>
+
+#include <Logging.hpp>
+
 using namespace std;
 using namespace boost::asio::ip;
 namespace ba = boost::asio;
@@ -17,47 +20,42 @@ Client::Client(Resource &r) : name(std::string(r.getName().c_str())) {
 
 void Client::send(msg_t *message) {
   if (message->msgId != MSG_DONE)
-    cout << "(DEBUG):\t\t* Sending Request" << endl;
+    LOG(debug) << "\t\t* Sending Request" ;
   size_t byteSize = message->totalBytes;
   float kb = (float)byteSize / 1024;
   float mb = kb / 1024;
-  cout << "(DEBUG):\t\t\t->Sending ";
+  std::stringstream ss;
+  ss << "\t\t\t->Sending ";
   if (mb >= 1) {
-    cout << mb << " MB" << endl;
+    ss << mb << " MB" ;
+  } else  if (kb >= 1) {
+    ss << kb << " KB" ;
   } else {
-    if (kb >= 1) {
-      cout << kb << " KB" << endl;
-    } else {
-      cout << byteSize << " Bytes" << endl;
-    }
+    ss << byteSize << " Bytes" ;
   }
+  LOG(debug) << ss.str();
   ba::write(*socket_, ba::buffer((char *)message, message->totalBytes));
 }
 
 void Client::start() {
-  cout << "(DEBUG):\t\t* Client::start()" << endl;
-  cout << "(DEBUG): \tHostname: " << name;
-  cout << "\tPort: " << port << endl;
+  LOGF(debug, "\tConnecting to %1%:%2%") % name % port;
   try {
     tcp::resolver resolver(io_service);
-    //  cout << "tcp::resolver::query()" << endl;
     tcp::resolver::query q(name, boost::lexical_cast<string>(port));
-    //  cout << "resolver.resolve()" << endl;
     boost::system::error_code ec;
     tcp::resolver::iterator endpoint_it = resolver.resolve(q, ec);
     if (ec)
-      cout << "(ERROR): cannot resolve address: " << ec.message() << endl;
+      LOG(error) << "(ERROR): cannot resolve address: " << ec.message() ;
     socket_ = boost::make_shared<tcp::socket>(boost::ref(io_service));
-    //  cout << "(DEBUG): asio::connect()" << endl;
     boost::asio::connect(*socket_, endpoint_it);
   }
   catch (std::exception &e) {
-    cout << "(ERROR): Client::start() - " << e.what() << endl;
+    LOG(error) << "(ERROR): Client::start() - " << e.what() ;
   }
 }
 
 void Client::stop() {
-  cout << "(DEBUG):\t\t* Closing connection" << endl;
+  LOG(debug) << "\t\t* Closing connection" ;
 
   // let the server know we're done
   msg_t *msg = msg_done();
@@ -69,34 +67,20 @@ void Client::stop() {
 }
 
 void Client::getResult(void *out, int sizeBytes) {
-  cout << "(DEBUG):\t\t* Waiting for result..." << endl;
+  LOG(debug) << "\t\t* Waiting for result..." ;
   int size = sizeBytes + sizeof(msg_t);
   char *buf = (char *)calloc(size, 1);
-
-  //  try {
   ba::read(*socket_, boost::asio::buffer(buf, size));
-  //  } catch (std::exception& e) {
-  //    std::cout << "(ERROR):\t\t* Failed to read from socket."
-  //              << "Check if remote host crashed\n";
-  //  }
-
   msg_t *rsp = (msg_t *)buf;
   if (sizeBytes != rsp->dataBytes) {
-    cerr << "(ERROR):\t\t* Error: reply size different than expected! ";
-    cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes;
+    LOG(error) << "\t\t* Error: reply size different than expected! "
+	       << "Expected " << sizeBytes << ", got " << rsp->dataBytes;
   }
   memcpy(out, rsp->data, rsp->dataBytes);
   free(buf);
 }
 
 int Client::read(char *buffer, size_t sizeBytes) {
-  //  cout << "(DEBUG): Client::read()" << endl;
-  //  try {
   ba::read(*socket_, ba::buffer(buffer, sizeBytes));
-  //  } catch (std::exception& e) {
-  //    std::cout << "(ERROR):\t\t* Failed to read from socket."
-  //              << "Check if remote host crashed\n";
-  //    return 1;
-  //  }
   return 0;
 }

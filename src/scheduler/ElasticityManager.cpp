@@ -2,10 +2,13 @@
 
 #include <iostream>
 #include "Scheduler.hpp"
+#include "Logging.hpp"
 
 using namespace std;
 
 void ElasticityManager::updateResourcePool(const Scheduler &scheduler,
 					   const Allocations &allocations) const {
-  cout << "Updating scheduler resource pool" << endl;
+
+  LOG(debug) << "Updating scheduler resource pool";
+
 }

@@ -3,8 +3,19 @@
 #include <iostream>
 
 std::string parse(std::string functionName) {
+
+  // this will remove the type signature
+
+  // remove arguments
   size_t pos = functionName.find("(");
   functionName.erase(pos, functionName.size() - pos);
+  pos = functionName.rfind(" ");
+
+  // remove return type
+  if (pos != std::string::npos) {
+    return functionName.substr(pos, functionName.size() - pos);
+  }
+
   return functionName;
 }
 

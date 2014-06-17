@@ -10,13 +10,13 @@ int main(int argc, char* argv[])
   initLogging("OptionPricingTest.log");
 
   /** Ask for a simple option pricings a few times */
-  int t = 1;
+  int t = 2;
 
   double strike = 0.01;
   double sigma = 0.02;
   double timestep = 0.05;
   int numTimeStep = (int)(10/0.05);
-  int numMaturity = 2000000;
+  int numMaturity = 200;
   int paraNode = 50;
   int numPathGroup = 20;
   double T = 10;

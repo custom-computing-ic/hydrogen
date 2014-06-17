@@ -4,10 +4,13 @@
 #include <iostream>
 #include <cstdlib>
 #include <csignal>
+#include <Logging.hpp>
 
 using namespace std;
 
 int main(int argc, char** argv) {
+
+  initLogging("scheduler.log");
 
   if (argc < 3) {
     cout << "Usage ./scheduler <portNumber> <dispatcherPortNumber>" << endl;

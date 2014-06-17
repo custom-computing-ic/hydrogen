@@ -4,4 +4,4 @@ add_library(Scheduler
 	Allocations.cpp
 	ElasticityManager.cpp)
 
-target_link_libraries (Scheduler Common)
+target_link_libraries (Scheduler Common boost_log)

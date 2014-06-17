@@ -2,6 +2,7 @@
 #define _LOGGING_H_
 
 #include <string>
+#include <iomanip>
 
 #include <boost/format.hpp>
 #include <boost/log/attributes/named_scope.hpp>
@@ -20,7 +21,7 @@ void initLogging(std::string logFile);
 
 std::string parse(std::string);
 
-#define LOG(level) BOOST_LOG_TRIVIAL(level) << " " << setw(50) << parse(BOOST_CURRENT_FUNCTION) << ":\t"
-#define LOGF(level, msg) BOOST_LOG_TRIVIAL(level) << " "  << setw(50) << parse(BOOST_CURRENT_FUNCTION) << ":\t" << boost::format(msg)
+#define LOG(level) BOOST_LOG_TRIVIAL(level) << " " << std::setw(50) << parse(BOOST_CURRENT_FUNCTION) << ":\t"
+#define LOGF(level, msg) BOOST_LOG_TRIVIAL(level) << " "  << std::setw(50) << parse(BOOST_CURRENT_FUNCTION) << ":\t" << boost::format(msg)
 
 #endif /* _LOGGING_H_ */
