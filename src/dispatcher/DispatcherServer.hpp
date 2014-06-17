@@ -4,6 +4,7 @@
 #include <MultiThreadedTCPServer.hpp>
 #include <message.hpp>
 #include <string>
+#include <Logging.hpp>
 
 #ifdef USEDFE
 #include <DfeLib.hpp>
@@ -21,10 +22,10 @@ public:
     super(address, name, thread_pool_size)
   {
 #ifdef USEDFE
-    std::cout << "Starting Dispatcher Server using DFE implementations" << std::endl;
+    LOG(debug) << "Using DFE implementations";
     useDfe = true;
 #else
-    std::cout << "Starting Dispatcher Server without DFE implementations" << std::endl;
+    LOG(debug) << "Using CPU Only";
     useDfe = false;
 #endif
   }

@@ -3,13 +3,12 @@
 #include <vector>
 #include <sstream>
 #include <boost/chrono.hpp>
+
 using namespace std;
 namespace bc = boost::chrono;
 
 void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *out) {
-  cout << "Dispatcher::MovingAverageCPU" << endl;
-  cout << " n:    " << n << endl;
-  cout << " size: " << size << endl;
+  LOGF(debug, "movingAverageCpu(n = %1%, size = %2%)") % n % size;
 
   for (size_t i = 0; i <= n - size; i++) {
     out[i] = 0;
@@ -29,7 +28,7 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
 
 void DispatcherServer::movingAverage_dfe(int n, int size,
                                          int *data, int *out) {
-  cout << "Dispatcher::MovingAverageDFE" << endl;
+  LOGF(debug, "movingAverageDfe(n = %1%, size = %2%)") % n % size;
   char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
   MovingAverageDFE(size, n, data, out, 2, dfeIds, true);
@@ -39,7 +38,7 @@ void DispatcherServer::movingAverage_dfe(int n, int size,
 void DispatcherServer::movingAverage_dfe(int n, int size,
                                          int *data, int *out,
                                          char** dfeIds, int nDfes) {
-  cout << "Dispatcher::MovingAverageDFE" << endl;
+  LOGF(debug, "movingAverageDfe(n = %1%, size = %2%, nDfes = %3%)") % n % size % nDfes;
   //  char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
   MovingAverageDFE(size, n, data, out, nDfes, dfeIds, true);
@@ -56,6 +55,12 @@ void DispatcherServer::optionPricing_dfe(double strike,
 					 double *out,
 					 int nDFEs
                                          ) {
+  LOGF(debug,
+       "strike = %1%, sigma = %2%, timestep = %3% "
+       "numMaturity = %4%, paraNode = %5% "
+       "numPathGroup = %6%, T = %7%, nDfes = %8%")
+    % strike % sigma % timestep % numMaturity % paraNode % numPathGroup % T % nDFEs;
+
 #ifdef USEDFE
   *out = optionPricing(strike,
 		       sigma,
@@ -71,9 +76,7 @@ void DispatcherServer::optionPricing_dfe(double strike,
 }
 
 msg_t* DispatcherServer::handle_request(msg_t* request) {
-#ifdef DEBUG
-  std::cout << "Dispatcher::handle_request" << std::endl;
-#endif
+  LOG(debug) << "Start";
 
   if (request->msgId == MSG_MOVING_AVG) {
     // unpack data
@@ -82,23 +85,23 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     size_t nBytes = sizeof(int) * n;
     int* out = (int *)calloc(n, sizeof(int));
     int* data_in = (int*)malloc(nBytes);
-    std::cout << "(DEBUG): RIDS[";
+    LOG(debug) << "(DEBUG): RIDS[";
     std::vector<char*> dfeIds;
     std::stringstream ss;
     int nDFEs = 0;
     for (int i = 0; i < 4; i++) {
       if ((int)(pow(2,i)) & request->rids) {
         char* temp = (char*) malloc (sizeof(char));
-        std::cout << 1;
+        LOG(debug) << 1;
         ss << i;
         ss >> *temp;
         dfeIds.push_back(temp);
         nDFEs++;
       } else {
-        std::cout << 0;
+        LOG(debug) << 0;
       }
     }
-    std::cout << "]\n";
+    LOG(debug) << "]\n";
     memcpy(data_in, request->data, nBytes);
 
     // do computation
@@ -116,11 +119,6 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
       free(c);
     }
     auto end = bc::system_clock::now();
-#ifdef DEBUG
-    cout << "Data out " << endl;
-    for (int i = 0; i < n; i++)
-      cout << out[i] << endl;
-#endif
 
     // write the response
     int dataBytes = request->dataSize * sizeof(int);
@@ -150,7 +148,6 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     int numPE = 4;
     double T = *(double*)(request->data + 3*sizeof(double) + 3*sizeof(int));
 
-    cerr << "Making request " << endl;
     double res;
 
     // TODO add nDFEs
@@ -176,8 +173,6 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->dataBytes = sizeof(double);
     memcpy(response->data, &res, sizeof(double));
 
-    cerr << "Got reply " << endl;
-    response->print();
     return response;
   }
 
