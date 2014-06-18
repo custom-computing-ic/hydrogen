@@ -34,8 +34,8 @@ void Scheduler::claimResources(JobResPairPtr elem) {
   ResourceListPtr r = std::get<1>(*elem);
   for (auto rit = r->begin(); rit != r->end(); rit++) {
     auto remove =
-        std::find_if(resPool->begin(), resPool->end(),
-                     std::bind(resPtrEQ, *rit, std::placeholders::_1));
+      std::find_if(resPool->begin(), resPool->end(),
+                   std::bind(resPtrEQ, *rit, std::placeholders::_1));
     resPool->erase(remove);
   }
   LOG(debug) << "resPool[" << resPool->size() << "]";
@@ -54,7 +54,7 @@ bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   bc::duration<double, boost::ratio<1, 1000> > milli_sec(milliseconds);
   auto micro_sec = bc::duration_cast<bc::microseconds>(milli_sec);
   LOG(debug) << milli_sec.count() << "ms"
-	     << ", " << micro_sec.count() << "us";
+             << ", " << micro_sec.count() << "us";
   return milli_sec;
 }
 
@@ -70,7 +70,7 @@ int Scheduler::numLateJobs() {
   JobQueue::iterator it = finishedQ->begin();
   for (; it != finishedQ->end(); it++) {
     bc::system_clock::time_point disp_t =
-        (std::get<0>(**it))->getDispatchTime();
+      (std::get<0>(**it))->getDispatchTime();
     bc::system_clock::time_point issue_t = (std::get<0>(**it))->getIssueTime();
     sum = (disp_t - issue_t) > bc::seconds(1) ? sum + 1 : sum;
   }
@@ -149,7 +149,7 @@ msg_t *Scheduler::handle_request(msg_t *request) {
     response = (msg_t *)calloc(sizeBytes, 1);
     concurrentHandler(*request, *response, sizeBytes);
     response->avg_wt =
-        (int)bc::duration_cast<bc::milliseconds>(meanWaitTime).count();
+      (int)bc::duration_cast<bc::milliseconds>(meanWaitTime).count();
     return response;
   default:
     LOGF(error, "Unsuported msg_id %1%") % request->msgId;
@@ -165,60 +165,60 @@ void Scheduler::schedLoop() {
       // If we have no results or nothing to try and schedule wait
       while (!QStatus.getReadyQStatus()) {
         QCondVar.wait(lock);
-        //  LOG(debug) << "Scheduler Thread woke up";
       }
       lock.unlock();
 
-      // A job was deposited in the readyQ
-      if (QStatus.getReadyQStatus() == true) {
-        QStatus.setReadyQStatus(false);
-        auto start = bc::system_clock::now();
-        //        LOG(debug) << "(DEBUG): Event on readyQ";
-        boost::unique_lock<boost::mutex> rqLk(readyQMtx);
-        Allocations *a = schedule(MODE_MANAGED, true);
-        rqLk.unlock();
-        if (a == nullptr) {
-          /* No free resources.. Just block for some more time :)   */
-          //          LOG(debug) << "(DEBUG): Allocations returned null";
-          boost::this_thread::yield();
+      if (!QStatus.getReadyQStatus())
+        continue;
 
+      // A job was deposited in the readyQ
+      QStatus.setReadyQStatus(false);
+      auto start = bc::system_clock::now();
+      //        LOG(debug) << "(DEBUG): Event on readyQ";
+      boost::unique_lock<boost::mutex> rqLk(readyQMtx);
+      Allocations *a = schedule(MODE_MANAGED, true);
+      rqLk.unlock();
+      if (a == nullptr) {
+        /* No free resources.. Just block for some more time :)   */
+        //          LOG(debug) << "(DEBUG): Allocations returned null";
+        boost::this_thread::yield();
+
+        QStatus.setRunQStatus(true);
+        QCondVar.notify_all();
+      } else {
+        elasticityManager.updateResourcePool(*this, *a);
+
+        /* managed to get some kind of schedule. */
+        size_t numJobsScheduled = a->noJobs();
+        if (numJobsScheduled > 0) {
+          a->serviceAllocations(*this);
           QStatus.setRunQStatus(true);
+          auto end = bc::system_clock::now();
+          auto duration = bc::duration_cast<bc::microseconds>(end - start);
+
+          LOGF(debug, "Scheduling took: %1%") % duration.count();
+          totalSchedTime += duration;
+          numSchedules++;
           QCondVar.notify_all();
         } else {
-	  elasticityManager.updateResourcePool(*this, *a);
-
-          /* managed to get some kind of schedule. */
-          size_t numJobsScheduled = a->noJobs();
-          if (numJobsScheduled > 0) {
-            a->serviceAllocations(*this);
-            QStatus.setRunQStatus(true);
-            auto end = bc::system_clock::now();
-            auto duration = bc::duration_cast<bc::microseconds>(end - start);
-
-            LOGF(debug, "Scheduling took: %1%") % duration.count();
-            totalSchedTime += duration;
-            numSchedules++;
-            QCondVar.notify_all();
-          } else {
-            boost::this_thread::yield();
-          }
-          delete a;
-
-          LOG(debug) << "Managed Mode scheduled " << numJobsScheduled;
-          totalJobsScheduled += numJobsScheduled;
-          if (numJobsScheduled > 1)
-            LOG(debug) << " Jobs";
-          else
-            LOG(debug) << " Job";
-          size_t waitingJobs = readyQ->size();
-          LOG(debug) << "\t(" << waitingJobs;
-          if (waitingJobs > 1 || waitingJobs == 0)
-            LOG(debug) << " Jobs left)";
-          else
-            LOG(debug) << " Job left)";
+          boost::this_thread::yield();
         }
-        QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
+        delete a;
+
+        LOG(debug) << "Managed Mode scheduled " << numJobsScheduled;
+        totalJobsScheduled += numJobsScheduled;
+        if (numJobsScheduled > 1)
+          LOG(debug) << " Jobs";
+        else
+          LOG(debug) << " Job";
+        size_t waitingJobs = readyQ->size();
+        LOG(debug) << "\t(" << waitingJobs;
+        if (waitingJobs > 1 || waitingJobs == 0)
+          LOG(debug) << " Jobs left)";
+        else
+          LOG(debug) << " Job left)";
       }
+      QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
     }
   }
   catch (boost::thread_interrupted &) {
@@ -244,7 +244,7 @@ void Scheduler::runJobs() {
       LOG(debug) << "Start Job";
       jobInfo->setStarted(true);
       boost::thread jobThread(
-          boost::bind(&Scheduler::runJob, this, job_pair_ptr));
+                              boost::bind(&Scheduler::runJob, this, job_pair_ptr));
       jobThread.detach();
       //         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
     }
@@ -294,7 +294,7 @@ void Scheduler::runJob(JobResPairPtr j) {
   msg_t *req = jobPtr->getReq();
 
   LOG(debug) << "\t* Opening connection to: " << name << ":"
-            << portNumber << "";
+             << portNumber << "";
 
   // TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
   // TODO[mtottenh]: Quick hack for now, need to make this scaleable

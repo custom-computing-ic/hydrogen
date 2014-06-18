@@ -355,7 +355,6 @@ private:
   inline void setWindow(size_t w) { window = w; }
 
   inline void addResource(int PortNo, const std::string &Hostname) {
-
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
     const std::string &type = std::string("DFE");
     resPool->push_back(
