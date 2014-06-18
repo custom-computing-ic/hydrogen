@@ -44,7 +44,7 @@ void Scheduler::claimResources(JobResPairPtr elem) {
 void Scheduler::returnResources(ResourceListPtr res) {
   ResourceList::iterator r = res->begin();
   for (; r != res->end(); r++) {
-   addResource(*r);
+    addResource(*r);
   }
 }
 
@@ -174,50 +174,46 @@ void Scheduler::schedLoop() {
       // A job was deposited in the readyQ
       QStatus.setReadyQStatus(false);
       auto start = bc::system_clock::now();
-      //        LOG(debug) << "(DEBUG): Event on readyQ";
       boost::unique_lock<boost::mutex> rqLk(readyQMtx);
       Allocations *a = schedule(MODE_MANAGED, true);
       rqLk.unlock();
       if (a == nullptr) {
         /* No free resources.. Just block for some more time :)   */
-        //          LOG(debug) << "(DEBUG): Allocations returned null";
         boost::this_thread::yield();
-
         QStatus.setRunQStatus(true);
         QCondVar.notify_all();
-      } else {
-        elasticityManager.updateResourcePool(*this, *a);
-
-        /* managed to get some kind of schedule. */
-        size_t numJobsScheduled = a->noJobs();
-        if (numJobsScheduled > 0) {
-          a->serviceAllocations(*this);
-          QStatus.setRunQStatus(true);
-          auto end = bc::system_clock::now();
-          auto duration = bc::duration_cast<bc::microseconds>(end - start);
-
-          LOGF(debug, "Scheduling took: %1%") % duration.count();
-          totalSchedTime += duration;
-          numSchedules++;
-          QCondVar.notify_all();
-        } else {
-          boost::this_thread::yield();
-        }
-        delete a;
-
-        LOG(debug) << "Managed Mode scheduled " << numJobsScheduled;
-        totalJobsScheduled += numJobsScheduled;
-        if (numJobsScheduled > 1)
-          LOG(debug) << " Jobs";
-        else
-          LOG(debug) << " Job";
-        size_t waitingJobs = readyQ->size();
-        LOG(debug) << "\t(" << waitingJobs;
-        if (waitingJobs > 1 || waitingJobs == 0)
-          LOG(debug) << " Jobs left)";
-        else
-          LOG(debug) << " Job left)";
+        QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
+        continue;
       }
+
+      elasticityManager.updateResourcePool(*this, *a);
+
+      /* managed to get some kind of schedule. */
+      size_t numJobsScheduled = a->noJobs();
+      if (numJobsScheduled > 0) {
+        a->serviceAllocations(*this);
+        QStatus.setRunQStatus(true);
+        auto end = bc::system_clock::now();
+        auto duration = bc::duration_cast<bc::microseconds>(end - start);
+        LOGF(debug, "Scheduling took: %1%") % duration.count();
+        totalSchedTime += duration;
+        numSchedules++;
+        QCondVar.notify_all();
+      } else {
+        boost::this_thread::yield();
+      }
+      delete a;
+
+      LOG(debug) << "Managed Mode scheduled " << numJobsScheduled;
+      totalJobsScheduled += numJobsScheduled;
+      LOG(debug) << " Job(s)";
+      size_t waitingJobs = readyQ->size();
+      LOG(debug) << "\t(" << waitingJobs;
+      if (waitingJobs > 1 || waitingJobs == 0)
+        LOG(debug) << " Jobs left)";
+      else
+        LOG(debug) << " Job left)";
+
       QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
     }
   }
