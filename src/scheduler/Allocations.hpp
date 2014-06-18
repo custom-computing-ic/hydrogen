@@ -2,6 +2,7 @@
 #define __ALLOCATIONS_H_
 #include <Job.hpp>
 #include <typedefs.hpp>
+#include <Logging.hpp>
 class Allocations {
 
 public:
@@ -23,6 +24,7 @@ public:
   }
 
   float totalPriorities() { return 1.0; }
+
   size_t noJobs() {
     size_t count = 0;
     JobTuplePtr j;
@@ -36,10 +38,24 @@ public:
     }
     return count;
   }
-  int getScore() { return score; }
+
+  int getScore() const { return score; }
+
   void setScore(int a) { score = a; }
+
   void serviceAllocations(Scheduler &s);
+
   void returnResources(Scheduler &s);
+
+  double getJLOMetric() {
+    LOGF(debug, "Computing jloMetric for %1% jobs") % noJobs();
+    JobResPairQ::iterator it = jobs.begin();
+    for ( ; it != jobs.end(); it++) {
+      // JobTuplePtr p = std::get<0>(**it);
+      // Job j = *(std::get<0>(*p));
+    }
+    return 0;
+  }
 
 private:
   JobResPairQ jobs;

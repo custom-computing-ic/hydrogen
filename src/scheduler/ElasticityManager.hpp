@@ -12,7 +12,7 @@ public:
 
   /** Update the size of the schedueler resource pool based on the
       jloMetric. */
-  void updateResourcePool(const Scheduler &, const Allocations &) const;
+  void updateResourcePool(const Scheduler &, Allocations &) const;
 };
 
 #endif /* _ELASTICITYMANAGER_H_ */

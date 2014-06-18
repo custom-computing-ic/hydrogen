@@ -7,8 +7,10 @@
 using namespace std;
 
 void ElasticityManager::updateResourcePool(const Scheduler &scheduler,
-					   const Allocations &allocations) const {
+					   Allocations &allocations) const {
 
-  LOG(debug) << "Updating scheduler resource pool";
+  double jloMetric = allocations.getJLOMetric();
+
+  LOG(debug) << "JLOMetric: " << jloMetric;
 
 }
