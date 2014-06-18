@@ -15,6 +15,17 @@ void optionPricing(double strike,
 		   double T,
 		   double *out);
 
+void optionPricingJlo(double strike,
+		      double sigma,
+		      double timestep,
+		      int numMaturity,
+		      int paraNode,
+		      int numPathGroup,
+		      double T,
+		      double *out,
+		      int predictedTimeMillis,
+		      int targetExecutionTimeMillis);
+
 void TerminateServer();
 /** Version of Moving average where client can specify port # */
 void movingAverage(size_t n, size_t size, int* data, int* out, int pNum);

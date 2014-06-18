@@ -104,10 +104,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     LOG(debug) << "]\n";
     memcpy(data_in, request->data, nBytes);
 
-    // do computation
-    // TODO check resource type
     if (request->resourceType == DFE && useDfe) {
-      // TODO pass in other arguments (e.g. nDfes, dfeIDs)
       if (nDFEs != 0)
         movingAverage_dfe(n, request->firstParam(), data_in, out, dfeIds.data(),nDFEs);
       else
@@ -129,7 +126,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->paramsSize = 0;
     response->totalBytes = sizeBytes;
     response->dataBytes = dataBytes;
-    response->predicted_time = bc::duration_cast<bc::milliseconds>(end-start).count();
+    response->predictedTimeMillis = bc::duration_cast<bc::milliseconds>(end-start).count();
     memcpy(response->data, out, nBytes);
     free(out);
     free(data_in);
@@ -137,7 +134,6 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     return response;
   } else if (request->msgId == MSG_OPTION_PRICE) {
 
-    // -- Dummy Parameters --
     double strike = *(double*)request->data;
     double sigma = *(double*)(request->data + sizeof(double));
     double timestep = *(double*)(request->data + 2* sizeof(double));
@@ -149,10 +145,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     double T = *(double*)(request->data + 3*sizeof(double) + 3*sizeof(int));
 
     double res;
-
-    // TODO add nDFEs
-    int nDFEs = 1;
-
+    auto start = bc::system_clock::now();
     this->optionPricing_dfe(strike,
 			    sigma,
 			    timestep,
@@ -161,7 +154,9 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 			    numPathGroup,
 			    T,
 			    &res,
-			    nDFEs);
+			    request->nDfes());
+     auto end = bc::system_clock::now();
+     LOG(debug) << "   " << bc::duration_cast<bc::milliseconds>(end - start).count();
 
     // write the response
     size_t sizeBytes = sizeof(msg_t) + sizeof(double);

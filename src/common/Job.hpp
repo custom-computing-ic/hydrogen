@@ -6,12 +6,15 @@
 
 #include <boost/chrono.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/format.hpp>
+
 #include <memory>
 #include <csignal>
 #include <deque>
 #include <vector>
 #include <typedefs.hpp>
 #include <Resource.hpp>
+
 float defaultCostFunction(JobResPair &p);
 namespace bc = boost::chrono;
 class Job {
@@ -51,7 +54,7 @@ public:
   inline bc::system_clock::time_point getFinishTime() const {
     return finishTime;
   }
-  inline float getDefaultJobTime() const { return defaultJobTime; }
+  inline float getDefaultJobTime() const { return predictedTimeMillis.count(); }
 
   inline bc::duration<double> getMeasuredExecutionTime() const {
     return measuredExecutionTime;
@@ -63,6 +66,7 @@ public:
   inline void setMeasuredExecutionTime(bc::duration<double> tp) {
     measuredExecutionTime = tp;
   }
+
   inline void setActualExecutionTime(bc::duration<double> tp) {
     actualExecutionTime = tp;
   }
@@ -89,16 +93,25 @@ public:
 
   inline float cost(JobResPair &p) { return cost_func(p); }
 
-  inline float minCost() const { return defaultJobTime / min; }
-  inline float maxCost() const { return defaultJobTime / max; }
+  inline float minCost() const { return predictedTimeMillis.count() / min; }
+  inline float maxCost() const { return predictedTimeMillis.count() / max; }
 
   friend bool operator==(const Job &lhs, const Job &rhs) {
     return lhs.getId() == rhs.getId();
   }
+
   friend std::ostream &operator<<(std::ostream &s, Job const &j) {
-    s << "Job[" << j.getId() << "]";
+    s << boost::format("Job[id:%1% predTime: %2% actTime:%3% targetTime:%4% jlo: %5%]")
+      % j.jid % j.predictedTimeMillis % j.measuredExecutionTime % j.targetExecutionTimeMillis
+      % j.getJlo(1);
     return s;
   }
+
+  inline double getJlo(int resourceCount) const {
+    // TODO [paul-g]: extremely simple "performance model"
+    return (targetExecutionTimeMillis - predictedTimeMillis / resourceCount).count();
+  }
+
   /* Helper Functions */
   msg_t run();
   msg_t *getRsp() { return rsp; }
@@ -111,13 +124,16 @@ private:
   int uid;
   int status;
   int priority;
-  float defaultJobTime;
 
   bc::system_clock::time_point issueTime;
   bc::system_clock::time_point dispatchTime;
   bc::system_clock::time_point finishTime;
   bc::duration<double> actualExecutionTime;
   bc::duration<double> measuredExecutionTime;
+
+  // simplified model of JLO
+  bc::duration<double> targetExecutionTimeMillis;
+  bc::duration<double> predictedTimeMillis;
 
   CostFunctionType cost_func;
   ResourcePoolPtr AllocatedResources;

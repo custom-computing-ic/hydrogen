@@ -16,9 +16,8 @@ public:
 
   float makespan() {
     float sum = 0;
-    JobResPairQ::iterator it = jobs.begin();
-    for (; it != jobs.end(); it++) {
-      sum += std::get<0>(*std::get<0>(**it))->cost(**it);
+    for (auto it : jobs) {
+      sum += std::get<0>(*std::get<0>(*it))->cost(*it);
     }
     return sum;
   }
@@ -29,9 +28,8 @@ public:
     size_t count = 0;
     JobTuplePtr j;
     ResourceListPtr rl;
-    JobResPairQ::iterator it = jobs.begin();
-    for (; it != jobs.end(); it++) {
-      std::tie(j, rl) = **it;
+    for (auto it : jobs) {
+      std::tie(j, rl) = *it;
       if (rl != nullptr && rl->size() > 0) {
         count++;
       }
@@ -48,13 +46,25 @@ public:
   void returnResources(Scheduler &s);
 
   double getJLOMetric() {
-    LOGF(debug, "Computing jloMetric for %1% jobs") % noJobs();
-    JobResPairQ::iterator it = jobs.begin();
-    for ( ; it != jobs.end(); it++) {
-      // JobTuplePtr p = std::get<0>(**it);
-      // Job j = *(std::get<0>(*p));
+    double jloMetricNeg = 0;
+    double jloMetricPos = 0;
+    for (auto it : jobs) {
+      JobTuplePtr p = std::get<0>(*it);
+      ResourceListPtr rp = std::get<1>(*it);
+      LOG(debug) << rp->size();
+      int resourceCount = rp->size();
+      Job j = *(std::get<0>(*p));
+      double jloMetric = j.getJlo(resourceCount);
+      if (jloMetric < 0)
+	jloMetricNeg += jloMetric;
+      else
+	jloMetricPos += jloMetric;
     }
-    return 0;
+
+    if (jloMetricNeg < 0)
+      return jloMetricNeg;
+
+    return jloMetricPos;
   }
 
 private:

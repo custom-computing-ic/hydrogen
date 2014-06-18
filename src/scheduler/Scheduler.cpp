@@ -66,12 +66,11 @@ void Scheduler::defaultHandler(msg_t &request, msg_t &response,
 
 bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   // TODO[mtottenh]:Add code to estimate a job finish time
-  LOG(debug) << "(DEBUG): Scheduler::estimateExecutionTime()";
-  double milliseconds = (double)j->getReq()->predicted_time;
+  double milliseconds = (double)j->getReq()->predictedTimeMillis;
   bc::duration<double, boost::ratio<1, 1000> > milli_sec(milliseconds);
   auto micro_sec = bc::duration_cast<bc::microseconds>(milli_sec);
-  LOG(debug) << "- " << milli_sec.count() << "ms";
-  LOG(debug) << "- " << micro_sec.count() << "us";
+  LOG(debug) << milli_sec.count() << "ms"
+	     << ", " << micro_sec.count() << "us";
   return milli_sec;
 }
 
@@ -225,7 +224,6 @@ void Scheduler::schedLoop() {
         //        LOG(debug) << "(DEBUG): Event on readyQ";
         boost::unique_lock<boost::mutex> rqLk(readyQMtx);
         Allocations *a = schedule(MODE_MANAGED, true);
-	elasticityManager.updateResourcePool(*this, *a);
         rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
@@ -235,6 +233,8 @@ void Scheduler::schedLoop() {
           QStatus.setRunQStatus(true);
           QCondVar.notify_all();
         } else {
+	  elasticityManager.updateResourcePool(*this, *a);
+
           /* managed to get some kind of schedule. */
           size_t numJobsScheduled = a->noJobs();
           if (numJobsScheduled > 0) {
@@ -383,7 +383,7 @@ void Scheduler::runJob(JobResPairPtr j) {
   c.stop();
   auto end = bc::system_clock::now();
   jobPtr->setMeasuredExecutionTime(end - start);
-  jobPtr->setActualExecutionTime(bc::milliseconds(rsp->predicted_time));
+  jobPtr->setActualExecutionTime(bc::milliseconds(rsp->predictedTimeMillis));
 #ifdef DEBUG
   rsp->print();
 #endif

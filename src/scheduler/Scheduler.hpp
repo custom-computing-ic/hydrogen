@@ -65,18 +65,23 @@ public:
   }
   Scheduler(const ElasticityManager &_elasticityManager,
             const std::string &port, const std::string &name,
-            int dispatcherPortNumber, const std::string &dispatcherHostname)
+            int _dispatcherPortNumber, const std::string &_dispatcherHostname)
       : MultiThreadedTCPServer::super(name, port, NUM_THREADS),
-        elasticityManager(_elasticityManager) {
+        elasticityManager(_elasticityManager),
+	dispatcherHostname(_dispatcherHostname),
+	dispatcherPortNumber(_dispatcherPortNumber)
+  {
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
     runQ = JobResPairQPtr(new JobResPairQ());
     finishedQ = JobQueuePtr(new JobQueue());
 
-    addResource(dispatcherPortNumber, dispatcherHostname, 1);
-    addResource(dispatcherPortNumber, dispatcherHostname, 2);
-    addResource(dispatcherPortNumber, dispatcherHostname, 3);
-    addResource(dispatcherPortNumber, dispatcherHostname, 4);
+    resourceId = 1;
+    addResource(dispatcherPortNumber, dispatcherHostname);
+
+    // addResource(dispatcherPortNumber, dispatcherHostname, 2);
+    // addResource(dispatcherPortNumber, dispatcherHostname, 3);
+    // addResource(dispatcherPortNumber, dispatcherHostname, 4);
 
     nextJid = 1;
     strat = "Completion Time";
@@ -275,6 +280,7 @@ public:
     updateUtilization(j);
     updateLateJobs(j);
   }
+
   void updateUtilization(JobPtr j) {
     totBusyTime += j->getActualExecutionTime();
     auto tp = bc::system_clock::now();
@@ -282,6 +288,7 @@ public:
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
     meanUtilization = (double)busyTimeMs.count() / (double)totTimeMs.count();
   }
+
   void updateMeanWaitTime(JobPtr j) {
     // LOCK
     totalWaitTime += (j->getDispatchTime() - j->getIssueTime());
@@ -292,18 +299,18 @@ public:
     totalServiceTime += (j->getFinishTime() - j->getDispatchTime());
     meanServiceTime = totalServiceTime / totalCompletions;
   }
+
   void updateThroughput(JobPtr j) {
     auto tp = bc::system_clock::now();
     auto seconds = bc::duration_cast<bc::seconds>(tp - startTime);
     meanThroughput = (double)totalCompletions / (double)seconds.count();
   }
+
   void updateLateJobs(JobPtr j) {
     bc::duration<double> actualExecutionTime = bc::duration_cast<bc::seconds>(
         j->getFinishTime() - j->getDispatchTime());
     auto lateness = actualExecutionTime - estimateExecutionTime(j);
-    //   if ( lateness > bc::seconds(0)) {
-    std::cout << "(DEBUG): Estimate off by : " << lateness << " seconds\n";
-    //    }
+    LOG(debug) << "Estimate off by : " << lateness << " seconds\n";
   }
 
   void updateLatency(JobPtr j) {
@@ -323,6 +330,16 @@ public:
         boost::shared_ptr<Resource>(new Resource(Rid, portNo, hostName, type)));
   }
 
+  void provisionResource() {
+    // TODO[paul-g] check resources are available
+    LOG(debug) << "Adding resource to pool";
+    addResource(dispatcherPortNumber, dispatcherHostname);
+  }
+
+  void deprovisionResource() {
+    LOG(debug) << "Removing resource from pool";
+  }
+
 private:
   JobPtr deallocate(JobPtr j);
   /* Setters */
@@ -332,11 +349,13 @@ private:
 
   inline void setWindow(size_t w) { window = w; }
 
-  inline void addResource(int PortNo, const std::string &Hostname, int Rid) {
+  inline void addResource(int PortNo, const std::string &Hostname) {
+
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
     const std::string &type = std::string("DFE");
     resPool->push_back(
-        boost::shared_ptr<Resource>(new Resource(Rid, PortNo, Hostname, type)));
+        boost::shared_ptr<Resource>(new Resource(resourceId, PortNo, Hostname, type)));
+    resourceId++;
 
     //    resPool->push_back(boost::unique_ptr<Resource,Deleter<Resource>>(new
     // Resource(Rid,PortNo,Hostname,type)));
@@ -421,6 +440,10 @@ private:
   int nextJid;
   uint64_t totalCompletions;
   std::unordered_map<int, int> clientPriorities;
+
+  int resourceId;
+  int dispatcherPortNumber;
+  const std::string &dispatcherHostname;
 
   const ElasticityManager &elasticityManager;
 };
