@@ -15,6 +15,8 @@
 #include <Job.hpp>
 #include <typedefs.hpp>
 #include <Allocations.hpp>
+#include <Logging.hpp>
+
 class Scheduler;
 #define NUM_THREADS 4
 #include <algs.hpp>
@@ -33,31 +35,30 @@ namespace bc = boost::chrono;
 class Scheduler : public MultiThreadedTCPServer {
 public:
   ~Scheduler() {
-    std::cout << "(DEBUG): ~Scheduler()..\n";
     bool already_cleaned = true;
     if (schedulerThread != nullptr) {
-      std::cout << "(DEBUG):\t- Joining schedulerThread\n";
+      LOG(debug) << "\t- Joining schedulerThread\n";
       schedulerThread->interrupt();
       schedulerThread->join();
       delete schedulerThread;
       already_cleaned = false;
     }
     if (dispatcherThread != nullptr) {
-      std::cout << "(DEBUG):\t- Joining dispatcherThread\n";
+      LOG(debug) << "\t- Joining dispatcherThread\n";
       dispatcherThread->interrupt();
       dispatcherThread->join();
       delete dispatcherThread;
       already_cleaned = false;
     }
     if (finishedQThread != nullptr) {
-      std::cout << "(DEBUG):\t- Joining finishedQThread\n";
+      LOG(debug) << "\t- Joining finishedQThread\n";
       finishedQThread->interrupt();
       finishedQThread->join();
       delete finishedQThread;
       already_cleaned = false;
     }
     if (!already_cleaned) {
-      std::cout << "(DEBUG):\t- Joining jobThreads\n";
+      LOG(debug) << "\t- Joining jobThreads\n";
       //      jobThreads.interrupt_all();
       ///      jobThreads.join_all();
     }
@@ -143,6 +144,7 @@ public:
 #endif
     QCondVar.notify_all();
   }
+
   /* Server functions */
   int getNextId() {
     boost::lock_guard<boost::mutex> lk(jidMtx);
@@ -150,8 +152,6 @@ public:
   }
 
   virtual msg_t *handle_request(msg_t *request);
-  virtual void defaultHandler(msg_t &request, msg_t &response,
-                              int responseSize);
   msg_t *concurrentHandler(msg_t &request, msg_t &response,
                            unsigned long responseSize);
 
@@ -161,6 +161,7 @@ public:
   void dispatcherLoop();
 
   virtual void start();
+
   void stop() {
     /* If not using priorities: */
     std::cout << std::dec << "(INFO): Uptime: "
@@ -206,10 +207,12 @@ public:
     // JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j)));
     return rq->at(i);
   }
+
   inline std::string getStrategy() const { return strat; }
   inline size_t readyQSize() { return readyQ->size(); }
   inline size_t resPoolSize() { return resPool->size(); }
   inline size_t getWindow() const { return window; }
+
   /* Scheduling Strategies */
   Allocations *schedule(size_t, bool);
   void returnResources(Allocations &a);
@@ -229,6 +232,7 @@ public:
   inline static bool idEqrq(const int &jid, const JobTuplePtr &item) {
     return jid == std::get<0>(*item)->getId();
   }
+
   JobResPairPtr removeJobFromReadyQ(const JobResPairPtr &j) {
     boost::lock_guard<boost::mutex> lk(readyQMtx);
     if (readyQ->size() > 0) {
@@ -253,6 +257,7 @@ public:
     QCondVar.notify_all();
     return j;
   }
+
   void removeJobFromRunQ(int jid);
 
   /* TODO[mtottenh]: Deprecate these. access to Ptrs of these Q's is bad
@@ -337,17 +342,12 @@ private:
     const std::string &type = std::string("DFE");
     resPool->push_back(
         boost::shared_ptr<Resource>(new Resource(Rid, PortNo, Hostname, type)));
-
-    //    resPool->push_back(boost::unique_ptr<Resource,Deleter<Resource>>(new
-    // Resource(Rid,PortNo,Hostname,type)));
   }
 
   /* Getters */
-  // inline float  getCurTime() const {return curTime;}
   inline AlgType getAlg(size_t i) { return algVec[i]; }
   inline size_t noAlgs() { return algVec.size(); }
   inline JobTuplePtr getFirstReadyProc() {
-
     boost::lock_guard<boost::mutex> lk(readyQMtx);
     JobTuplePtr j = std::move(readyQ->front());
     readyQ->pop_front();
@@ -357,21 +357,15 @@ private:
   /* Helper Functions */
   int addToReadyQ(msg_t &request);
   int getJobStatus(int jobID);
-  msg_t getJobResponse(int);
   void returnToReadyQ(JobPtr j, int pos);
   JobPtr estimateFinishTime(JobPtr j);
   bc::duration<double> estimateExecutionTime(JobPtr);
   int numLateJobs();
   void updateState();
   void dumpInfo();
-  void printQInfo(const char *, JobQueuePtr, bool);
   void reclaimResources();
-  /* Attempts to allocate a least n resources to job j
-   * up to a maximum of m resources
-   * returns # resources allocated or -1 on failure
-   */
-  /* Helper functions for resource managment */
 
+  /* Helper functions for resource managment */
   void finishedLoop();
   void serviceAllocations(Allocations &a);
 

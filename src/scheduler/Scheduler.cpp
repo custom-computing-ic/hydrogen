@@ -8,9 +8,6 @@
 #include <Logging.hpp>
 #include <sstream>
 
-#define REF_GET(N, Tuple)                                                      \
-  [](Tuple &t) { return std::get<N>(t); };
-
 #define FCFS_MIN 0
 #define FCFS_MAX 1
 #define FCFS_AMAP 2
@@ -33,10 +30,7 @@ bool resPtrEQ(const Resource &lhs, const boost::shared_ptr<Resource> &rhs) {
 
 void Scheduler::claimResources(JobResPairPtr elem) {
   boost::lock_guard<boost::mutex> lk(resPoolMtx);
-  using namespace std::placeholders;
-  LOG(debug) << "claimResources()";
   LOG(debug) << "resPool[" << resPool->size() << "]\t";
-
   ResourceListPtr r = std::get<1>(*elem);
   for (auto rit = r->begin(); rit != r->end(); rit++) {
     auto remove =
@@ -50,18 +44,8 @@ void Scheduler::claimResources(JobResPairPtr elem) {
 void Scheduler::returnResources(ResourceListPtr res) {
   ResourceList::iterator r = res->begin();
   for (; r != res->end(); r++) {
-    addResource(*r);
+   addResource(*r);
   }
-}
-
-// TODO[mtottenh] Finish implementing the rest of the scheduler class
-void Scheduler::defaultHandler(msg_t &request, msg_t &response,
-                               int responseSize) {
-  LOG(error) << "Not implemented " << responseSize;
-#ifdef DEBUG
-  request.print();
-  response.print();
-#endif
 }
 
 bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
@@ -109,19 +93,7 @@ void Scheduler::notifyClientsOfResults() {
   std::get<2>(*j)->notify_all();
 }
 
-void Scheduler::printQInfo(const char *, JobQueuePtr, bool) {}
-
-// TODO[mtottenh]: Add this to the header file. This could be
-// dangerous.. it seems to remove all the resources in the runQ and
-// return them to the pool... use with extreme caution
-void Scheduler::reclaimResources() {
-  LOG(debug) << "Not Implemented";
-}
-
-// TODO[mtottenh]: Collapse the below back into 1 function.
-// needless code duplication here.
 Allocations *Scheduler::schedule(size_t choice, bool flag) {
-
   flag = false;
   Allocations *a = nullptr;
   if (resPool->size() <= 0) {
@@ -158,22 +130,9 @@ JobPtr Scheduler::deallocate(JobPtr j) {
   return j;
 }
 
-// TODO[mtottenh]: Remove this
-msg_t Scheduler::getJobResponse(int jobID) {
-  LOG(error) << "NOT IMPLEMENTED";
-  msg_t rsp;
-  return rsp;
-}
-
 /* Server Handling */
 msg_t *Scheduler::handle_request(msg_t *request) {
-
   LOGF(debug, "Scheduler recieved request msgID[%1%]") % request->msgId;
-#ifdef DEBUG
-  request->print();
-#endif
-  // TODO: Lookup requestID/Implementation ID in a map and return error if not
-  // found
   msg_t *response;
   unsigned long sizeBytes = 0;
   switch (request->msgId) {
@@ -185,9 +144,6 @@ msg_t *Scheduler::handle_request(msg_t *request) {
     response = (msg_t *)calloc(sizeBytes, 1);
     LOG(debug) << "Handling MSG_OPTION_PRICE request";
     concurrentHandler(*request, *response, sizeBytes);
-#ifdef DEBUG
-    response->print();
-#endif
     return response;
   case MSG_MOVING_AVG:
     sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
@@ -195,10 +151,6 @@ msg_t *Scheduler::handle_request(msg_t *request) {
     concurrentHandler(*request, *response, sizeBytes);
     response->avg_wt =
         (int)bc::duration_cast<bc::milliseconds>(meanWaitTime).count();
-#ifdef DEBUG
-    response->print();
-    cout << "Returning from Scheduler::handle_request()";
-#endif
     return response;
   default:
     LOGF(error, "Unsuported msg_id %1%") % request->msgId;
