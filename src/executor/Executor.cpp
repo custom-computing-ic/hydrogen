@@ -188,7 +188,7 @@ msg_t* Executor::handle_request(msg_t* request) {
       /* TODO[mtottenh]: Add error checking/lookup msgId in task map
        */
       std::tie(imp,runtime) = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize,avg_wt);
-      request->predicted_time = (int)runtime;
+      request->predictedTimeMillis = (int)runtime;
       rsp = runImp(imp,request);
       avg_wt = rsp->avg_wt;
       return rsp;
@@ -205,7 +205,7 @@ msg_t* Executor::handle_request(msg_t* request) {
       int sizeBytes = sizeof(msg_t) + sizeof(int) * (request->dataSize);
       char* buff = (char *)calloc(sizeBytes, 1);
       rsp = (msg_t *) buff;
-      request->predicted_time = 1;
+      request->predictedTimeMillis = 1;
       std::cout << "(DEBUG): Sending request to client\n";
       c.start();
       c.send(request);

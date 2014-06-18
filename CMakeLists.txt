@@ -125,9 +125,11 @@ target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
 add_executable (OptionPricing test/OptionPricingTest.cpp)
 target_link_libraries (OptionPricing ${EXTRA_LIBS} TestLib)
 
+add_executable (OptionPricingJlo test/OptionPricingJloTest.cpp)
+target_link_libraries (OptionPricingJlo ${EXTRA_LIBS} TestLib)
+
 add_executable (TerminateServer test/TerminateServer.cpp)
 target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
-
 
 enable_testing ()
 add_test ("DispatcherTest" DispatcherTest)
@@ -141,4 +143,6 @@ add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
 add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
 
 add_test ("OptionPricing" OptionPricing)
+add_test ("OptionPricingJlo" OptionPricingJlo)
+
 add_test ("TerminateServer" TerminateServer)
