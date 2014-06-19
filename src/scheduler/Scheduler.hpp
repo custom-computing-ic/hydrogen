@@ -136,7 +136,7 @@ public:
 
   void addToRunQ(JobResPairPtr elem) {
     boost::unique_lock<boost::mutex> guard(runQMtx);
-    LOG(debug) << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
+    //    LOG(debug) << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
     runQ->push_back(elem);
     std::get<0>(*std::get<0>(*elem))->setDispatchTime(bc::system_clock::now());
     guard.unlock();
