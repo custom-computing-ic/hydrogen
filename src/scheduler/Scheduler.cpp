@@ -4,6 +4,7 @@
 #include <cstring>
 #include <boost/chrono.hpp>
 #include <unistd.h>
+#include <StatsScreen.hpp>
 #define REF_GET(N,Tuple) \
         [] (Tuple& t) { return std::get<N>(t);};
 
@@ -19,7 +20,7 @@
 #define RID3 0x4
 #define RID4 0x8
 namespace bc = boost::chrono;
-
+extern sig_atomic_t stopFlag;
 using namespace std;
 //Removes resources allocated to a job from the res pool....
 bool resPtrEQ(const Resource& lhs, const boost::shared_ptr<Resource>& rhs) {
@@ -520,6 +521,17 @@ void Scheduler::finishedLoop() {
     std::cout << "(ERROR): FinishedQ thread - " << e.what() << std::endl;
   }
 }
+void Scheduler::guiLoop() {
+  StatsScreen s;
+  while (stopFlag == 0) {
+    boost::this_thread::sleep_for(bc::milliseconds(400));
+    s << WAIT_TIME << this->getWaitTime();
+    s << SERVICE_TIME << this->getServiceTime();
+    s << UTIL << this->getUtilization();
+    s << THROUGHPUT << this->getThroughput();
+    s << NO_JOBS << this->getCompletions();
+  }
+}
 
 void Scheduler::start() {
   //Fire up the Scheduling and dispatch threads.
@@ -530,5 +542,6 @@ void Scheduler::start() {
   schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
   dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
   finishedQThread = new boost::thread(&Scheduler::finishedLoop, this);
+  guiThread = new boost::thread(&Scheduler::guiLoop, this);
   run();
 }

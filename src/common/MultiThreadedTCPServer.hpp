@@ -10,7 +10,6 @@
 #include <string>
 
 #include "message.hpp"
-
 class MultiThreadedTCPServer;
 
 /// Represents a single connection from a client.
@@ -84,7 +83,7 @@ private:
   boost::asio::signal_set signals_;
 
   boost::asio::ip::tcp::acceptor acceptor_;
-  
+
   boost::thread_group worker_threads;
 
   connection_ptr new_connection_;

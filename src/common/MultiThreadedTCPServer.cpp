@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "message.hpp"
+sig_atomic_t stopFlag = 0;
 
 using namespace std;
 namespace ba = boost::asio;
@@ -66,6 +67,7 @@ void MultiThreadedTCPServer::handle_accept() {
 
 void MultiThreadedTCPServer::handle_stop() {
   cout << "(DEBUG): Server::handle_stop()" << endl;
+  stopFlag = 1;
   io_service_.stop();
   cout << "(DEBUG): interrupting worker_threads" << endl;
   worker_threads.interrupt_all();

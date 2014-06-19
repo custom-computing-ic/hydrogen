@@ -32,6 +32,7 @@ namespace bc = boost::chrono;
 
 class Scheduler : public MultiThreadedTCPServer {
 public:
+
   ~Scheduler() {
     std::cout << "(DEBUG): ~Scheduler()..\n";
     bool already_cleaned = true;
@@ -54,6 +55,13 @@ public:
       finishedQThread->interrupt();
       finishedQThread->join();
       delete finishedQThread;
+      already_cleaned = false;
+    }
+    if (guiThread != nullptr) {
+      std::cout << "(DEBUG):\t- Joining guiThread\n";
+      guiThread->interrupt();
+      guiThread->join();
+      delete guiThread;
       already_cleaned = false;
     }
     if (!already_cleaned) {
@@ -147,6 +155,23 @@ public:
   int getNextId() {
     boost::lock_guard<boost::mutex> lk(jidMtx);
     return nextJid++;
+  }
+
+  std::string getWaitTime() {
+    return std::to_string(meanWaitTime.count()) + "ms";
+  }
+  std::string getServiceTime() {
+    return std::to_string(meanServiceTime.count()) +  "ms";
+
+  }
+  std::string getCompletions() {
+    return std::to_string(totalCompletions);
+  }
+  std::string getUtilization() {
+    return std::to_string(meanUtilization);
+  }
+  std::string getThroughput() {
+    return std::to_string(meanThroughput);
   }
 
   virtual msg_t* handle_request(msg_t* request);
@@ -367,7 +392,7 @@ private:
    */
   /* Helper functions for resource managment */
 
-
+  void guiLoop();
   void finishedLoop();
   void serviceAllocations(Allocations &a);
 
@@ -387,6 +412,7 @@ private:
   boost::thread *schedulerThread;
   boost::thread *dispatcherThread;
   boost::thread *finishedQThread;
+  boost::thread *guiThread;
   boost::thread_group jobThreads;
   /*Private Data Members */
   ResourcePoolPtr resPool;
