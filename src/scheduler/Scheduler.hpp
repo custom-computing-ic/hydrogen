@@ -249,8 +249,7 @@ public:
   void provisionResource() {
     // TODO[paul-g] check resources are available
     LOG(debug) << "Adding resource to pool";
-    if (resourceId < 3)
-      addResource(dispatcherPortNumber, dispatcherHostname);
+    addResource(dispatcherPortNumber, dispatcherHostname);
   }
 
   void deprovisionResource() {
