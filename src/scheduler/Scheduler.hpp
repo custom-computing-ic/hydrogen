@@ -27,11 +27,7 @@ class Scheduler;
 /** The scheduler is a server for the client API and a client of the dispatcher
  * **/
 
-// TODO[mtottenh]: clean this up a bit
-template <typename T> class ContainerPtr {
-public:
-  typedef std::shared_ptr<std::deque<T> > deque;
-};
+
 namespace bc = boost::chrono;
 
 class Scheduler : public MultiThreadedTCPServer {
@@ -75,8 +71,8 @@ public:
 	dispatcherPortNumber(_dispatcherPortNumber)
   {
     resPool = ResourcePoolPtr(new ResourcePool());
-    readyQ = JobQueuePtr(new JobQueue());
-    runQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
+    readyQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
+    runQ = ConcurrentJobResPairQPtr(new ConcurrentJobResPairQ());
     finishedQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
 
     resourceId = 1;
@@ -105,37 +101,11 @@ public:
     startTime = bc::system_clock::now();
   }
 
-  template <typename T>
-  void enqueue(typename ContainerPtr<std::shared_ptr<T> >::deque container,
-               std::shared_ptr<T> elem, boost::mutex &lock,
-               const std::string &name) {
-    // Check that this shouldn't be the lock passed in.
-    boost::unique_lock<boost::mutex> lk(lock);
-
-    container->push_back(elem);
-    lk.unlock();
-    if (name == "readyQ") {
-      std::get<0>(*elem)->setIssueTime(bc::system_clock::now());
-      QStatus.setReadyQStatus(true);
-    }
-    if (name == "runQ") {
-      //      std::get<0>(*elem)->setDispatchTime( bc::system_clock::now());
-      QStatus.setRunQStatus(true);
-    }
-    if (name == "finishedQ") {
-      std::get<0>(*elem)->setFinishTime(bc::system_clock::now());
-      QStatus.setFinishedQStatus(true);
-    }
-    LOGF(debug, "Added element to %1% calling notify_all()") % name;
-    QCondVar.notify_all();
-  }
 
   void addToRunQ(JobResPairPtr elem) {
     std::get<0>(*std::get<0>(*elem))->setDispatchTime(bc::system_clock::now());
-    runQ->push_back(elem);
-    QStatus.setRunQStatus(true);
-    LOG(debug) << "Added element to runQ, calling notify_all().\n";
-    QCondVar.notify_all();
+    runQ->push_front(elem);
+    LOG(debug) << "Added element to runQ, calling notify_all()";
   }
 
   /* Server functions */
@@ -159,7 +129,6 @@ public:
     std::cout << std::dec << "(INFO): Uptime: "
               << bc::duration_cast<bc::seconds>(bc::system_clock::now() -
                                                 startTime) << std::endl;
-
     std::cout << std::dec << "(INFO): Mean waiting Time: " << meanWaitTime
               << "\n";
     std::cout << std::dec << "(INFO): Mean Service Time: " << meanServiceTime
@@ -176,20 +145,9 @@ public:
               << "\tTotal Completions: " << totalCompletions;
     std::cout << std::dec << "\tAvg. # Jobs/Schedule: "
               << (double)totalJobsScheduled / (double)numSchedules << "\n";
-    //   add per resource Utilization Statistics
-
-    /* Otherwise
-    int i = 0;
-    for(priorityWt: meanWaitTimes) {
-      i++;
-      std::cout << "Mean waiting time for priority[" << i << "]: "
-                << priorityWt << "\n";
-    }
-    */
-    //    raise(SIGINT);
   };
 
-  JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i) {
+  JobTuplePtr copyJobFromQ(ConcurrentJobQueuePtr rq, size_t i) {
     if (i > rq->size()) {
       return nullptr;
     }
@@ -210,7 +168,6 @@ public:
 
   inline AlgVecType *getAlgVecPtr() { return &algVec; }
   inline void addSchedAlg(AlgType f) { algVec.push_back(f); }
-  void runJobs();
   void runJob(JobResPairPtr j);
 
   inline static bool idEq(const int &jid, const JobResPairPtr &item) {
@@ -221,39 +178,12 @@ public:
     return jid == std::get<0>(*item)->getId();
   }
 
-  JobResPairPtr removeJobFromReadyQ(const JobResPairPtr &j) {
-    boost::lock_guard<boost::mutex> lk(readyQMtx);
-    if (readyQ->size() > 0) {
-      auto elem = std::find_if(
-          readyQ->begin(), readyQ->end(),
-          std::bind(&idEqrq, std::get<0>(*(std::get<0>(*j)))->getId(),
-                    std::placeholders::_1));
-      if (elem != readyQ->end()) {
-        readyQ->erase(elem);
-      }
-    }
-    /*    JobQueuePtr preserve_list = JobQueuePtr(new JobQueue());
-        JobQueue::iterator a = readyQ->begin();
-        for(;a != readyQ->end(); a++) {
-          if (std::get<0>(**a)->getId() !=
-       std::get<0>(*(std::get<0>(j)))->getId()) {
-            preserve_list->push_back(*a);
-          }
-        }
-        readyQ = preserve_list;
-      */
-    QCondVar.notify_all();
-    return j;
-  }
-
+  JobResPairPtr removeJobFromReadyQ(const JobResPairPtr &j);
   void removeJobFromRunQ(int jid);
 
-  /* TODO[mtottenh]: Deprecate these. access to Ptrs of these Q's is bad
-   * now that everything is multithreaded
-   */
-  JobQueuePtr getReadyQPtr() { return readyQ; }
+  ConcurrentJobQueuePtr getReadyQPtr() { return readyQ; }
   ConcurrentJobQueuePtr getFinishedQPtr() { return finishedQ; }
-  ConcurrentJobQueuePtr getRunQPtr() { return runQ; }
+  ConcurrentJobResPairQPtr getRunQPtr() { return runQ; }
 
   void claimResources(JobResPairPtr elem);
   void returnResources(ResourceListPtr res);
@@ -330,7 +260,6 @@ public:
 private:
   JobPtr deallocate(JobPtr j);
   /* Setters */
-  inline void setReadyQ(JobQueuePtr rq) { readyQ = rq; }
   inline void setResPool(ResourcePoolPtr r) { resPool = r; }
 
   inline void setWindow(size_t w) { window = w; }
@@ -346,13 +275,6 @@ private:
   /* Getters */
   inline AlgType getAlg(size_t i) { return algVec[i]; }
   inline size_t noAlgs() { return algVec.size(); }
-
-  inline JobTuplePtr getFirstReadyProc() {
-    boost::lock_guard<boost::mutex> lk(readyQMtx);
-    JobTuplePtr j = std::move(readyQ->front());
-    readyQ->pop_front();
-    return j;
-  }
 
   /* Helper Functions */
   int addToReadyQ(msg_t &request);
@@ -375,8 +297,6 @@ private:
   struct QInfo QStatus;
 
   /* used for locking Q's */
-  boost::mutex readyQMtx;
-  boost::mutex runQMtx;
 
   boost::mutex jidMtx;
   boost::mutex waitTimeMtx;
@@ -390,8 +310,8 @@ private:
 
   /*Private Data Members */
   ResourcePoolPtr resPool;
-  JobQueuePtr readyQ;
-  ConcurrentJobQueuePtr finishedQ, runQ;
+  ConcurrentJobResPairQPtr runQ;
+  ConcurrentJobQueuePtr finishedQ, readyQ;
 
   AlgVecType algVec;
   /* tuning variables */

@@ -58,12 +58,14 @@ typedef std::deque<ResourcePtr> ResourcePool;
 typedef std::deque<JobTuplePtr> JobQueue;
 typedef concurrent_deque<JobTuplePtr> ConcurrentJobQueue;
 typedef std::deque<JobResPairPtr> JobResPairQ;
+typedef concurrent_deque<JobResPairPtr> ConcurrentJobResPairQ;
 
 /* Pointers to Collections */
 typedef std::shared_ptr<JobQueue> JobQueuePtr;
 typedef std::shared_ptr<ConcurrentJobQueue> ConcurrentJobQueuePtr;
 typedef std::shared_ptr<ResourcePool> ResourcePoolPtr;
 typedef std::shared_ptr<JobResPairQ> JobResPairQPtr;
+typedef std::shared_ptr<ConcurrentJobResPairQ> ConcurrentJobResPairQPtr;
 
 /* Algorithm Base and Collection Types */
 typedef std::function<Allocations *(Scheduler &)> AlgType;

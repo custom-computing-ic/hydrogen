@@ -58,12 +58,6 @@ bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   return milli_sec;
 }
 
-/*
- * TODO[mtottenh]: Check implementations of getDispatchTime/IssueTime
- *  with timevals in the minites/seconds range not just random
- *  floats.. Also add Q locks
- */
-
 int Scheduler::numLateJobs() {
   // TODO[paul-g] move iteration inside the queue (e.g. a for_each style call)
   int sum = 0;
@@ -147,101 +141,6 @@ msg_t *Scheduler::handle_request(msg_t *request) {
   }
 }
 
-void Scheduler::schedLoop() {
-  try {
-    while (true) {
-      boost::unique_lock<boost::mutex> lock(qMutex);
-      // If we have no results or nothing to try and schedule wait
-      while (!QStatus.getReadyQStatus()) {
-        QCondVar.wait(lock);
-      }
-      lock.unlock();
-
-      if (!QStatus.getReadyQStatus())
-        continue;
-
-      // A job was deposited in the readyQ
-      QStatus.setReadyQStatus(false);
-      auto start = bc::system_clock::now();
-      boost::unique_lock<boost::mutex> rqLk(readyQMtx);
-      Allocations *a = schedule(MODE_MANAGED, true);
-      rqLk.unlock();
-      if (a == nullptr) {
-        boost::this_thread::yield();
-        QStatus.setRunQStatus(true);
-        QCondVar.notify_all();
-        QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
-        continue;
-      }
-
-      elasticityManager.updateResourcePool(*this, *a);
-
-      /* managed to get some kind of schedule. */
-      size_t numJobsScheduled = a->noJobs();
-      if (numJobsScheduled > 0) {
-        a->serviceAllocations(*this);
-        QStatus.setRunQStatus(true);
-        auto end = bc::system_clock::now();
-        auto duration = bc::duration_cast<bc::microseconds>(end - start);
-        LOGF(debug, "Scheduling took: %1%") % duration.count();
-        totalSchedTime += duration;
-        numSchedules++;
-        QCondVar.notify_all();
-      } else {
-        boost::this_thread::yield();
-      }
-      delete a;
-
-      LOG(debug) << "Managed Mode scheduled " << numJobsScheduled;
-      totalJobsScheduled += numJobsScheduled;
-      LOG(debug) << " Job(s)";
-      size_t waitingJobs = readyQ->size();
-      LOG(debug) << "\t(" << waitingJobs;
-      if (waitingJobs > 1 || waitingJobs == 0)
-        LOG(debug) << " Jobs left)";
-      else
-        LOG(debug) << " Job left)";
-
-      QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
-    }
-  }
-  catch (boost::thread_interrupted &) {
-    LOG(debug) << "\t* Scheduling thread recieved interrupt";
-    return;
-  }
-  catch (std::exception &e) {
-    LOG(debug) << "(ERROR): Scheduling thread - " << e.what();
-    throw e;
-  }
-}
-void Scheduler::runJobs() {
-
-  boost::unique_lock<boost::mutex> lk(runQMtx);
-  if (runQ->size() > 0) {
-    auto job_pair_ptr = runQ->front();
-    runQ->pop_front();
-    lk.unlock();
-    JobTuplePtr jobTuplePtr = std::get<0>(*job_pair_ptr);
-    auto jobInfo = std::get<1>(*jobTuplePtr);
-    if (!jobInfo->isStarted()) {
-      LOG(debug) << "Start Job";
-      jobInfo->setStarted(true);
-      boost::thread jobThread(
-                              boost::bind(&Scheduler::runJob, this, job_pair_ptr));
-      jobThread.detach();
-      //         jT.create_thread(boost::bind(&Scheduler::runJob,this,*it));
-    }
-    if (!jobInfo->isFinished()) {
-      lk.lock();
-      runQ->push_back(job_pair_ptr);
-      lk.unlock();
-    }
-  } else {
-    lk.unlock();
-  }
-
-  //  jT.join_all();
-}
 void Scheduler::runJob(JobResPairPtr j) {
   ResourceListPtr resourceList;
   JobTuplePtr jobTuplePtr;
@@ -271,7 +170,7 @@ void Scheduler::runJob(JobResPairPtr j) {
     }
   }
   LOG(debug) << "\t* Rids: { " << ss.str()  <<  "}";
-  Resource r = resourceList->front();
+  const Resource& r = resourceList->front();
   const string &name = r.getName().c_str();
   int portNumber = r.getPort();
   msg_t *req = jobPtr->getReq();
@@ -279,18 +178,12 @@ void Scheduler::runJob(JobResPairPtr j) {
   LOG(debug) << "\t* Opening connection to: " << name << ":"
              << portNumber << "";
 
-  // TODO[mtottenh]: How do we invoke a job on more than one DFE? :O
-  // TODO[mtottenh]: Quick hack for now, need to make this scaleable
   Client c(portNumber, name);
   auto start = bc::system_clock::now();
   c.start();
 
   boost::this_thread::interruption_point();
-#ifdef DEBUG
-  req->print();
-#endif
   if (req != NULL) {
-    //     LOG(debug) << "\t* Scheduler::runJob() - Sending Request";
     req->rids = packed_rids;
     c.send(req);
   }
@@ -310,51 +203,82 @@ void Scheduler::runJob(JobResPairPtr j) {
   do {
     LOG(debug) << "\t Reading reply, size: " << sizeBytes;
     c.read(buff, sizeBytes);
-#ifdef DEBUG
-    rsp->print();
-#endif
   } while (rsp->msgId != MSG_RESULT);
   LOG(debug) << "\t* Got Result";
   c.stop();
   auto end = bc::system_clock::now();
   jobPtr->setMeasuredExecutionTime(end - start);
   jobPtr->setActualExecutionTime(bc::milliseconds(rsp->predictedTimeMillis));
-#ifdef DEBUG
-  rsp->print();
-#endif
-  //    jobPtr->copyRsp(buff,sizeBytes);
   jobPtr->setRsp((msg_t *)buff);
   returnResources(resourceList);
   resourceList = nullptr;
-  //  enqueue(finishedQ, jobTuplePtr, finishedQMtx, "finishedQ");
+  std::get<0>(*jobTuplePtr)->setFinishTime(bc::system_clock::now());
   finishedQ->push_front(jobTuplePtr);
+  LOG(debug) << "Removing job from runQ";
   removeJobFromRunQ(jobPtr->getId());
 }
 
 void Scheduler::removeJobFromRunQ(int jid) {
-  boost::lock_guard<boost::mutex> lk(runQMtx);
+  //  boost::lock_guard<boost::mutex> lk(runQMtx);
+  LOG(debug) << "removing job from runQ";
   auto it = std::find_if(runQ->begin(), runQ->end(),
                          std::bind(&idEq, jid, std::placeholders::_1));
   if (it != runQ->end())
     runQ->erase(it);
-  QCondVar.notify_all();
+}
+
+void Scheduler::schedLoop() {
+  try {
+    while (true) {
+      readyQ->wait_not_empty();
+      LOG(debug) << "Got job in schedLoop";
+      auto start = bc::system_clock::now();
+      Allocations *a = nullptr;
+      if (resPool->size() > 0) {
+	readyQ->lock();
+	a = this->algVec[MODE_MANAGED](*this);
+	readyQ->unlock();
+      } else {
+        continue;
+      }
+
+      /* managed to get some kind of schedule. */
+      size_t numJobsScheduled = a->noJobs();
+      if (numJobsScheduled > 0) {
+	elasticityManager.updateResourcePool(*this, *a);
+        a->serviceAllocations(*this);
+        auto end = bc::system_clock::now();
+        auto duration = bc::duration_cast<bc::microseconds>(end - start);
+        LOGF(debug, "Scheduling took: %1%") % duration.count();
+        totalSchedTime += duration;
+        numSchedules++;
+      }
+      delete a;
+      LOGF(debug, "MMode scheduled %1% job(s)") % numJobsScheduled;
+      totalJobsScheduled += numJobsScheduled;
+      LOG(debug) << "\t(" << readyQ->size() << " Job(s) left)";
+    }
+  }
+  catch (std::exception &e) {
+    LOG(error) << "Scheduling thread - " << e.what();
+  }
 }
 
 void Scheduler::dispatcherLoop() {
   try {
     while (true) {
-      // wait on readyQ or FinishedQ condvar
-      boost::unique_lock<boost::mutex> lock(qMutex);
-      while (!QStatus.getRunQStatus()) {
-        QCondVar.wait(lock);
+      auto job_pair_ptr = runQ->wait_pop_front();
+      LOG(debug) << "Dispatcher serving job...";
+      JobTuplePtr jobTuplePtr = std::get<0>(*job_pair_ptr);
+      auto jobInfo = std::get<1>(*jobTuplePtr);
+      if (!jobInfo->isStarted()) {
+	LOG(debug) << "Start job on separate thread";
+	jobInfo->setStarted(true);
+	boost::thread jobThread (
+				boost::bind(&Scheduler::runJob, this, job_pair_ptr));
+	jobThread.detach();
       }
-      lock.unlock();
-      if (QStatus.getRunQStatus()) {
-        while (runQ->size() > 0) {
-          runJobs();
-        }
-        QStatus.setRunQStatus(false);
-      }
+
     }
   }
   catch (boost::thread_interrupted &) {
@@ -386,15 +310,21 @@ msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
                                     unsigned long sizeBytes) {
   auto jCondVar = CondVarPtr(new boost::condition_variable);
   boost::mutex jobMutex;
+
   boost::unique_lock<boost::mutex> lock(jobMutex);
   auto jInfo = JobInfoPtr(new JobInfo());
   jInfo->setFinished(false);
   jInfo->setStarted(false);
-  LOGF(debug, " New Connection tid = %1%") % boost::this_thread::get_id();
 
   JobPtr nJob = JobPtr(new Job(&request, getNextId()));
   JobTuple t = std::make_tuple(nJob, jInfo, jCondVar);
-  enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx, "readyQ");
+
+  JobTuplePtr jobPtr = std::make_shared<JobTuple>(t);
+  std::get<0>(*jobPtr)->setIssueTime(bc::system_clock::now());
+  readyQ->push_front(jobPtr);
+
+  LOGF(debug, " New conn tid = %1%, Added job to readyQ %2%")
+    % boost::this_thread::get_id() % *nJob;
 
   try {
     while (!jInfo->isFinished()) {
@@ -427,13 +357,22 @@ msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
 
 
 void Scheduler::start() {
-  // Fire up the Scheduling and dispatch threads.
-  QStatus.setReadyQStatus(false);
-  QStatus.setRunQStatus(false);
-  QStatus.setFinishedQStatus(false);
-
   schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
   dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
   finishedQThread = new boost::thread(&Scheduler::finishedLoop, this);
   run();
+}
+
+JobResPairPtr Scheduler::removeJobFromReadyQ(const JobResPairPtr &j) {
+  if (readyQ->size() > 0) {
+    auto elem = std::find_if(
+			     readyQ->begin(), readyQ->end(),
+			     std::bind(&idEqrq, std::get<0>(*(std::get<0>(*j)))->getId(),
+				       std::placeholders::_1));
+    if (elem != readyQ->end()) {
+      LOG(debug) << "Erasing job";
+      readyQ->erase(elem);
+    }
+  }
+  return j;
 }

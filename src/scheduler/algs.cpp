@@ -10,7 +10,7 @@
 /***** Priority Agnostic algorithms (FCFS) *****/
 Allocations *FCFSMin(Scheduler &s) {
   Allocations *a = new Allocations();
-  JobQueuePtr rq = s.getReadyQPtr();
+  ConcurrentJobQueuePtr rq = s.getReadyQPtr();
 #ifdef DEBUG
   LOG(debug) << ": Using FCFSMin"
             << "\n";
@@ -42,7 +42,7 @@ Allocations *FCFSMin(Scheduler &s) {
 
 Allocations *FCFSAsManyAsPos(Scheduler &s) {
   Allocations *a = new Allocations();
-  JobQueuePtr rq = s.getReadyQPtr();
+  ConcurrentJobQueuePtr rq = s.getReadyQPtr();
 
 #ifdef DEBUG
   LOG(debug) << " Using FCFSAMAP"
@@ -67,7 +67,7 @@ Allocations *FCFSAsManyAsPos(Scheduler &s) {
 }
 Allocations *FCFSMax(Scheduler &s) {
   Allocations *a = new Allocations();
-  JobQueuePtr rq = s.getReadyQPtr();
+  ConcurrentJobQueuePtr rq = s.getReadyQPtr();
 #ifdef DEBUG
   LOG(debug) << ": Using FCFS Max"
             << "\n";
@@ -96,7 +96,7 @@ Allocations *FCFSMax(Scheduler &s) {
 Allocations *Priority(Scheduler &s) {
   Allocations *alloc = new Allocations();
   JobQueue job_window;
-  JobQueuePtr rq = s.getReadyQPtr();
+  ConcurrentJobQueuePtr rq = s.getReadyQPtr();
 
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < rq->size(); i++) {
@@ -169,7 +169,7 @@ Allocations *SJTF(Scheduler &s) {
 #ifdef DEBUG
   LOG(debug) << ": Using SJTF\n";
 #endif
-  JobQueuePtr rq = s.getReadyQPtr();
+  ConcurrentJobQueuePtr rq = s.getReadyQPtr();
   if (rq == nullptr) {
     LOG(debug) << "(ERROR): SOMETHING WENT HORRIBLY WRONG :O ";
     return aloc;
