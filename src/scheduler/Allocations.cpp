@@ -1,7 +1,7 @@
 #include <Allocations.hpp>
 #include <Scheduler.hpp>
 void Allocations::serviceAllocations(Scheduler &s) {
-  std::cout << "(DEBUG): Allocations::serviceAllocations()\n";
+//  std::cout << "(DEBUG): Allocations::serviceAllocations()\n";
   auto j = jobs.begin();
   for(;j != jobs.end(); j++) {
     s.removeJobFromReadyQ(*j);
@@ -13,7 +13,7 @@ void Allocations::serviceAllocations(Scheduler &s) {
 
 
 void Allocations::returnResources(Scheduler& s) {
-  std::cout << "(DEBUG):\t\t* Allocations::returnResources()" << std::endl;
+//  std::cout << "(DEBUG):\t\t* Allocations::returnResources()" << std::endl;
   auto it = jobs.begin();
   for ( ; it != jobs.end(); it++) {
        s.returnResources(std::get<1>(**it));

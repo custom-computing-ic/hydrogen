@@ -146,7 +146,7 @@ void connection::handle_read(const boost::system::error_code& e,
     // write reply back
     if (reply != NULL) {
       try {
-	std::cout << "(INFO): writing reply back - size: " << reply->totalBytes << std::endl;
+//	std::cout << "(INFO): writing reply back - size: " << reply->totalBytes << std::endl;
         ba::write(socket_, ba::buffer((char *)reply, reply->totalBytes));
         socket_.read_some(ba::buffer(buffer_));
       } catch (std::exception& e) {

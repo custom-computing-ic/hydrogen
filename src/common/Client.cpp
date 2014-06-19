@@ -18,11 +18,12 @@ Client::Client(Resource &r) :
 }
 
 void Client::send(msg_t *message) {
-  if (message->msgId != MSG_DONE)
-    cout << "(DEBUG):\t\t* Sending Request" << endl;
+/*  if (message->msgId != MSG_DONE)
+    cout << "(DEBUG):\t\t* Sending Request" << endl;*/
   size_t byteSize= message->totalBytes;
   float kb = (float)byteSize / 1024;
   float mb = kb / 1024;
+  /*
   cout << "(DEBUG):\t\t\t->Sending ";
   if ( mb >= 1) {
     cout << mb << " MB" << endl;
@@ -33,15 +34,16 @@ void Client::send(msg_t *message) {
      cout << byteSize << " Bytes" << endl;
     }
   }
+  */
   ba::write(*socket_,
             ba::buffer((char *)message, message->totalBytes)
            );
 }
 
 void Client::start() {
-  cout << "(DEBUG):\t\t* Client::start()" << endl;
-  cout << "(DEBUG): \tHostname: " << name;
-  cout << "\tPort: " << port << endl;
+//  cout << "(DEBUG):\t\t* Client::start()" << endl;
+//  cout << "(DEBUG): \tHostname: " << name;
+//  cout << "\tPort: " << port << endl;
   try {
   tcp::resolver resolver(io_service);
 //  cout << "tcp::resolver::query()" << endl;
@@ -61,7 +63,7 @@ void Client::start() {
 }
 
 void Client::stop() {
-  cout << "(DEBUG):\t\t* Closing connection" << endl;
+//  cout << "(DEBUG):\t\t* Closing connection" << endl;
 
   // let the server know we're done
   msg_t* msg = msg_done();
@@ -73,7 +75,7 @@ void Client::stop() {
 }
 
 void Client::getResult(void* out, int sizeBytes) {
-  cout << "(DEBUG):\t\t* Waiting for result..." << endl;
+//  cout << "(DEBUG):\t\t* Waiting for result..." << endl;
   int size = sizeBytes + sizeof(msg_t);
   char *buf = (char *)calloc(size, 1);
 
@@ -89,8 +91,8 @@ void Client::getResult(void* out, int sizeBytes) {
 
   msg_t* rsp = (msg_t*)buf;
   if (sizeBytes != rsp->dataBytes) {
-    cerr << "(ERROR):\t\t* Error: reply size different than expected! ";
-    cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes;
+ //   cerr << "(ERROR):\t\t* Error: reply size different than expected! ";
+ //   cerr << "Expected " << sizeBytes << ", got " << rsp->dataBytes;
   }
   memcpy(out, rsp->data, rsp->dataBytes);
   free(buf);

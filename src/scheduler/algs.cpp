@@ -9,13 +9,13 @@ Allocations* FCFSMin(Scheduler &s) {
   Allocations* a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
 #ifdef DEBUG
-  std::cout << "(DEBUG): Using FCFSMin" << "\n";
+//  std::cout << "(DEBUG): Using FCFSMin" << "\n";
 #endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
     JobTuplePtr j = s.copyJobFromQ(rq,i);    //TODO: COPY the job accross
     if (j == nullptr) {
-      std::cout << "(ERROR): FATAL ERROR COPYING JOB!\n";
+  //    std::cout << "(ERROR): FATAL ERROR COPYING JOB!\n";
     }
 
     ResourceList resourceList =  s.allocate(*std::get<0>(*j),
@@ -28,7 +28,7 @@ Allocations* FCFSMin(Scheduler &s) {
       a->addJobResourcePair(j,resourceListPtr);
     } else {
 #ifdef DEBUG
-      std::cout << "(DEBUG): FCFSMin Can't allocate resources to job\n";
+//      std::cout << "(DEBUG): FCFSMin Can't allocate resources to job\n";
 #endif
       break;
       /* if we can't allocate then just stop */
@@ -42,7 +42,7 @@ Allocations* FCFSAsManyAsPos(Scheduler &s) {
   JobQueuePtr rq = s.getReadyQPtr();
 
 #ifdef DEBUG
-  std::cout << "(DEBUG) Using FCFSAMAP" << "\n";
+ // std::cout << "(DEBUG) Using FCFSAMAP" << "\n";
 #endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -67,7 +67,7 @@ Allocations* FCFSMax(Scheduler &s) {
   Allocations *a = new Allocations();
   JobQueuePtr rq = s.getReadyQPtr();
 #ifdef DEBUG
-  std::cout << "(DEBUG): Using FCFS Max" << "\n";
+//  std::cout << "(DEBUG): Using FCFS Max" << "\n";
 #endif
   size_t w_size = s.getWindow();
   for (size_t i = 0; i < w_size && i < s.readyQSize(); i++) {
@@ -168,16 +168,16 @@ Allocations* SJTF(Scheduler &s) {
   Allocations *aloc = new Allocations();
   size_t w_size = s.getWindow();
 #ifdef DEBUG
-  std::cout << "(DEBUG): Using SJTF\n";
+//  std::cout << "(DEBUG): Using SJTF\n";
 #endif
   JobQueuePtr rq = s.getReadyQPtr();
   if (rq == nullptr) {
-    std::cout << "(ERROR): SOMETHING WENT HORRIBLY WRONG :O ";
+//    std::cout << "(ERROR): SOMETHING WENT HORRIBLY WRONG :O ";
     return aloc;
   }
   if (rq->size() == 0) {
 #ifdef DEBUG
-    std::cout << "(DEBUG): No items to process\n";
+//    std::cout << "(DEBUG): No items to process\n";
 #endif
     return aloc;
   }
@@ -211,16 +211,16 @@ Allocations* ManagedMode(Scheduler &s) {
   AlgVecType* av = s.getAlgVecPtr();
   std::deque<Allocations*> allocations;
 
-  std::cout << "(DEBUG): Scheduling using the managed mode\n"
-            << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t"
-            << "# Waiting Jobs [" << s.readyQSize() << "]\n";
+//  std::cout << "(DEBUG): Scheduling using the managed mode\n"
+//            << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t"
+//            << "# Waiting Jobs [" << s.readyQSize() << "]\n";
   /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
     allocations.push_back( s.schedule(i,true) );
     /* This means that we don't actually allocate the resources for each job */
     allocations.back()->returnResources(s);
   }
-  std::cout << "(DEBUG):\t- Scoring Allocations\n";
+//  std::cout << "(DEBUG):\t- Scoring Allocations\n";
   /* Score each allocation */
   std::deque<Allocations* >::iterator a = allocations.begin();
   for (;a != allocations.end(); a++) {
@@ -234,7 +234,7 @@ Allocations* ManagedMode(Scheduler &s) {
 
 void score(Allocations &a, Scheduler &s) {
   std::string strat = s.getStrategy();
-  std::cout << "(DEBUG):\t\t* Score: ";
+//  std::cout << "(DEBUG):\t\t* Score: ";
 //  std::cout << "starting score: " << a.getScore() << "\n";
   if (!strat.compare("Completion Time")) {
 //    std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
@@ -242,9 +242,9 @@ void score(Allocations &a, Scheduler &s) {
       a.setScore(0);
     } else {
       size_t q_const = s.readyQSize();
-      std::cout << "QCONST: " << q_const;
-      std::cout << "\tNOJOBS: " << a.noJobs();
-      std::cout << "\tMKSPN: " << a.makespan();
+//      std::cout << "QCONST: " << q_const;
+//      std::cout << "\tNOJOBS: " << a.noJobs();
+//      std::cout << "\tMKSPN: " << a.makespan();
       q_const = q_const > 0 ? q_const : 1;
       a.setScore((float)((q_const*a.noJobs()) +
                 ((float) a.noJobs() / (float) a.makespan() )));
@@ -254,7 +254,7 @@ void score(Allocations &a, Scheduler &s) {
     a.setScore(a.totalPriorities());
 
   }
-  std::cout <<"\tRESULT:" << a.getScore() << "\n";
+//  std::cout <<"\tRESULT:" << a.getScore() << "\n";
 }
 
 Allocations* selectMaxScore(std::deque<Allocations *> &a) {
@@ -269,26 +269,26 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
     }
   }
 
-  std::cout << "(DEBUG):\t - Managed mode chose: ";
+//  std::cout << "(DEBUG):\t - Managed mode chose: ";
   switch(index) {
     case 0:
-      std::cout << "FCFS MAX\n";
+//      std::cout << "FCFS MAX\n";
       break;
     case 1:
-      std::cout << "FCFS MIN\n";
+//      std::cout << "FCFS MIN\n";
       break;
     case 2:
-      std::cout << "FCFS AMAP\n";
+  //    std::cout << "FCFS AMAP\n";
       break;
     case 3:
-      std::cout << "SJTF\n";
+//      std::cout << "SJTF\n";
       break;
     case 4:
-        std::cout << "Priority\n";
+//        std::cout << "Priority\n";
       break;
-    default:
-        std::cout << "\n(ERROR): Manage Mode decided on an algorithm "
-                  << "that doesn't exist!\n";
+//    default:
+ //       std::cout << "\n(ERROR): Manage Mode decided on an algorithm "
+ //                 << "that doesn't exist!\n";
  }
  for (unsigned int i = 0; i < a.size(); i++) {
    if (i != index) {

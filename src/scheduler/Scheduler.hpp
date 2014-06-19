@@ -91,6 +91,7 @@ public:
     strat = "Completion Time";
     window = 5;
     totalCompletions = 0;
+    totalArrivals=0;
     clientPriorities[1] = 1;
     clientPriorities[2] = 2;
     clientPriorities[3] = 3;
@@ -158,10 +159,10 @@ public:
   }
 
   std::string getWaitTime() {
-    return std::to_string(meanWaitTime.count()) + "ms";
+    return std::to_string(bc::duration_cast<bc::microseconds>(meanWaitTime).count()).substr(0,4) + "us";
   }
   std::string getServiceTime() {
-    return std::to_string(meanServiceTime.count()) +  "ms";
+    return std::to_string(bc::duration_cast<bc::microseconds>(meanServiceTime).count()).substr(0,4) +  "us";
 
   }
   std::string getCompletions() {
@@ -173,7 +174,9 @@ public:
   std::string getThroughput() {
     return std::to_string(meanThroughput);
   }
-
+  std::string getArrivalRate() {
+    return std::to_string(ArrivalRate);
+  }
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
   msg_t* concurrentHandler(msg_t& request, msg_t& response, unsigned long responseSize);
@@ -290,9 +293,24 @@ public:
     updateMeanWaitTime(j);
     updateMeanServiceTime(j);
     updateLatency(j);
-    updateThroughput(j);
+    updateThroughput();
     updateUtilization(j);
     updateLateJobs(j);
+  }
+  void incrementArrival(){
+    boost::lock_guard<boost::mutex> lk(arrivalsMtx);
+    totalArrivals++;
+  }
+  void updateStatistics() {
+    boost::lock_guard<boost::mutex> lk(waitTimeMtx);
+    updateThroughput();
+    updateUtilization();
+    updateArrivalRate();
+  }
+  void updateArrivalRate() {
+    auto tp = bc::system_clock::now();
+    auto totTimeSec = bc::duration_cast<bc::seconds>(tp-startTime);
+    ArrivalRate = (double) totalArrivals / (double) totTimeSec.count();
   }
   void updateUtilization(JobPtr j ) {
     totBusyTime += j->getActualExecutionTime();
@@ -302,17 +320,24 @@ public:
 #define RESCOUNT 4
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
-    void updateMeanWaitTime(JobPtr j) {
-    //LOCK
-    totalWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
-    meanWaitTime =  totalWaitTime  /  totalCompletions;
+  void updateUtilization( ) {
+    auto tp = bc::system_clock::now();
+    auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
+    auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
+#define RESCOUNT 4
+    meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
 
+
+  void updateMeanWaitTime(JobPtr j) {
+    totalWaitTime +=  bc::duration_cast<bc::milliseconds>(j->getDispatchTime() - j->getIssueTime());
+    meanWaitTime =  totalWaitTime  /  totalCompletions;
+  }
   void updateMeanServiceTime(JobPtr j) {
     totalServiceTime += (j->getFinishTime() - j->getDispatchTime());
     meanServiceTime= totalServiceTime / totalCompletions;
   }
-  void updateThroughput(JobPtr j) {
+  void updateThroughput() {
     auto tp = bc::system_clock::now();
     auto seconds = bc::duration_cast<bc::seconds>(tp-startTime);
     meanThroughput = (double) totalCompletions / (double) seconds.count();
@@ -320,12 +345,7 @@ public:
   void updateLateJobs(JobPtr j) {
  bc::duration<double> actualExecutionTime = bc::duration_cast<bc::seconds>(j->getFinishTime() - j->getDispatchTime());
     auto lateness = actualExecutionTime - estimateExecutionTime(j);
- //   if ( lateness > bc::seconds(0)) {
-      std::cout << "(DEBUG): Estimate off by : "<< lateness << " seconds\n";
-//    }
   }
-
-
   void updateLatency(JobPtr j) {
    totalLatency +=  j->getMeasuredExecutionTime() - j->getActualExecutionTime();
    meanLatency = totalLatency / totalCompletions;
@@ -407,7 +427,7 @@ private:
   boost::mutex jidMtx;
   boost::mutex waitTimeMtx;
   boost::mutex resPoolMtx;
-
+  boost::mutex arrivalsMtx;
   /* Worker threads */
   boost::thread *schedulerThread;
   boost::thread *dispatcherThread;
@@ -438,10 +458,11 @@ private:
 
   double meanThroughput;
   double meanUtilization;
-
+  double ArrivalRate;
   std::string strat;
   int nextJid;
   uint64_t totalCompletions;
+  uint64_t totalArrivals;
   std::unordered_map<int,int> clientPriorities;
 };
 

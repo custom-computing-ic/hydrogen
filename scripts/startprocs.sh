@@ -3,9 +3,8 @@
 set -e
 if [ -z "$MAXELEROSDIR" ] || [ -z "$MAXCOMPILERDIR" ]; then
   printf "Starting Dispatcher Without DFE Implementations"
-  ./dispatcher 8112 1> /dev/null &
+  ./dispatcher 8112 1 2 1> /dev/null &
   #TODO: Add cmd line option to force CPU only.
-  ./dispatcher 8122 1> /dev/null &
 else
   printf "Starting Dispatcher With DFE Implementations"
   LD_PRELOAD=/opt/maxeler/maxeleros/lib/libmaxeleros.so ./dispatcher 8112  0 2 1> /dev/null &

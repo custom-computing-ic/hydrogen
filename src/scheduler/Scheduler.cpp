@@ -447,26 +447,19 @@ void Scheduler::dispatcherLoop() {
 msg_t*  Scheduler::concurrentHandler( msg_t &request,
                                       msg_t &response,
                                       unsigned long sizeBytes) {
-  //creat (job,condvar) pair
-  //
   auto jCondVar = CondVarPtr(new boost::condition_variable);
-  boost::mutex jobMutex;
-  boost::unique_lock<boost::mutex> lock(jobMutex);
-//  struct JobInfo jInfo;
   auto jInfo = JobInfoPtr(new JobInfo());
   jInfo->setFinished(false);
   jInfo->setStarted(false);
-  //std::cout << "(DEBUG): Scheduler::concurrentHandler()\n";
-  //std::cout << "(DEBUG):\t- New Connection on Thread: "
-           // << boost::this_thread::get_id() << "\n";
-
+  JobPtr nJob = JobPtr(new Job(&request,getNextId()));
+  incrementArrival();
 #ifdef DEBUG
   request.print();
 #endif
-  JobPtr nJob = JobPtr(new Job(&request,getNextId()));
   JobTuple t = std::make_tuple( nJob, jInfo ,jCondVar);
   enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx,"readyQ");
-
+  boost::mutex jobMutex;
+  boost::unique_lock<boost::mutex> lock(jobMutex);
   try {
     while (!jInfo->isFinished()) {
       jCondVar->wait(lock);
@@ -525,12 +518,14 @@ void Scheduler::finishedLoop() {
 void Scheduler::guiLoop() {
   StatsScreen s;
   while (stopFlag == 0) {
-    boost::this_thread::sleep_for(bc::milliseconds(400));
+    boost::this_thread::sleep_for(bc::milliseconds(100));
+    updateStatistics();
     s << WAIT_TIME << this->getWaitTime();
     s << SERVICE_TIME << this->getServiceTime();
     s << UTIL << this->getUtilization();
     s << THROUGHPUT << this->getThroughput();
     s << NO_JOBS << this->getCompletions();
+    s << ARR_RATE << this->getArrivalRate();
   }
 }
 
