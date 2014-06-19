@@ -338,7 +338,8 @@ void Scheduler::runJob(JobResPairPtr j) {
   jobPtr->setRsp((msg_t *)buff);
   returnResources(resourceList);
   resourceList = nullptr;
-  enqueue(finishedQ, jobTuplePtr, finishedQMtx, "finishedQ");
+  //  enqueue(finishedQ, jobTuplePtr, finishedQMtx, "finishedQ");
+  finishedQ->push(jobTuplePtr);
   removeJobFromRunQ(jobPtr->getId());
 }
 

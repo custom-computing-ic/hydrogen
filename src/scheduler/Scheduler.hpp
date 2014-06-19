@@ -260,7 +260,7 @@ public:
    * now that everything is multithreaded
    */
   JobQueuePtr getReadyQPtr() { return readyQ; }
-  JobQueuePtr getFinishedQPtr() { return finishedQ; }
+  ConcurrentJobQueuePtr getFinishedQPtr() { return finishedQ; }
   JobResPairQPtr getRunQPtr() { return runQ; }
 
   void claimResources(JobResPairPtr elem);
@@ -401,7 +401,7 @@ private:
   ResourcePoolPtr resPool;
   JobQueuePtr readyQ;
   JobResPairQPtr runQ;
-  JobQueuePtr finishedQ;
+  ConcurrentJobQueuePtr finishedQ;
 
   AlgVecType algVec;
   /* tuning variables */
