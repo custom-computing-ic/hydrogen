@@ -218,7 +218,6 @@ void Scheduler::runJobs() {
 
   boost::unique_lock<boost::mutex> lk(runQMtx);
   if (runQ->size() > 0) {
-    //    boost::thread_group jT;
     auto job_pair_ptr = runQ->front();
     runQ->pop_front();
     lk.unlock();

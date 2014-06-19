@@ -76,7 +76,7 @@ public:
   {
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
-    runQ = JobResPairQPtr(new JobResPairQ());
+    runQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
     finishedQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
 
     resourceId = 1;
@@ -131,11 +131,8 @@ public:
   }
 
   void addToRunQ(JobResPairPtr elem) {
-    boost::unique_lock<boost::mutex> guard(runQMtx);
-    //    LOG(debug) << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
-    runQ->push_back(elem);
     std::get<0>(*std::get<0>(*elem))->setDispatchTime(bc::system_clock::now());
-    guard.unlock();
+    runQ->push_back(elem);
     QStatus.setRunQStatus(true);
     LOG(debug) << "Added element to runQ, calling notify_all().\n";
     QCondVar.notify_all();
@@ -256,7 +253,7 @@ public:
    */
   JobQueuePtr getReadyQPtr() { return readyQ; }
   ConcurrentJobQueuePtr getFinishedQPtr() { return finishedQ; }
-  JobResPairQPtr getRunQPtr() { return runQ; }
+  ConcurrentJobQueuePtr getRunQPtr() { return runQ; }
 
   void claimResources(JobResPairPtr elem);
   void returnResources(ResourceListPtr res);
@@ -334,7 +331,6 @@ private:
   JobPtr deallocate(JobPtr j);
   /* Setters */
   inline void setReadyQ(JobQueuePtr rq) { readyQ = rq; }
-  inline void setRunQ(JobResPairQPtr rq) { runQ = rq; }
   inline void setResPool(ResourcePoolPtr r) { resPool = r; }
 
   inline void setWindow(size_t w) { window = w; }
@@ -395,8 +391,7 @@ private:
   /*Private Data Members */
   ResourcePoolPtr resPool;
   JobQueuePtr readyQ;
-  JobResPairQPtr runQ;
-  ConcurrentJobQueuePtr finishedQ;
+  ConcurrentJobQueuePtr finishedQ, runQ;
 
   AlgVecType algVec;
   /* tuning variables */
