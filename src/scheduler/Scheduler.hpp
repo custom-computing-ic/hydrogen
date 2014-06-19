@@ -77,14 +77,10 @@ public:
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
     runQ = JobResPairQPtr(new JobResPairQ());
-    finishedQ = JobQueuePtr(new JobQueue());
+    finishedQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
 
     resourceId = 1;
     addResource(dispatcherPortNumber, dispatcherHostname);
-
-    // addResource(dispatcherPortNumber, dispatcherHostname, 2);
-    // addResource(dispatcherPortNumber, dispatcherHostname, 3);
-    // addResource(dispatcherPortNumber, dispatcherHostname, 4);
 
     nextJid = 1;
     strat = "Completion Time";
@@ -155,7 +151,6 @@ public:
   msg_t *concurrentHandler(msg_t &request, msg_t &response,
                            unsigned long responseSize);
 
-  void notifyClientsOfResults();
   /* Thread functions */
   void schedLoop();
   void dispatcherLoop();
@@ -327,7 +322,8 @@ public:
   void provisionResource() {
     // TODO[paul-g] check resources are available
     LOG(debug) << "Adding resource to pool";
-    addResource(dispatcherPortNumber, dispatcherHostname);
+    if (resourceId < 3)
+      addResource(dispatcherPortNumber, dispatcherHostname);
   }
 
   void deprovisionResource() {

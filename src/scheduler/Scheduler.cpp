@@ -65,9 +65,9 @@ bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
  */
 
 int Scheduler::numLateJobs() {
-  boost::lock_guard<boost::mutex> lk(finishedQMtx);
+  // TODO[paul-g] move iteration inside the queue (e.g. a for_each style call)
   int sum = 0;
-  JobQueue::iterator it = finishedQ->begin();
+  auto it = finishedQ->begin();
   for (; it != finishedQ->end(); it++) {
     bc::system_clock::time_point disp_t =
       (std::get<0>(**it))->getDispatchTime();
@@ -80,14 +80,6 @@ int Scheduler::numLateJobs() {
 void Scheduler::updateState() {}
 
 void Scheduler::dumpInfo() {}
-
-void Scheduler::notifyClientsOfResults() {
-  auto j = finishedQ->front();
-  finishedQ->wait_pop_front();
-  updateStatistics(std::get<0>(*j));
-  std::get<1>(*j)->setFinished(true);
-  std::get<2>(*j)->notify_all();
-}
 
 Allocations *Scheduler::schedule(size_t choice, bool flag) {
   flag = false;
@@ -418,26 +410,17 @@ msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
 void Scheduler::finishedLoop() {
   try {
     while (true) {
-      boost::unique_lock<boost::mutex> lock(qMutex);
-      while (!QStatus.getFinishedQStatus()) {
-        QCondVar.wait(lock);
-      }
-      lock.unlock();
-      if (QStatus.getFinishedQStatus() == true) {
-        QStatus.setReadyQStatus(true);
-        while (finishedQ->size() > 0) {
-          notifyClientsOfResults();
-        }
-        QStatus.setFinishedQStatus(false);
-      }
+      // TOOD [paul-g]: there is a race condition here, but I am not
+      // sure what is deleting the jobs and causing a segfault
+      auto j = finishedQ->wait_pop_front();
+      updateStatistics(std::get<0>(*j));
+      LOG(debug) << "Updated statistics";
+      std::get<1>(*j)->setFinished(true);
+      std::get<2>(*j)->notify_all();
     }
   }
-  catch (boost::thread_interrupted &) {
-    LOG(debug) << "\t* FinishedQ thread recieved interrupt";
-    return;
-  }
   catch (std::exception &e) {
-    LOG(debug) << "(ERROR): FinishedQ thread - " << e.what();
+    LOG(debug) << "FinishedQ thread - " << e.what();
   }
 }
 
