@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <functional>
-
+#include <boost/iostreams/device/mapped_file.hpp>
 #include <utils.hpp>
 //#include "timer/timer.h"
 //#include "timer/simpleTimer.h"
@@ -15,9 +15,10 @@
 #include <boost/program_options.hpp>
 //#include "build/gen/control.pb.h"
 #define MSIZE 2
+const long int TSIZE = 3840000;
 
 namespace po = boost::program_options;
-
+namespace bio = boost::iostreams;
 
 
 
@@ -57,62 +58,64 @@ int main(int argc, char** argv) {
   e.AddResource(new Resource(1, vm["scheduler_port"].as<int>(),
                              vm["hostname"].as<std::string>(),
                              "SHARED_DFE"));
-  e.AddResource(new Resource(2, 8122, "localhost", "CPU"));
+  e.AddResource(new Resource(2, 8112, "localhost", "CPU"));
   /* Adding some tasks... */
   e.AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
   Implementation *mav_CPU = new Implementation("MAV","mavCPU","MOVING_AVERAGE","","","CPU");
 
-  PerfModel* perf_CPU = new PerfModel(mav_CPU,4e-18,1e2,2,1);
-  PerfModel* perf_DFE = new PerfModel(mav_DFE,4e-18,1e2,2,1);
-/*  perf.CreateModel(384000000, [&](const long size) -> double {
+  PerfModel* perf_CPU = new PerfModel(mav_CPU,4e-18,1e4,2,1);
+  PerfModel* perf_DFE = new PerfModel(mav_DFE,1e-19,1e6,2,1);
+
+  std::default_random_engine gen;
+/*  perf_DFE->CreateModel(384000000, [&](const long size) -> double {
                   if (size == 0)
                     return 0.0;
-                  std::default_random_engine gen;
-                  std::uniform_int_distribution<int> dist(0,10000);
-                  auto a1 = (int*) malloc(size*sizeof(int));
-                  auto out =(int*) malloc(size*sizeof(int));
-                  for (int j = 0; j < size; j++) {
-                    a1[j] = dist(gen);
+                  auto param = bio::mapped_file_params("/mnt/data/cccad3/mt3410/mav.dat");
+                  auto a1 = bio::mapped_file_source(param);
+                  if (!a1.is_open())
+                    a1.open(param);
+                 if (a1.size() < (size*sizeof(int))) {
+                    std::cerr << "(ERROR): Not enough data for this run"
+                              << "producing -1 as runtime.";
+                    return -1.0;
                   }
+                  auto out =(int*) malloc(size*sizeof(int));
+                  std::uniform_int_distribution<int> dist(0,a1.size()-TSIZE*sizeof(int));
+                  std::uniform_int_distribution<int> dist(0,a1.size()-size*sizeof(int));
+
+                  auto offset = dist(gen);
+                  auto input = a1.data() + offset;
+                  std::cout << "(INFO): size: " << a1.size() << "\toffset:"
+                            << offset << "\n";
                   SimpleTimer test_t;
                   test_t.start();
-                  movingAverage(size,3,a1,out,2);
+                  movingAverage(size,3,(int*)input,out,2);
                   uint64_t ms = test_t.end();
                   std::stringstream ss;
                   auto mb = (((size*sizeof(int))/1024)/1024);
                   std::cout << "(INFO): Size: " << size << " (" << mb << "MB)"
                             << "\t ms: " << ms << "\n";
                   ss << ms;
-                  free(a1);
                   free(out);
                   double msd;
                   ss >> msd;
                   return msd;
                 });*/
- // std::cout << "(INFO)" << perf << "\n";
+//  std::cout << "(INFO): " << *perf_DFE << "\n";
+//  perf_DFE->SaveToDisk("MAV_DFE_4");
   perf_CPU->LoadFromDisk("MAV_CPU");
-  perf_DFE->LoadFromDisk("MAV_DFE");
-  std::cout << "(INFO)" << *perf_CPU << "\n";
-  std::cout << "(INFO)" << *perf_DFE << "\n";
+  perf_DFE->LoadFromDisk("MAV_DFE_4");
+  std::cout << "(INFO): " << *perf_CPU << "\n";
+  std::cout << "(INFO): " << *perf_DFE << "\n";
 
-//  perf.setAlpha(1e-19);
-//  perf.setIter(1e4);
-//  perf.LinearRegression();
-
-//  std::cout << "\n(INFO)" << perf << "\n";
-
-/*  for (int i = 0; i < 38400000; i+= 384000) {
-    std::cout << "(DEBUG): perf.QueryModel("<< i
-              << ") = " << perf.QueryModel(i) << "ms\n";
-  }*/
-//  perf.SaveToDisk("MAV_CPU");
+  perf_DFE->setAlpha(1e-19);
+  perf_DFE->setIter(1e6);
+  perf_DFE->LinearRegression();
+  std::cout << "\n(INFO)" << *perf_DFE << "\n";
+  //perf_DFE->SaveToDisk("MAV_DFE");
   e.AddImp(e.FindTask("MOVING_AVERAGE"), perf_DFE);
   e.AddImp(e.FindTask("MOVING_AVERAGE"), perf_CPU);
-//  e.AddImp(e.FindTask("MOVING_AVERAGE"),
-//           new Implementation( "MAV","mavCPU","MOVING_AVERAGE","", "","CPU"));
-
-
 
   e.start();
   return 0;

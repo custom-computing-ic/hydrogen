@@ -274,7 +274,8 @@ public:
     auto tp = bc::system_clock::now();
     auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
-    meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count();
+#define RESCOUNT 4
+    meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
     void updateMeanWaitTime(JobPtr j) {
     //LOCK

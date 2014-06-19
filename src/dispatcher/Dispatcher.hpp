@@ -13,8 +13,8 @@ class Dispatcher {
 
 public:
 
-  Dispatcher(int port, const std::string &name) {
-    server = new DispatcherServer(name, boost::lexical_cast<std::string>(port), 4);
+  Dispatcher(int port, const std::string &name, bool ug,int nd) {
+    server = new DispatcherServer(name, boost::lexical_cast<std::string>(port), 4, ug,nd);
     server->run();
   }
 

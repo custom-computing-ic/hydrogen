@@ -15,8 +15,8 @@ int main() {
   int *data = mavg_data(n);
   int *exp = mavg_threept_exp(n, data);
 
-  int p = 30;
-  int numJobs = 10;
+  int p = 10;
+  int numJobs = 100;
   for (int i = 0; i < p; i++) {
     int pid = fork();
 

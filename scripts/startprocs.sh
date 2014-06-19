@@ -8,7 +8,7 @@ if [ -z "$MAXELEROSDIR" ] || [ -z "$MAXCOMPILERDIR" ]; then
   ./dispatcher 8122 1> /dev/null &
 else
   printf "Starting Dispatcher With DFE Implementations"
-  LD_PRELOAD=/opt/maxeler/maxeleros/lib/libmaxeleros.so ./dispatcher 8112 1> /dev/null &
+  LD_PRELOAD=/opt/maxeler/maxeleros/lib/libmaxeleros.so ./dispatcher 8112  0 2 1> /dev/null &
 fi
 
 sleep 0.2s

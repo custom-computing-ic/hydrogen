@@ -28,21 +28,24 @@ void DispatcherServer::movingAverage_cpu(size_t n, size_t size, int *data, int *
 }
 
 void DispatcherServer::movingAverage_dfe(int n, int size,
-                                         int *data, int *out) {
+                                         int *data, int *out,
+                                         bool useGroups) {
   cout << "Dispatcher::MovingAverageDFE" << endl;
   char* dfeIds[] = {"1", "2", "3", "4"};
+//  int nDfes = 4;
 #ifdef USEDFE
-  MovingAverageDFE(size, n, data, out, 2, dfeIds, true);
+  MovingAverageDFE(size, n, data, out, this->nDfes, dfeIds, useGroups);
 #endif
 }
 
 void DispatcherServer::movingAverage_dfe(int n, int size,
                                          int *data, int *out,
-                                         char** dfeIds, int nDfes) {
+                                         char** dfeIds, int nDfes,
+                                         bool useGroups) {
   cout << "Dispatcher::MovingAverageDFE" << endl;
   //  char* dfeIds[] = {"1", "2", "3", "4"};
 #ifdef USEDFE
-  MovingAverageDFE(size, n, data, out, nDfes, dfeIds, true);
+  MovingAverageDFE(size, n, data, out, nDfes, dfeIds, useGroups);
 #endif
 }
 
@@ -79,7 +82,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 
   if (request->msgId == MSG_MOVING_AVG) {
     // unpack data
-    auto start = bc::system_clock::now();
+
     size_t n = request->dataSize;
     size_t nBytes = sizeof(int) * n;
     int* out = (int *)calloc(n, sizeof(int));
@@ -104,20 +107,23 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     memcpy(data_in, request->data, nBytes);
 
     // do computation
-    // TODO check resource type
+    auto start = bc::system_clock::now();
     if (request->resourceType == DFE && useDfe) {
       // TODO pass in other arguments (e.g. nDfes, dfeIDs)
       if (nDFEs != 0)
-        movingAverage_dfe(n, request->firstParam(), data_in, out, dfeIds.data(),nDFEs);
+        movingAverage_dfe(n, request->firstParam(), data_in, out, dfeIds.data(),nDFEs,
+                          useGroups);
       else
-        movingAverage_dfe(n,request->firstParam(), data_in, out);
+        movingAverage_dfe(n,request->firstParam(), data_in, out,useGroups);
     } else {
       movingAverage_cpu(n, (size_t)request->firstParam(), data_in, out);
     }
+    auto end = bc::system_clock::now();
     for (auto c : dfeIds) {
       free(c);
     }
-    auto end = bc::system_clock::now();
+    auto busy_time = bc::duration_cast<bc::milliseconds>(end-start).count();
+
 #ifdef DEBUG
     cout << "Data out " << endl;
     for (int i = 0; i < n; i++)
@@ -133,7 +139,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
     response->paramsSize = 0;
     response->totalBytes = sizeBytes;
     response->dataBytes = dataBytes;
-    response->predicted_time = bc::duration_cast<bc::milliseconds>(end-start).count();
+    response->predicted_time = nDFEs > 0 ? busy_time*nDFEs : busy_time;
     memcpy(response->data, out, nBytes);
     free(out);
     free(data_in);

@@ -15,7 +15,11 @@ Job::Job(msg_t* request,int id) :  req(request) {
   //TODO[mtottenh]: Replace this with data from perf model
   cost_func = defaultCostFunction;
   //TODO[mtottenh]: Replace this with data from perf model
-  defaultJobTime = (float)request->predicted_time;
+  if (request->predicted_time > 0) {
+    defaultJobTime = (float)request->predicted_time;
+  } else {
+    defaultJobTime = 1.0;
+  }
   //TODO[mtottenh]: This works for now, but this needs to
   //change for after the demmo.
   priority = request->clientId;
@@ -23,9 +27,6 @@ Job::Job(msg_t* request,int id) :  req(request) {
   dispatchTime = boost::chrono::system_clock::now();
   finishTime = boost::chrono::system_clock::now();
   status = 2;
-//  realloc(&(req.data),request.dataBytes() * sizeof(char));
-//  memcpy(req.data,request.data,request.dataBytes());
-//  req = request;
   jid = id;
   rsp = nullptr;
 }
