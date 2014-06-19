@@ -381,7 +381,6 @@ private:
   /* used for locking Q's */
   boost::mutex readyQMtx;
   boost::mutex runQMtx;
-  boost::mutex finishedQMtx;
 
   boost::mutex jidMtx;
   boost::mutex waitTimeMtx;
