@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 
   int dispatcherPortNumber = atoi(argv[2]);
 
-  auto localhost = string("localhost");
+  const string& localhost = "localhost";
 
   auto elasticityManager = ElasticityManager();
 

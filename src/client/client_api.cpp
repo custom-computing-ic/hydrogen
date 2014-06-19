@@ -144,7 +144,7 @@ void TerminateServer() {
 
   msg_t *msg = msg_empty();
 
-  auto name = "localhost";
+  const string& name = "localhost";
   int client_id = 0;
   int portNumber = 8111;
 

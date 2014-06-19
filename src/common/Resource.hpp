@@ -11,7 +11,6 @@ public:
     port = r.getPort();
     url = r.getName();
     type = r.getType();
-    /* should we copy idle/util time? */
   }
 
   Resource(int id, int port_, const std::string &name_,

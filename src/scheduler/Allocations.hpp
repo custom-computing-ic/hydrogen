@@ -6,10 +6,12 @@
 class Allocations {
 
 public:
+
   Allocations() {
     score = 0;
     jobs.clear();
   }
+
   void addJobResourcePair(JobTuplePtr j, ResourceListPtr r) {
     jobs.push_back(std::make_shared<JobResPair>(std::make_pair(j, r)));
   }
