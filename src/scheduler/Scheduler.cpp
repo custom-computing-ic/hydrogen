@@ -261,17 +261,18 @@ void Scheduler::schedLoop() {
 
           //std::cout << "(DEBUG): Managed Mode scheduled " << numJobsScheduled;
           totalJobsScheduled += numJobsScheduled;
+          /*
           if (numJobsScheduled > 1)
-            //std::cout <<" Jobs";
+            std::cout <<" Jobs";
           else
-            //std::cout <<" Job";
+            std::cout <<" Job";
           size_t waitingJobs = readyQ->size();
-          //std::cout << "\t(" << waitingJobs;
+          std::cout << "\t(" << waitingJobs;
           if (waitingJobs > 1 || waitingJobs == 0)
-            //std::cout <<" Jobs left)\n";
+            std::cout <<" Jobs left)\n";
           else
-            //std::cout <<" Job left)\n";
-
+            std::cout <<" Job left)\n";
+*/
         }
         QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
       }
