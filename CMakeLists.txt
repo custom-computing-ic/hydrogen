@@ -5,7 +5,6 @@ SET (BOOST_ROOT "/usr/local/boost_1_55_0")
 SET (BOOST_MIN_VERSION "1.55.0")
 SET (BOOST_INCLUDEDIR "/usr/local/boost_1_55_0/include")
 SET (BOOST_LIBRARYDIR "/usr/local/boost_1_55_0/lib")
-SET (Boost_NO_SYSTEM_PATH ON)
 
 ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
 SET(Boost_USE_STATIC_LIBS ON)

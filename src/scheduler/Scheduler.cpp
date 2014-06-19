@@ -357,21 +357,14 @@ void Scheduler::dispatcherLoop() {
     while (true) {
       // wait on readyQ or FinishedQ condvar
       boost::unique_lock<boost::mutex> lock(qMutex);
-      // TODO[mtottenh]: change finishedQStatus to somethign that indicates a
-      // dfe
-      // has a result. Might not be able to have this as a condvar wait
-      // situation....
       while (!QStatus.getRunQStatus()) {
         QCondVar.wait(lock);
-        //        LOG(debug) << "(DEBUG): Dispatcher thread woke up";
       }
       lock.unlock();
       if (QStatus.getRunQStatus()) {
-        //        LOG(debug) << "(DEBUG): Event on Run Q";
         while (runQ->size() > 0) {
           runJobs();
         }
-        //        if (runQ->size() == 0)
         QStatus.setRunQStatus(false);
       }
     }

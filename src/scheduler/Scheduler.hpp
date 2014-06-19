@@ -17,6 +17,8 @@
 #include <Allocations.hpp>
 #include <Logging.hpp>
 
+#include <concurrent_queue.hpp>
+
 class Scheduler;
 #define NUM_THREADS 4
 #include <algs.hpp>
@@ -329,8 +331,6 @@ public:
     std::string hostName = r.getName();
     int Rid = r.getId();
     std::string type = r.getType();
-    //    resPool->push_back(boost::unique_ptr<Resource>(new
-    // Resource(Rid,portNo,hostName,type)));
     resPool->push_back(
         boost::shared_ptr<Resource>(new Resource(Rid, portNo, hostName, type)));
   }
