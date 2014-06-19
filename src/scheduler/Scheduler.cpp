@@ -364,6 +364,25 @@ void Scheduler::dispatcherLoop() {
   }
 }
 
+/** Loop for processing finished jobs which should run on a separate
+    thread.*/
+void Scheduler::finishedLoop() {
+  try {
+    while (true) {
+      // TOOD [paul-g]: there is a race condition here, but I am not
+      // sure what is deleting the jobs and causing a segfault
+      auto j = finishedQ->wait_pop_front();
+      updateStatistics(std::get<0>(*j));
+      LOG(debug) << "Updated statistics";
+      std::get<1>(*j)->setFinished(true);
+      std::get<2>(*j)->notify_all();
+    }
+  }
+  catch (std::exception &e) {
+    LOG(debug) << "FinishedQ thread - " << e.what();
+  }
+}
+
 msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
                                     unsigned long sizeBytes) {
   auto jCondVar = CondVarPtr(new boost::condition_variable);
@@ -407,22 +426,6 @@ msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
   return &response;
 }
 
-void Scheduler::finishedLoop() {
-  try {
-    while (true) {
-      // TOOD [paul-g]: there is a race condition here, but I am not
-      // sure what is deleting the jobs and causing a segfault
-      auto j = finishedQ->wait_pop_front();
-      updateStatistics(std::get<0>(*j));
-      LOG(debug) << "Updated statistics";
-      std::get<1>(*j)->setFinished(true);
-      std::get<2>(*j)->notify_all();
-    }
-  }
-  catch (std::exception &e) {
-    LOG(debug) << "FinishedQ thread - " << e.what();
-  }
-}
 
 void Scheduler::start() {
   // Fire up the Scheduling and dispatch threads.
