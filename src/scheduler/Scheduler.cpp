@@ -377,20 +377,14 @@ void Scheduler::dispatcherLoop() {
 
 msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
                                     unsigned long sizeBytes) {
-  // creat (job,condvar) pair
-  //
   auto jCondVar = CondVarPtr(new boost::condition_variable);
   boost::mutex jobMutex;
   boost::unique_lock<boost::mutex> lock(jobMutex);
-  //  struct JobInfo jInfo;
   auto jInfo = JobInfoPtr(new JobInfo());
   jInfo->setFinished(false);
   jInfo->setStarted(false);
-  //  LOGF(debug, " New Connection tid = %1%") % boost::this_thread::get_id();
+  LOGF(debug, " New Connection tid = %1%") % boost::this_thread::get_id();
 
-#ifdef DEBUG
-  request.print();
-#endif
   JobPtr nJob = JobPtr(new Job(&request, getNextId()));
   JobTuple t = std::make_tuple(nJob, jInfo, jCondVar);
   enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx, "readyQ");

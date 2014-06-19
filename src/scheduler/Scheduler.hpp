@@ -114,14 +114,12 @@ public:
                std::shared_ptr<T> elem, boost::mutex &lock,
                const std::string &name) {
     // Check that this shouldn't be the lock passed in.
-    //  std::cout << "Scheduler::enqueue()\n";
     boost::unique_lock<boost::mutex> lk(lock);
 
     container->push_back(elem);
     lk.unlock();
     if (name == "readyQ") {
       std::get<0>(*elem)->setIssueTime(bc::system_clock::now());
-
       QStatus.setReadyQStatus(true);
     }
     if (name == "runQ") {
@@ -132,23 +130,18 @@ public:
       std::get<0>(*elem)->setFinishTime(bc::system_clock::now());
       QStatus.setFinishedQStatus(true);
     }
-#ifdef DEBUG
-    std::cout << "Added element to " << name << ", calling notify_all().\n";
-#endif
+    LOGF(debug, "Added element to %1% calling notify_all()") % name;
     QCondVar.notify_all();
   }
+
   void addToRunQ(JobResPairPtr elem) {
     boost::unique_lock<boost::mutex> guard(runQMtx);
-#ifdef DEBUG
-    std::cout << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
-#endif
+    LOG(debug) << "Adding " << *std::get<0>(*std::get<0>(elem)) << "To RunQ\n";
     runQ->push_back(elem);
     std::get<0>(*std::get<0>(*elem))->setDispatchTime(bc::system_clock::now());
     guard.unlock();
     QStatus.setRunQStatus(true);
-#ifdef DEBUG
-    std::cout << "Added element to runQ, calling notify_all().\n";
-#endif
+    LOG(debug) << "Added element to runQ, calling notify_all().\n";
     QCondVar.notify_all();
   }
 
@@ -391,10 +384,12 @@ private:
   boost::mutex qMutex;
   boost::condition_variable QCondVar;
   struct QInfo QStatus;
+
   /* used for locking Q's */
   boost::mutex readyQMtx;
   boost::mutex runQMtx;
   boost::mutex finishedQMtx;
+
   boost::mutex jidMtx;
   boost::mutex waitTimeMtx;
   boost::mutex resPoolMtx;
@@ -404,6 +399,7 @@ private:
   boost::thread *dispatcherThread;
   boost::thread *finishedQThread;
   boost::thread_group jobThreads;
+
   /*Private Data Members */
   ResourcePoolPtr resPool;
   JobQueuePtr readyQ;
