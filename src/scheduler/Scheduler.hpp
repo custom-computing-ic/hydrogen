@@ -198,13 +198,9 @@ public:
   };
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i) {
-    //    boost::lock_guard<boost::mutex> lk(runQMtx);
     if (i > rq->size()) {
       return nullptr;
     }
-    //    JobTuple j = *(rq->at(i));
-    //    JobTuplePtr nj = std::shared_ptr<JobTuple>(new
-    // JobTuple(std::get<0>(j), std::get<1>(j), std::get<2>(j)));
     return rq->at(i);
   }
 
@@ -358,6 +354,7 @@ private:
   /* Getters */
   inline AlgType getAlg(size_t i) { return algVec[i]; }
   inline size_t noAlgs() { return algVec.size(); }
+
   inline JobTuplePtr getFirstReadyProc() {
     boost::lock_guard<boost::mutex> lk(readyQMtx);
     JobTuplePtr j = std::move(readyQ->front());

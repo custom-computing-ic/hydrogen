@@ -178,7 +178,6 @@ void Scheduler::schedLoop() {
       Allocations *a = schedule(MODE_MANAGED, true);
       rqLk.unlock();
       if (a == nullptr) {
-        /* No free resources.. Just block for some more time :)   */
         boost::this_thread::yield();
         QStatus.setRunQStatus(true);
         QCondVar.notify_all();
