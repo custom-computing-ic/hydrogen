@@ -4,6 +4,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
 
+#include <concurrent_queue.hpp>
+
 class Allocations;
 class Scheduler;
 class Job;
@@ -50,13 +52,16 @@ typedef std::deque<Resource> ResourceList; // TODO: change this maybe?
 typedef std::shared_ptr<ResourceList> ResourceListPtr;
 typedef std::pair<JobTuplePtr, ResourceListPtr> JobResPair;
 typedef std::shared_ptr<JobResPair> JobResPairPtr;
+
 /* Collections of Bases */
 typedef std::deque<ResourcePtr> ResourcePool;
 typedef std::deque<JobTuplePtr> JobQueue;
+typedef concurrent_queue<JobTuplePtr> ConcurrentJobQueue;
 typedef std::deque<JobResPairPtr> JobResPairQ;
 
 /* Pointers to Collections */
 typedef std::shared_ptr<JobQueue> JobQueuePtr;
+typedef std::shared_ptr<ConcurrentJobQueue> ConcurrentJobQueuePtr;
 typedef std::shared_ptr<ResourcePool> ResourcePoolPtr;
 typedef std::shared_ptr<JobResPairQ> JobResPairQPtr;
 
