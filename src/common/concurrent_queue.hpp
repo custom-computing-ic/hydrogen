@@ -1,3 +1,5 @@
+#ifndef _CONCURRENT_QUEUE_H_
+#define _CONCURRENT_QUEUE_H_
 /**
    Based on a post by Anthony Williams.  See
    http://www.justsoftwaresolutions.co.uk/threading/implementing-a-thread-safe-queue-using-condition-variables.html
@@ -46,4 +48,11 @@ public:
     popped_value = queue.front();
     queue.pop();
   }
+
+  int size() {
+    boost::mutex::scoped_lock lock(mutex);
+    return queue.size();
+  }
+
 };
+#endif /* _CONCURRENT_QUEUE_H_ */
