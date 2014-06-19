@@ -82,12 +82,9 @@ void Scheduler::updateState() {}
 void Scheduler::dumpInfo() {}
 
 void Scheduler::notifyClientsOfResults() {
-  boost::unique_lock<boost::mutex> lk(finishedQMtx);
   auto j = finishedQ->front();
-  finishedQ->pop_front();
-  lk.unlock();
+  finishedQ->wait_pop_front();
   updateStatistics(std::get<0>(*j));
-
   std::get<1>(*j)->setFinished(true);
   std::get<2>(*j)->notify_all();
 }
@@ -339,7 +336,7 @@ void Scheduler::runJob(JobResPairPtr j) {
   returnResources(resourceList);
   resourceList = nullptr;
   //  enqueue(finishedQ, jobTuplePtr, finishedQMtx, "finishedQ");
-  finishedQ->push(jobTuplePtr);
+  finishedQ->push_front(jobTuplePtr);
   removeJobFromRunQ(jobPtr->getId());
 }
 

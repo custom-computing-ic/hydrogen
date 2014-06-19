@@ -1,4 +1,4 @@
-/** End to end test for option pricing */
+/** End to end test for option pricing with elasticity.  */
 #include "TestLib.hpp"
 
 #include <client_api.hpp>
@@ -26,9 +26,35 @@ int main()
     18000,
   };
 
+  int repetitions = 2;
   bool status = true;
-  for (int factor = 10; factor < 40; factor+=10) {
-    int repetitions = 5;
+
+  LOG(debug) << "Starting scale test";
+  // test resource allocation scales up
+  int factor = 10;
+  for (; factor < 30; factor+=10) {
+    for (int k = 0; k < repetitions; k++) {
+      double res;
+      int newNumPathGroup = numPathGroup * factor;
+      LOGF(debug, "numPathGroup = %1% k = %2%") % newNumPathGroup % k;
+      optionPricingJlo(strike,
+		       sigma,
+		       timestep,
+		       numMaturity,
+		       paraNode,
+		       newNumPathGroup,
+		       T,
+		       &res,
+		       perfModel[factor / 10],
+		       4000
+		       );
+      printf("res = %d\n", res);
+   }
+  }
+
+  LOG(debug) << "Starting scale down test";
+  // test resource allocation scales down
+  for (; factor > 10; factor -= 10) {
     for (int k = 0; k < repetitions; k++) {
       double res;
       int newNumPathGroup = numPathGroup * factor;

@@ -7,7 +7,8 @@ add_library(Common
   utils.cpp
   message.cpp
   Logging.cpp
-  concurrent_queue.hpp)
+  concurrent_queue.cpp
+  concurrent_deque.cpp)
 
 #Need to add Pbuf for protobuf control messages.. see subdir protobuf/ cmake
 #file
