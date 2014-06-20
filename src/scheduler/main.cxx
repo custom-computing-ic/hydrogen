@@ -50,9 +50,9 @@ int main(int argc, char** argv) {
     useGUI = vm["use_gui"].as<bool>();
   }
 
-  cout << "(INFO): Binding to: " << schedulerHost << ":";
+  cout << "\n(INFO): Binding to: " << schedulerHost << ":";
   cout << schedulerPortNumber << "\n";
-  cout << "(INFO): Dispatcher: " << dispatcherHost << ":";
+  cout << "\n(INFO): Dispatcher: " << dispatcherHost << ":";
   cout << dispatcherPortNumber << "\n";
   Scheduler s(schedulerPortNumber,
               schedulerHost,
@@ -73,8 +73,11 @@ int main(int argc, char** argv) {
   s.addSchedAlg(Priority);
   /* 5 */
   s.addSchedAlg(ManagedMode);
-
-  s.start();
+  try {
+    s.start();
+  } catch (std::exception& e) {
+    cout << "\nError: " << e.what() << endl;
+  }
 
   return 0;
 }

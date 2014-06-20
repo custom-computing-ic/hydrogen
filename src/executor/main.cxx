@@ -53,14 +53,23 @@ int main(int argc, char** argv) {
     std::cout << "(DEBUG): Environmental Variable CLIENT_ID = " << client_id << "\n";
   }
 
-  Executor e("localhost",clientIdCh);
+  Executor* e = nullptr;
+  try {
+    e = new Executor("localhost",clientIdCh);
+  } catch (std::exception& err) {
+    std::cerr << "\nError: " << err.what() << std::endl;
+    if (e != nullptr)
+      delete e;
+    return 1;
+  }
+
   /* Add a local CPU and the shared DFE's from the cmd line */
-  e.AddResource(new Resource(1, vm["scheduler_port"].as<int>(),
+  e->AddResource(new Resource(1, vm["scheduler_port"].as<int>(),
                              vm["hostname"].as<std::string>(),
                              "SHARED_DFE"));
-  e.AddResource(new Resource(2, 8112, "localhost", "CPU"));
+  e->AddResource(new Resource(2, 8112, "localhost", "CPU"));
   /* Adding some tasks... */
-  e.AddTask(new Task("MOVING_AVERAGE"));
+  e->AddTask(new Task("MOVING_AVERAGE"));
   Implementation *mav_DFE = new Implementation("MAV","mavDFE","MOVING_AVERAGE","","","SHARED_DFE");
   Implementation *mav_CPU = new Implementation("MAV","mavCPU","MOVING_AVERAGE","","","CPU");
 
@@ -105,7 +114,7 @@ int main(int argc, char** argv) {
 //  std::cout << "(INFO): " << *perf_DFE << "\n";
 //  perf_DFE->SaveToDisk("MAV_DFE_4");
   perf_CPU->LoadFromDisk("MAV_CPU");
-  perf_DFE->LoadFromDisk("MAV_DFE_4");
+  perf_DFE->LoadFromDisk("MAV_DFE");
   std::cout << "(INFO): " << *perf_CPU << "\n";
   std::cout << "(INFO): " << *perf_DFE << "\n";
 
@@ -114,10 +123,9 @@ int main(int argc, char** argv) {
   perf_DFE->LinearRegression();
   std::cout << "\n(INFO)" << *perf_DFE << "\n";
   //perf_DFE->SaveToDisk("MAV_DFE");
-  e.AddImp(e.FindTask("MOVING_AVERAGE"), perf_DFE);
-  e.AddImp(e.FindTask("MOVING_AVERAGE"), perf_CPU);
-
-  e.start();
+  e->AddImp(e->FindTask("MOVING_AVERAGE"), perf_DFE);
+  e->AddImp(e->FindTask("MOVING_AVERAGE"), perf_CPU);
+  e->start();
   return 0;
 }
 

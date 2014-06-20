@@ -21,7 +21,16 @@ int main(int argc, char** argv) {
      nDfes = 1;
 
   const string& localhost = string("localhost");
-  Dispatcher d(portnumber, localhost, groups == 1, nDfes);
+  Dispatcher* d = nullptr;
+  try {
+    d = new Dispatcher(portnumber, localhost, groups == 1, nDfes);
+  } catch (std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    if (d != nullptr)
+      delete d;
+    return 1;
+  }
+
   //  d->start();
   return 0;
 }
