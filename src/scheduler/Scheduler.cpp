@@ -105,13 +105,6 @@ ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
   return allocatedResources;
 }
 
-// TODO[mtottenh]:Check this functions as intended.
-// I'm not sure about getAllocdRes()->***/
-JobPtr Scheduler::deallocate(JobPtr j) {
-  LOG(error) << "NOT IMPLEMENTED";
-  return j;
-}
-
 /* Server Handling */
 msg_t *Scheduler::handle_request(msg_t *request) {
   LOGF(debug, "Scheduler recieved request msgID[%1%]") % request->msgId;

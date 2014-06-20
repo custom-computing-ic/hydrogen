@@ -257,7 +257,6 @@ public:
   }
 
 private:
-  JobPtr deallocate(JobPtr j);
   /* Setters */
   inline void setResPool(ResourcePoolPtr r) { resPool = r; }
 
