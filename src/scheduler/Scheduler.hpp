@@ -35,40 +35,31 @@ public:
 
   ~Scheduler() {
     std::cout << "(DEBUG): ~Scheduler()..\n";
-    bool already_cleaned = true;
+    if (guiThread != nullptr) {
+      std::cout << "(DEBUG):\t- Joining guiThread\n";
+      guiThread->interrupt();
+      guiThread->join();
+      delete guiThread;
+    }
     if (schedulerThread != nullptr) {
       std::cout << "(DEBUG):\t- Joining schedulerThread\n";
       schedulerThread->interrupt();
       schedulerThread->join();
       delete schedulerThread;
-      already_cleaned = false;
     }
     if (dispatcherThread != nullptr) {
       std::cout << "(DEBUG):\t- Joining dispatcherThread\n";
       dispatcherThread->interrupt();
       dispatcherThread->join();
       delete dispatcherThread;
-      already_cleaned = false;
     }
     if (finishedQThread != nullptr) {
       std::cout << "(DEBUG):\t- Joining finishedQThread\n";
       finishedQThread->interrupt();
       finishedQThread->join();
       delete finishedQThread;
-      already_cleaned = false;
     }
-    if (guiThread != nullptr) {
-      std::cout << "(DEBUG):\t- Joining guiThread\n";
-      guiThread->interrupt();
-      guiThread->join();
-      delete guiThread;
-      already_cleaned = false;
-    }
-    if (!already_cleaned) {
-      std::cout << "(DEBUG):\t- Joining jobThreads\n";
-//      jobThreads.interrupt_all();
-///      jobThreads.join_all();
-    }
+    this->stop();
     std::cout << "(DEBUG): ~Scheduler() Deconstructed\n";
   }
   Scheduler(const std::string& port,
@@ -161,7 +152,9 @@ public:
     boost::lock_guard<boost::mutex> lk(jidMtx);
     return nextJid++;
   }
-
+  std::string getUptime() {
+    return std::to_string(bc::duration_cast<bc::seconds>(bc::system_clock::now() - startTime).count()).substr(0,4) + "s";
+  }
   std::string getWaitTime() {
     return std::to_string(bc::duration_cast<bc::microseconds>(meanWaitTime).count()).substr(0,4) + "us";
   }
@@ -173,13 +166,13 @@ public:
     return std::to_string(totalCompletions);
   }
   std::string getUtilization() {
-    return std::to_string(meanUtilization);
+    return std::to_string(meanUtilization).substr(0,4);
   }
   std::string getThroughput() {
-    return std::to_string(meanThroughput);
+    return std::to_string(meanThroughput).substr(0,4) + "  (Jobs/sec)";
   }
   std::string getArrivalRate() {
-    return std::to_string(ArrivalRate);
+    return std::to_string(ArrivalRate).substr(0,4) + "  (Jobs/sec)";
   }
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
@@ -203,14 +196,19 @@ public:
     std::cout << std::dec << "(INFO): Mean Latency : " << meanLatency << "\n";
     std::cout << std::dec << "(INFO): Mean Throughput " << meanThroughput << "  (Jobs/sec)\n";
     std::cout << std::dec << "(INFO): Mean Utilization " << meanUtilization << "\n";
-    std::cout << std::dec << "(INFO): Mean Scheduling Overhead " << totalSchedTime / numSchedules << "\n";
+    if (numSchedules != 0)
+      std::cout << std::dec << "(INFO): Mean Scheduling Overhead " << totalSchedTime / numSchedules << "\n";
+
     std::cout << std::dec << "(INFO): Total Jobs : " << totalCompletions +
                                             readyQ->size() +
                                             runQ->size()
                                          << "\tTotal Completions: "
                                          << totalCompletions;
-    std::cout << std::dec<< "\tAvg. # Jobs/Schedule: "
-              << (double)totalJobsScheduled / (double) numSchedules << "\n";
+    if (numSchedules != 0 ) {
+      std::cout << std::dec<< "\tAvg. # Jobs/Schedule: "
+                << (double)totalJobsScheduled / (double) numSchedules << "\n";
+    }
+    std::cout << std::endl;
  //   add per resource Utilization Statistics
 
     /* Otherwise

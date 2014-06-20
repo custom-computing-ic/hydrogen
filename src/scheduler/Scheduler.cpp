@@ -519,7 +519,6 @@ void Scheduler::finishedLoop() {
 }
 void Scheduler::guiLoop() {
   StatsScreen s;
-  s << TITLE << "Hydrogen: v0.3";
   while (stopFlag == 0) {
     s.check_resize();
     boost::posix_time::time_duration td = boost::posix_time::milliseconds(100);
@@ -531,6 +530,9 @@ void Scheduler::guiLoop() {
     s << THROUGHPUT << this->getThroughput();
     s << NO_JOBS << this->getCompletions();
     s << ARR_RATE << this->getArrivalRate();
+    s << TITLE << "Hydrogen: v0.3";
+    s << UPTIME << this->getUptime();
+
   }
 }
 
