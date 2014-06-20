@@ -539,10 +539,11 @@ void Scheduler::start() {
   QStatus.setReadyQStatus(false);
   QStatus.setRunQStatus(false);
   QStatus.setFinishedQStatus(false);
-
+  startTime = bc::system_clock::now();
   schedulerThread = new boost::thread(&Scheduler::schedLoop, this);
   dispatcherThread = new boost::thread(&Scheduler::dispatcherLoop, this);
   finishedQThread = new boost::thread(&Scheduler::finishedLoop, this);
-  guiThread = new boost::thread(&Scheduler::guiLoop, this);
+  if (useGUI)
+    guiThread = new boost::thread(&Scheduler::guiLoop, this);
   run();
 }

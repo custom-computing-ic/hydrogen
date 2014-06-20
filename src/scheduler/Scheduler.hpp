@@ -74,9 +74,14 @@ public:
   Scheduler(const std::string& port,
 	    const std::string& name,
 	    int dispatcherPortNumber,
-	    const std::string& dispatcherHostname) :
-    MultiThreadedTCPServer::super(name, port, NUM_THREADS)
+	    const std::string& dispatcherHostname, bool _useGUI) :
+    MultiThreadedTCPServer::super(name, port, NUM_THREADS),
+    useGUI(_useGUI)
   {
+    schedulerThread = nullptr;
+    dispatcherThread = nullptr;
+    finishedQThread = nullptr;
+    guiThread = nullptr;
     resPool = ResourcePoolPtr(new ResourcePool());
     readyQ = JobQueuePtr(new JobQueue());
     runQ = JobResPairQPtr(new JobResPairQ());
@@ -86,29 +91,28 @@ public:
     addResource(dispatcherPortNumber,dispatcherHostname,2);
     addResource(dispatcherPortNumber,dispatcherHostname,3);
     addResource(dispatcherPortNumber,dispatcherHostname,4);
-
+    /* Scheduling Paramaters*/
     nextJid = 1;
     strat = "Completion Time";
     window = 5;
-    totalCompletions = 0;
-    totalArrivals=0;
     clientPriorities[1] = 1;
     clientPriorities[2] = 2;
     clientPriorities[3] = 3;
     clientPriorities[4] = 4;
+    /* Initialize Statistics to 0 */
+    totalCompletions = 0;
+    totalArrivals=0;
     meanWaitTime = bc::seconds(0);
     meanServiceTime = bc::seconds(0);
     totalWaitTime = bc::seconds(0);
     totalServiceTime = bc::seconds(0);
     totalSchedTime = bc::seconds(0);
-
     totalLatency = bc::seconds(0);
     meanLatency = bc::seconds(0);
     meanThroughput = 0;
     meanUtilization = 0;
     numSchedules = 0;
     totalJobsScheduled = 0;
-    startTime = bc::system_clock::now();
   }
 
   template <typename T> void enqueue(typename ContainerPtr<std::shared_ptr<T>>::deque container,
@@ -415,7 +419,7 @@ private:
   void guiLoop();
   void finishedLoop();
   void serviceAllocations(Allocations &a);
-
+  bool useGUI;
   /* Signaling Structs */
   boost::mutex qMutex;
   boost::condition_variable QCondVar;
