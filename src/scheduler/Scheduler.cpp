@@ -524,14 +524,19 @@ void Scheduler::guiLoop() {
     boost::posix_time::time_duration td = boost::posix_time::milliseconds(100);
     boost::this_thread::sleep(td);
     updateStatistics();
-    s << WAIT_TIME << this->getWaitTime();
-    s << SERVICE_TIME << this->getServiceTime();
-    s << UTIL << this->getUtilization();
-    s << THROUGHPUT << this->getThroughput();
-    s << NO_JOBS << this->getCompletions();
-    s << ARR_RATE << this->getArrivalRate();
-    s << TITLE << "Hydrogen: v0.3";
-    s << UPTIME << this->getUptime();
+    s << windowName::WAIT_TIME << this->getWaitTime();
+    s << windowName::SERVICE_TIME << this->getServiceTime();
+    s << windowName::UTIL << this->getUtilization();
+    s << windowName::THROUGHPUT << this->getThroughput();
+    s << windowName::NO_JOBS << this->getCompletions();
+    s << windowName::ARR_RATE << this->getArrivalRate();
+    s << windowName::TITLE << "Hydrogen: v0.3";
+    s << windowName::UPTIME << this->getUptime();
+    s << windowName::FREE_RES << this->getFreeResources();
+    s << windowName::TOT_RES << this->getTotalResources();
+    s << windowName::READYQTITLE << "";
+    s << windowName::RUNQTITLE << "";
+    s << windowName::FINQTITLE << "";
 
   }
 }

@@ -3,7 +3,7 @@ sig_atomic_t resizeFlag;
 StatsScreen::StatsScreen()  {
   boost::lock_guard<boost::mutex> guard(this->screenMtx);
 //  std::cout << "StatusScreen()" << std::endl;
-  currentWindow = 0;
+  currentWindow = windowName::FREESPACE;
   resizeFlag = 0;
   initscr();
   nonl();
@@ -16,14 +16,21 @@ StatsScreen::StatsScreen()  {
   maxX=0;
   maxY=0;
   width = 0;
-  fieldMap[UPTIME]       = "Uptime";
-  fieldMap[TITLE]        = "TITLE";
-  fieldMap[UTIL]         = "UTIL";
-  fieldMap[THROUGHPUT]   = "THROUGHPUT";
-  fieldMap[WAIT_TIME]    = "WAIT_TIME";
-  fieldMap[SERVICE_TIME] = "SERVICE_TIME";
-  fieldMap[NO_JOBS]      = "NO_JOBS";
-  fieldMap[ARR_RATE]     = "ARRIVAL_RATE";
+  /* separate into fieldMap and Title Map? */
+  fieldMap[windowName::UPTIME]       = "Uptime";
+  fieldMap[windowName::TITLE]        = "TITLE";
+  fieldMap[windowName::UTIL]         = "Cluster Utilization";
+  fieldMap[windowName::THROUGHPUT]   = "Throughput";
+  fieldMap[windowName::WAIT_TIME]    = "Avg. Wait Time";
+  fieldMap[windowName::SERVICE_TIME] = "Avg. Service Time";
+  fieldMap[windowName::NO_JOBS]      = "Job Completions";
+  fieldMap[windowName::ARR_RATE]     = "Arrival Rate";
+  fieldMap[windowName::FREE_RES]     = "Free Resources";
+  fieldMap[windowName::TOT_RES]      = "Total Resources";
+  fieldMap[windowName::READYQTITLE] = "ReadyQ";
+  fieldMap[windowName::RUNQTITLE]   = "RunQ";
+  fieldMap[windowName::FINQTITLE]   = "FinishedQ";
+
   for (const auto& elem : fieldMap) {
     width = elem.second.length() > width ? elem.second.length() : width;
    }
@@ -42,17 +49,17 @@ StatsScreen::~StatsScreen() {
 void StatsScreen::refreshScreen() {
   refresh();
   clear();
-  std::vector<WINDOW*>::iterator w;
+  std::map<windowName,WINDOW*>::iterator w;
   for (w = windows.begin(); w!= windows.end(); w++) {
-    wrefresh(*w);
-    wclear(*w);
+    wrefresh(w->second);
+    wclear(w->second);
   }
 }
 
 void StatsScreen::delWindows() {
   while (windows.size() > 0) {
-    WINDOW* w = windows.back();
-    windows.pop_back();
+    WINDOW* w = windows.begin()->second;
+    windows.erase(windows.begin());
     delwin(w);
   }
   endwin();
@@ -61,16 +68,28 @@ void StatsScreen::setupWindows() {
   getmaxyx(stdscr,maxY,maxX);
   lines = 1;
   /* 15 chars for the uptime string */
-  windows.push_back(newwin(lines,UPTIMEWIDTH,0,0));
+  windows[windowName::UPTIME] = newwin(lines,UPTIMEWIDTH,0,0);
   /* Title block */
-  windows.push_back(newwin(lines,maxX-UPTIMEWIDTH,0,15));
+  windows[windowName::TITLE] = newwin(lines,maxX-UPTIMEWIDTH,0,15);
+  /* Scheduler Stats */
+  int noFields = fieldMap.size() - 2;
+  int i = 0;
+  int row = 0;
+  int count = 2;
 
-  for (int j = 1; j < 4; j++) {
-    for (int i = 0; i < maxX-width; i +=  width ) {
-      windows.push_back(newwin(lines,width,j,i));
+  for (row = 1; count < noFields; row++) {
+    for (i = 0; i < maxX-width; i +=  width ) {
+      /* Ugly cast.. */
+      windows[static_cast<windowName>(count)] = newwin(lines,width,row,i);
+      count++;
     }
+    /* Small fudge for loop checking... I should really figure out a better way */
   }
-
+  row++;
+  /* Setup Stuff for Q information */
+  windows[windowName::READYQTITLE] =  newwin(lines,width,row,0);
+  windows[windowName::RUNQTITLE] =  newwin(lines,width,row,width);
+  windows[windowName::FINQTITLE] =  newwin(lines,width,row,width*2);
 
 }
 void StatsScreen::handle_WINCH(int sig) {

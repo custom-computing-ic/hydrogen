@@ -174,6 +174,14 @@ public:
   std::string getArrivalRate() {
     return std::to_string(ArrivalRate).substr(0,4) + "  (Jobs/sec)";
   }
+  std::string getFreeResources() {
+    boost::lock_guard<boost::mutex> lk (resPoolMtx);
+    return std::to_string(resPool->size());
+  }
+  std::string getTotalResources() {
+    return std::to_string(4);
+  }
+
   virtual msg_t* handle_request(msg_t* request);
   virtual void defaultHandler(msg_t& request, msg_t& response, int responseSize);
   msg_t* concurrentHandler(msg_t& request, msg_t& response, unsigned long responseSize);

@@ -24,14 +24,16 @@ extern sig_atomic_t stopFlag;
  */
 
 class StatsScreen;
-enum windowName {UPTIME, TITLE, WAIT_TIME, SERVICE_TIME, NO_JOBS, UTIL, THROUGHPUT, ARR_RATE};
+enum class windowName { UPTIME, TITLE, WAIT_TIME, SERVICE_TIME, NO_JOBS, UTIL,
+                        THROUGHPUT, ARR_RATE, FREE_RES, TOT_RES, READYQTITLE,
+                        RUNQTITLE,FINQTITLE,FREESPACE};
 class StatsScreen {
   private:
     boost::mutex screenMtx;
-    std::vector<WINDOW*> windows;
-    std::map<int,std::string> fieldMap;
+    std::map<windowName,WINDOW*> windows;
+    std::map<windowName,std::string> fieldMap;
     boost::signal<void(StatsScreen&)> resizeSignal;
-    int currentWindow;
+    windowName currentWindow;
     static const int UPTIMEWIDTH = 15;
     int maxX;
     int maxY;
@@ -55,19 +57,27 @@ class StatsScreen {
       wclear(os.windows[os.currentWindow]);
       wrefresh(os.windows[os.currentWindow]);
       start_color();
+      /* Id, Foreground, Background */
       init_pair(1, COLOR_BLACK, COLOR_WHITE);
       init_pair(2, COLOR_WHITE, COLOR_BLACK);
       /* Set Correct Color */
-      if (os.currentWindow != TITLE && os.currentWindow != UPTIME) {
-        wattron(os.windows[os.currentWindow],COLOR_PAIR(2));
-      } else {
-        wattron(os.windows[os.currentWindow],COLOR_PAIR(1));
+      switch(os.currentWindow) {
+        case windowName::TITLE:
+        case windowName::UPTIME:
+        case windowName::READYQTITLE:
+        case windowName::RUNQTITLE:
+        case windowName::FINQTITLE:
+          wattron(os.windows[os.currentWindow],COLOR_PAIR(1));
+          break;
+        defaut:
+          wattron(os.windows[os.currentWindow],COLOR_PAIR(2));
+          break;
       }
-      /* Deal with uptime as a special case */
-      if (os.currentWindow != TITLE) {
+                /* Deal with uptime as a special case */
+      if (os.currentWindow != windowName::TITLE) {
         std::string field = os.fieldMap[os.currentWindow];
         std::string space = "";
-        if (os.currentWindow == UPTIME) {
+        if (os.currentWindow == windowName::UPTIME) {
           for (int i = 0; i < UPTIMEWIDTH - field.length() - obj.length() + 2; i++) {
             space += " ";
           }
@@ -94,21 +104,26 @@ class StatsScreen {
       return os;
     }
 
-    friend StatsScreen& operator<< (StatsScreen& os, const int& obj){
+    friend StatsScreen& operator<< (StatsScreen& os, const windowName& obj){
       boost::lock_guard<boost::mutex> guard(os.screenMtx);
       switch(obj){
-        case UTIL:
-        case THROUGHPUT:
-        case WAIT_TIME:
-        case SERVICE_TIME:
-        case NO_JOBS:
-        case ARR_RATE:
-        case TITLE:
-        case UPTIME:
+        case windowName::UTIL:
+        case windowName::THROUGHPUT:
+        case windowName::WAIT_TIME:
+        case windowName::SERVICE_TIME:
+        case windowName::NO_JOBS:
+        case windowName::ARR_RATE:
+        case windowName::TITLE:
+        case windowName::UPTIME:
+        case windowName::FREE_RES:
+        case windowName::TOT_RES:
+        case windowName::RUNQTITLE:
+        case windowName::READYQTITLE:
+        case windowName::FINQTITLE:
           os.currentWindow = obj;
           break;
         default:
-          os.currentWindow = 0;
+          os.currentWindow = windowName::FREESPACE;
         }
         return os;
       }
