@@ -3,6 +3,7 @@
 #include <boost/make_shared.hpp>
 #include <cstring>
 #include <boost/chrono.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <unistd.h>
 #include <StatsScreen.hpp>
 #define REF_GET(N,Tuple) \
@@ -447,6 +448,9 @@ void Scheduler::dispatcherLoop() {
 msg_t*  Scheduler::concurrentHandler( msg_t &request,
                                       msg_t &response,
                                       unsigned long sizeBytes) {
+  boost::mutex jobMutex;
+  boost::unique_lock<boost::mutex> lock(jobMutex);
+
   auto jCondVar = CondVarPtr(new boost::condition_variable);
   auto jInfo = JobInfoPtr(new JobInfo());
   jInfo->setFinished(false);
@@ -458,8 +462,6 @@ msg_t*  Scheduler::concurrentHandler( msg_t &request,
 #endif
   JobTuple t = std::make_tuple( nJob, jInfo ,jCondVar);
   enqueue(readyQ, std::make_shared<JobTuple>(t), readyQMtx,"readyQ");
-  boost::mutex jobMutex;
-  boost::unique_lock<boost::mutex> lock(jobMutex);
   try {
     while (!jInfo->isFinished()) {
       jCondVar->wait(lock);
@@ -517,8 +519,11 @@ void Scheduler::finishedLoop() {
 }
 void Scheduler::guiLoop() {
   StatsScreen s;
+  s << TITLE << "Hydrogen: v0.3";
   while (stopFlag == 0) {
-    boost::this_thread::sleep_for(bc::milliseconds(100));
+    s.check_resize();
+    boost::posix_time::time_duration td = boost::posix_time::milliseconds(100);
+    boost::this_thread::sleep(td);
     updateStatistics();
     s << WAIT_TIME << this->getWaitTime();
     s << SERVICE_TIME << this->getServiceTime();

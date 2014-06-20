@@ -16,7 +16,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 4
+#define NUM_THREADS 10
 #include <algs.hpp>
 
 
@@ -291,21 +291,23 @@ public:
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);
     totalCompletions++;
     updateMeanWaitTime(j);
+    updateArrivalRate();
     updateMeanServiceTime(j);
     updateLatency(j);
     updateThroughput();
     updateUtilization(j);
     updateLateJobs(j);
   }
-  void incrementArrival(){
-    boost::lock_guard<boost::mutex> lk(arrivalsMtx);
-    totalArrivals++;
-  }
+
   void updateStatistics() {
     boost::lock_guard<boost::mutex> lk(waitTimeMtx);
     updateThroughput();
     updateUtilization();
     updateArrivalRate();
+  }
+  void incrementArrival(){
+    boost::lock_guard<boost::mutex> lk(arrivalsMtx);
+    totalArrivals++;
   }
   void updateArrivalRate() {
     auto tp = bc::system_clock::now();
@@ -328,9 +330,8 @@ public:
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
 
-
   void updateMeanWaitTime(JobPtr j) {
-    totalWaitTime +=  bc::duration_cast<bc::milliseconds>(j->getDispatchTime() - j->getIssueTime());
+    totalWaitTime +=  (j->getDispatchTime() - j->getIssueTime());
     meanWaitTime =  totalWaitTime  /  totalCompletions;
   }
   void updateMeanServiceTime(JobPtr j) {
@@ -358,7 +359,6 @@ public:
     std::string hostName = r.getName();
     int Rid = r.getId();
     std::string type = r.getType();
-//    resPool->push_back(boost::unique_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
     resPool->push_back(boost::shared_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
   }
 private:
