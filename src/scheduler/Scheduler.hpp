@@ -238,12 +238,8 @@ public:
 
   inline void addResource(Resource &r) {
     boost::lock_guard<boost::mutex> lk(resPoolMtx);
-    int portNo = r.getPort();
-    std::string hostName = r.getName();
-    int Rid = r.getId();
-    std::string type = r.getType();
     resPool->push_back(
-        boost::shared_ptr<Resource>(new Resource(Rid, portNo, hostName, type)));
+        boost::shared_ptr<Resource>(new Resource(r)));
   }
 
   void provisionResource() {
@@ -258,8 +254,6 @@ public:
 
 private:
   /* Setters */
-  inline void setResPool(ResourcePoolPtr r) { resPool = r; }
-
   inline void setWindow(size_t w) { window = w; }
 
   inline void addResource(int PortNo, const std::string &Hostname) {
