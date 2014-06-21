@@ -156,10 +156,10 @@ public:
     return std::to_string(bc::duration_cast<bc::seconds>(bc::system_clock::now() - startTime).count()).substr(0,4) + "s";
   }
   std::string getWaitTime() {
-    return std::to_string(bc::duration_cast<bc::microseconds>(meanWaitTime).count()).substr(0,4) + "us";
+    return std::to_string(bc::duration_cast<bc::milliseconds>(meanWaitTime).count()).substr(0,4) + "ms";
   }
   std::string getServiceTime() {
-    return std::to_string(bc::duration_cast<bc::microseconds>(meanServiceTime).count()).substr(0,4) +  "us";
+    return std::to_string(bc::duration_cast<bc::milliseconds>(meanServiceTime).count()).substr(0,4) +  "ms";
 
   }
   std::string getCompletions() {
@@ -232,7 +232,7 @@ public:
 
   JobTuplePtr copyJobFromQ(JobQueuePtr rq, size_t i)
   {
-//    boost::lock_guard<boost::mutex> lk(runQMtx);
+    boost::lock_guard<boost::mutex> lk(readyQMtx);
     if (i > rq->size()) {
       return nullptr;
     }
@@ -329,14 +329,14 @@ public:
     auto tp = bc::system_clock::now();
     auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
-#define RESCOUNT 4
+#define RESCOUNT 1
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
   void updateUtilization( ) {
     auto tp = bc::system_clock::now();
     auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
-#define RESCOUNT 4
+#define RESCOUNT 1
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
 
@@ -371,6 +371,32 @@ public:
     std::string type = r.getType();
     resPool->push_back(boost::shared_ptr<Resource>(new Resource(Rid,portNo,hostName,type)));
   }
+
+  std::string readyQToString() {
+    boost::lock_guard<boost::mutex> lk (readyQMtx);
+    std::stringstream jobs;
+    for (auto &elem : *readyQ) {
+        jobs << *std::get<0>(*elem) << "\n ";
+    }
+    return jobs.str();
+  }
+  std::string runQToString() {
+    boost::lock_guard<boost::mutex> lk (runQMtx);
+    std::stringstream jobs;
+    for (auto &elem : *runQ) {
+        jobs << *(std::get<0>(*std::get<0>(*elem))) << "\n ";
+    }
+    return jobs.str();
+  }
+  std::string finishedQToString() {
+    boost::lock_guard<boost::mutex> lk (finishedQMtx);
+    std::stringstream jobs;
+    for (auto &elem : *finishedQ) {
+        jobs << *std::get<0>(*elem) << "\n ";
+    }
+    return jobs.str();
+  }
+
 private:
   JobPtr deallocate(JobPtr j);
   /* Setters */

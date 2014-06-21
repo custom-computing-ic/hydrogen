@@ -30,6 +30,9 @@ StatsScreen::StatsScreen()  {
   fieldMap[windowName::READYQTITLE] = "ReadyQ";
   fieldMap[windowName::RUNQTITLE]   = "RunQ";
   fieldMap[windowName::FINQTITLE]   = "FinishedQ";
+  fieldMap[windowName::READYQ] = " ";
+  fieldMap[windowName::RUNQ]   = " ";
+  fieldMap[windowName::FINQ]   = " ";
 
   for (const auto& elem : fieldMap) {
     width = elem.second.length() > width ? elem.second.length() : width;
@@ -85,11 +88,15 @@ void StatsScreen::setupWindows() {
     }
     /* Small fudge for loop checking... I should really figure out a better way */
   }
-  row++;
   /* Setup Stuff for Q information */
   windows[windowName::READYQTITLE] =  newwin(lines,width,row,0);
   windows[windowName::RUNQTITLE] =  newwin(lines,width,row,width);
   windows[windowName::FINQTITLE] =  newwin(lines,width,row,width*2);
+  row++;
+  windows[windowName::READYQ] =  newwin(maxY-row,width,row,0);
+  windows[windowName::RUNQ] =  newwin(maxY-row,width,row,width);
+  windows[windowName::FINQ] =  newwin(maxY-row,width,row,width*2);
+
 
 }
 void StatsScreen::handle_WINCH(int sig) {

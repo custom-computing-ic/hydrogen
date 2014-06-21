@@ -140,6 +140,7 @@ Allocations* Scheduler::schedule(size_t choice, bool flag) {
 }
 
 ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
+  boost::lock_guard<boost::mutex> lk(resPoolMtx);
   ResourceList allocatedResources;
 
   if (resPool->size() >= min_res) {
@@ -228,12 +229,13 @@ void Scheduler::schedLoop() {
 
       //A job was deposited in the readyQ
       if (QStatus.getReadyQStatus() == true) {
+//        std::cout << readyQToString();
         QStatus.setReadyQStatus(false);
         auto start = bc::system_clock::now();
 //        //std::cout << "(DEBUG): Event on readyQ\n";
-        boost::unique_lock<boost::mutex> rqLk(readyQMtx);
+//        boost::unique_lock<boost::mutex> rqLk(readyQMtx);
         Allocations* a = schedule(MODE_MANAGED,true);
-        rqLk.unlock();
+//        rqLk.unlock();
         if (a == nullptr) {
           /* No free resources.. Just block for some more time :)   */
 //          //std::cout << "(DEBUG): Allocations returned null\n";
@@ -521,7 +523,7 @@ void Scheduler::guiLoop() {
   StatsScreen s;
   while (stopFlag == 0) {
     s.check_resize();
-    boost::posix_time::time_duration td = boost::posix_time::milliseconds(100);
+    boost::posix_time::time_duration td = boost::posix_time::milliseconds(600);
     boost::this_thread::sleep(td);
     updateStatistics();
     s << windowName::WAIT_TIME << this->getWaitTime();
@@ -537,7 +539,9 @@ void Scheduler::guiLoop() {
     s << windowName::READYQTITLE << "";
     s << windowName::RUNQTITLE << "";
     s << windowName::FINQTITLE << "";
-
+    s << windowName::READYQ << this->readyQToString();
+    s << windowName::RUNQ << this->runQToString();
+    s << windowName::FINQ << this->finishedQToString();
   }
 }
 
