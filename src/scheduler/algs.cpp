@@ -210,41 +210,49 @@ Allocations* SJTF(Scheduler &s) {
 Allocations* ManagedMode(Scheduler &s) {
   AlgVecType* av = s.getAlgVecPtr();
   std::deque<Allocations*> allocations;
-
-//  std::cout << "(DEBUG): Scheduling using the managed mode\n"
-//            << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t"
-//            << "# Waiting Jobs [" << s.readyQSize() << "]\n";
+  if (!s.useGui()) {
+    std::cout << "(DEBUG): Scheduling using the managed mode\n"
+              << "(DEBUG):\t- Resource Pool Size [" <<s.resPoolSize() << "]\t"
+              << "# Waiting Jobs [" << s.readyQSize() << "]\n";
+  }
   /* Create a list of allocations */
   for(unsigned int i = 0; i < av->size()-1; i++) {
     allocations.push_back( s.schedule(i,true) );
     /* This means that we don't actually allocate the resources for each job */
     allocations.back()->returnResources(s);
   }
-//  std::cout << "(DEBUG):\t- Scoring Allocations\n";
+  if (!s.useGui()){
+    std::cout << "(DEBUG):\t- Scoring Allocations\n";
+  }
   /* Score each allocation */
   std::deque<Allocations* >::iterator a = allocations.begin();
   for (;a != allocations.end(); a++) {
     score(**a,s);
   }
   /* Find the allocation with the highest score */
-  Allocations *mChoice = selectMaxScore(allocations);
+  Allocations *mChoice = selectMaxScore(allocations,s.useGui());
   return mChoice;
 }
 
 
 void score(Allocations &a, Scheduler &s) {
   std::string strat = s.getStrategy();
-//  std::cout << "(DEBUG):\t\t* Score: ";
-//  std::cout << "starting score: " << a.getScore() << "\n";
+  if (!s.useGui()) {
+    std::cout << "(DEBUG):\t\t* Score: ";
+    std::cout << "starting score: " << a.getScore() << "\n";
+  }
   if (!strat.compare("Completion Time")) {
-//    std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
+      if (!s.useGui())
+        std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
     if (a.noJobs() == 0 || a.makespan() <= 0) {
       a.setScore(0);
     } else {
       size_t q_const = s.readyQSize();
-//      std::cout << "QCONST: " << q_const;
-//      std::cout << "\tNOJOBS: " << a.noJobs();
-//      std::cout << "\tMKSPN: " << a.makespan();
+      if (!s.useGui()) {
+        std::cout << "QCONST: " << q_const;
+        std::cout << "\tNOJOBS: " << a.noJobs();
+        std::cout << "\tMKSPN: " << a.makespan();
+      }
       q_const = q_const > 0 ? q_const : 1;
       a.setScore((float)((q_const*a.noJobs()) +
                 ((float) a.noJobs() / (float) a.makespan() )));
@@ -254,10 +262,13 @@ void score(Allocations &a, Scheduler &s) {
     a.setScore(a.totalPriorities());
 
   }
-//  std::cout <<"\tRESULT:" << a.getScore() << "\n";
+  if (!s.useGui()) {
+
+    std::cout <<"\tRESULT:" << a.getScore() << "\n";
+  }
 }
 
-Allocations* selectMaxScore(std::deque<Allocations *> &a) {
+Allocations* selectMaxScore(std::deque<Allocations *> &a, bool gui) {
   float maxScore = a[0]->getScore();
   unsigned int index = 0;
   for (unsigned int i = 0; i < a.size() ; i++ ) {
@@ -268,28 +279,29 @@ Allocations* selectMaxScore(std::deque<Allocations *> &a) {
       index = i;
     }
   }
-
-//  std::cout << "(DEBUG):\t - Managed mode chose: ";
-  switch(index) {
-    case 0:
-//      std::cout << "FCFS MAX\n";
-      break;
-    case 1:
-//      std::cout << "FCFS MIN\n";
-      break;
-    case 2:
-  //    std::cout << "FCFS AMAP\n";
-      break;
-    case 3:
-//      std::cout << "SJTF\n";
-      break;
-    case 4:
-//        std::cout << "Priority\n";
-      break;
-//    default:
- //       std::cout << "\n(ERROR): Manage Mode decided on an algorithm "
- //                 << "that doesn't exist!\n";
- }
+  if (!gui) {
+    std::cout << "(DEBUG):\t - Managed mode chose: ";
+    switch(index) {
+      case 0:
+        std::cout << "FCFS MAX\n";
+        break;
+      case 1:
+        std::cout << "FCFS MIN\n";
+        break;
+      case 2:
+        std::cout << "FCFS AMAP\n";
+        break;
+      case 3:
+        std::cout << "SJTF\n";
+        break;
+      case 4:
+        std::cout << "Priority\n";
+        break;
+      default:
+        std::cout << "\n(ERROR): Manage Mode decided on an algorithm "
+                  << "that doesn't exist!\n";
+  }
+}
  for (unsigned int i = 0; i < a.size(); i++) {
    if (i != index) {
      delete a[i];

@@ -32,7 +32,7 @@ namespace bc = boost::chrono;
 
 class Scheduler : public MultiThreadedTCPServer {
 public:
-
+  bool useGui() {return useGUI;}
   ~Scheduler() {
     std::cout << "(DEBUG): ~Scheduler()..\n";
     if (guiThread != nullptr) {

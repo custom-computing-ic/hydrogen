@@ -15,7 +15,7 @@ bool sortByPriority(const JobTuplePtr i, const JobTuplePtr j);
 bool sortByTime(const JobTuplePtr i, const JobTuplePtr j);
 bool sortByMin(const JobTuplePtr i, const JobTuplePtr j);
 void score(Allocations &a, Scheduler &s);
-Allocations* selectMaxScore(std::deque<Allocations*> &a);
+Allocations* selectMaxScore(std::deque<Allocations*> &a, bool gui);
 
 
 #endif

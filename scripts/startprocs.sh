@@ -3,7 +3,7 @@
 set -e
 if [ -z "$MAXELEROSDIR" ] || [ -z "$MAXCOMPILERDIR" ]; then
   printf "Starting Dispatcher Without DFE Implementations\n"
-  ./dispatcher 8112 1 2 1> /dev/null &
+  ./dispatcher 8112 1 2 1> ./log/disp.out 2>./log/disp.err &
   #TODO: Add cmd line option to force CPU only.
 else
   printf "Starting Dispatcher With DFE Implementations\n"

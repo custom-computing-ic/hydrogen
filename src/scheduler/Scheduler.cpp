@@ -251,9 +251,10 @@ void Scheduler::schedLoop() {
             QStatus.setRunQStatus(true);
             auto end = bc::system_clock::now();
             auto duration = bc::duration_cast<bc::microseconds>(end - start);
-
-            //std::cout << "(DEBUG): Scheduling took: " << duration.count() << "us"
-       //               << std::endl;
+            if(!useGUI) {
+              std::cout << "(DEBUG): Scheduling took: " << duration.count() << "us"
+                        << std::endl;
+            }
             totalSchedTime += duration;
             numSchedules++;
             QCondVar.notify_all();
@@ -261,22 +262,22 @@ void Scheduler::schedLoop() {
             boost::this_thread::yield();
           }
           delete a;
-
-          //std::cout << "(DEBUG): Managed Mode scheduled " << numJobsScheduled;
           totalJobsScheduled += numJobsScheduled;
-          /*
-          if (numJobsScheduled > 1)
-            std::cout <<" Jobs";
-          else
-            std::cout <<" Job";
-          size_t waitingJobs = readyQ->size();
-          std::cout << "\t(" << waitingJobs;
-          if (waitingJobs > 1 || waitingJobs == 0)
-            std::cout <<" Jobs left)\n";
-          else
-            std::cout <<" Job left)\n";
-*/
-        }
+
+          if(!useGUI) {
+            std::cout << "(DEBUG): Managed Mode scheduled " << numJobsScheduled;
+            if (numJobsScheduled > 1)
+              std::cout <<" Jobs";
+            else
+              std::cout <<" Job";
+            size_t waitingJobs = readyQ->size();
+            std::cout << "\t(" << waitingJobs;
+            if (waitingJobs > 1 || waitingJobs == 0)
+              std::cout <<" Jobs left)\n";
+            else
+              std::cout <<" Job left)\n";
+          }
+       }
         QStatus.setReadyQStatus(readyQ->size() > 0); // hangs here....
       }
     }
