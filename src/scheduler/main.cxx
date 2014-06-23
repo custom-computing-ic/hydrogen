@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
   po::options_description desc("Program options");
   desc.add_options()
     ("help,h", "Produce this help message")
-    ("scheduler_port,p", po::value<int>(), "Scheduler Port - Listen for incomming connections on this port (default 8111)")
+    ("scheduler_port,p", po::value<std::string>(), "Scheduler Port - Listen for incomming connections on this port (default 8111)")
     ("scheduler_host,n", po::value<std::string>(), "Hostname - Host address to bind to  (default localhost)")
     ("dispatcher_port,d", po::value<int>(), "Dispatcher Port - (defualt 8112)")
     ("dispatcher_host,w", po::value<std::string>(), "Dispatcher Hostname - (default localhost)")

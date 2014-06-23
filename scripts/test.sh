@@ -3,9 +3,9 @@
 ../scripts/startprocs.sh
 sleep 0.2
 echo "Running test: "
-for i in {1..30}
+for i in {1..100}
 do
-   ./MovingAverageOneDfe 1> mav.out 2> mav.err &
+   ./MovingAverageOneDfeSmall 1> mav.out 2> mav.err &
 done
 echo -n "["
 for job in `jobs -p`

@@ -16,7 +16,7 @@
 #include <typedefs.hpp>
 #include <Allocations.hpp>
 class Scheduler;
-#define NUM_THREADS 10
+#define NUM_THREADS 5
 #include <algs.hpp>
 
 
@@ -329,14 +329,14 @@ public:
     auto tp = bc::system_clock::now();
     auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
-#define RESCOUNT 1
+#define RESCOUNT 4
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
   void updateUtilization( ) {
     auto tp = bc::system_clock::now();
     auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp-startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
-#define RESCOUNT 1
+#define RESCOUNT 4
     meanUtilization = (double) busyTimeMs.count() / (double) totTimeMs.count() / RESCOUNT;
   }
 
