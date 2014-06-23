@@ -10,8 +10,8 @@ using namespace std;
 namespace ba = boost::asio;
 
 MultiThreadedTCPServer::~MultiThreadedTCPServer() {
-  std::cout << "(DEBUG): ~MultiThradedTCPServer()...\n";
-  std::cout << "(DEBUG): ~MultiThradedTCPServer() Deconstructed\n";
+  std::cout << "(DEBUG): ~MultiThreadedTCPServer()...\n";
+  std::cout << "(DEBUG): ~MultiThreadedTCPServer() Deconstructed\n";
 }
 
 MultiThreadedTCPServer::MultiThreadedTCPServer(const string& address, const string& port,

@@ -524,7 +524,7 @@ void Scheduler::guiLoop() {
   StatsScreen s;
   while (stopFlag == 0) {
     s.check_resize();
-    boost::posix_time::time_duration td = boost::posix_time::milliseconds(600);
+    boost::posix_time::time_duration td = boost::posix_time::milliseconds(1000);
     boost::this_thread::sleep(td);
     updateStatistics();
     s << windowName::WAIT_TIME << this->getWaitTime();

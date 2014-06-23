@@ -187,6 +187,7 @@ msg_t* Executor::handle_request(msg_t* request) {
     case MSG_MOVING_AVG:
       /* TODO[mtottenh]: Add error checking/lookup msgId in task map
        */
+      std::cout << "DataSize: " << request->dataSize << std::endl;
       std::tie(imp,runtime) = FindTask("MOVING_AVERAGE")->SelectImplementation(request->dataSize,avg_wt);
       request->predicted_time = (int)runtime;
       rsp = runImp(imp,request);

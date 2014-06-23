@@ -11,7 +11,7 @@ PerfModel::PerfModel(Implementation *param)
   this->alpha = 4e-18;
   this->iterations = 1e2;
   this->numberOfFeatures = 4;
-  this->order = 3; 
+  this->order = 3;
 }
 PerfModel::PerfModel(Implementation *param, double alpha, uint64_t it, int feat,int order)
 {
@@ -20,9 +20,9 @@ PerfModel::PerfModel(Implementation *param, double alpha, uint64_t it, int feat,
   this->iterations = it;
   this->numberOfFeatures = feat;
   this->order = order;
-  
+
 }
-void PerfModel::GenerateTestData(uint64_t maxsize, 
+void PerfModel::GenerateTestData(uint64_t maxsize,
                                  std::function<double(uint64_t)> f) {
   std::cout << "\t*Generating test data\n\t\t [";
   std::vector<double> tmp;
@@ -30,7 +30,7 @@ void PerfModel::GenerateTestData(uint64_t maxsize,
     tmp.push_back(1.0);
   }
   features.push_back(tmp);
-  milliseconds.push_back(1);  
+  milliseconds.push_back(1);
   fflush(stdout);
   for(uint64_t i = 0; i < maxsize; i+=(maxsize/100)) {
      tmp.clear();
@@ -44,7 +44,7 @@ void PerfModel::GenerateTestData(uint64_t maxsize,
        double test2 = f(i);
        double test3 = f(i);
        double ave = (test1 + test2 + test3) / 3.0;
-       milliseconds.push_back(ave);    
+       milliseconds.push_back(ave);
      }
      if ( i % (maxsize/100) == 0 ) {
        std::cout << ".";
@@ -101,19 +101,19 @@ double PerfModel::QueryModel(double input) {
   double projectedCost = 0.0;
   std::vector<double> input_data;
   //std::cout << std::setprecision(2);
-  std::cout << "(DEBUG): ";
+//  std::cout << "(DEBUG): ";
   for (int i = 0; i <= order; i++) {
     input_data.push_back(pow(input,i));
   }
   for (int i = 0; i < numberOfFeatures; i++) {
-   std::cout << weights[i];
-    if ( i > 0)
-      std::cout  << "x^" << i;
-    if (i < numberOfFeatures -1)
-      std::cout << " + ";
+//   std::cout << weights[i];
+//    if ( i > 0)
+//      std::cout  << "x^" << i;
+//    if (i < numberOfFeatures -1)
+//      std::cout << " + ";
     projectedCost += weights[i] * input_data[i];
   }
-  std::cout << "\t = " << projectedCost << "\t(x=" << input << ")\n";
+//  std::cout << "\t = " << projectedCost << "\t(x=" << input << ")\n";
   return projectedCost;
 }
 
@@ -133,9 +133,9 @@ int PerfModel::SaveToDisk(const std::string& name) {
 int PerfModel::SaveToDisk() {
   std::string libName = imp->getLibName();
   std::string funcName = imp->getFuncName();
-  std::cout << "Saving this model to: "  << libName 
+  std::cout << "Saving this model to: "  << libName
             << "_" << funcName <<".mdl\n";
-  
+
   //TODO: Serialize relevant data to disk.
   std::ofstream saveFile;
   saveFile.open(libName+"_"+funcName+".mdl",std::ofstream::out);
@@ -156,21 +156,21 @@ int PerfModel::LoadFromDisk(const std::string& name) {
   saveFile.open(name+".mdl",std::ofstream::in);
   boost::archive::text_iarchive input(saveFile);
   input >> *this;
-  saveFile.close(); 
+  saveFile.close();
   return 0;
 }
 
 int PerfModel::LoadFromDisk(PerfModel& pm) {
   std::string libName = imp->getLibName();
   std::string funcName = imp->getFuncName();
-  std::cout << "Loading this model from: "  << imp->getLibName() 
+  std::cout << "Loading this model from: "  << imp->getLibName()
             << "_" << imp->getFuncName() <<".mdl\n";
   //TODO: Serialize relevant data to disk.
   std::ifstream saveFile;
   saveFile.open(libName+"_"+funcName+".mdl",std::ofstream::in);
   boost::archive::text_iarchive input(saveFile);
   input >> pm;
-  saveFile.close(); 
+  saveFile.close();
   return 0;
 }
 

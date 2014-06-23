@@ -11,13 +11,13 @@ using namespace std;
 
 int main() {
 
-  int n = mavg_data_size;
+  int n = mavg_data_15M;
 
   int *data = mavg_data(n);
   int *exp = mavg_threept_exp(n, data);
 
   /** Ask for a simple moving average a few times */
-  int t = 100;
+  int t = 10;
 
   bool status = true;
   for (int k = 0; k < t; k++) {

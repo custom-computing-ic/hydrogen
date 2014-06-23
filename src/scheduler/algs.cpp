@@ -227,6 +227,7 @@ Allocations* ManagedMode(Scheduler &s) {
   /* Score each allocation */
   std::deque<Allocations* >::iterator a = allocations.begin();
   for (;a != allocations.end(); a++) {
+
     score(**a,s);
   }
   /* Find the allocation with the highest score */
@@ -242,14 +243,12 @@ void score(Allocations &a, Scheduler &s) {
     std::cout << "starting score: " << a.getScore() << "\n";
   }
   if (!strat.compare("Completion Time")) {
-      if (!s.useGui())
-        std::cout << "MAKESPAN: " << a.makespan() << "\tJobs: " << a.noJobs() << "\t" ;
     if (a.noJobs() == 0 || a.makespan() <= 0) {
       a.setScore(0);
     } else {
       size_t q_const = s.readyQSize();
       if (!s.useGui()) {
-        std::cout << "QCONST: " << q_const;
+        std::cout << "\t\tQCONST: " << q_const;
         std::cout << "\tNOJOBS: " << a.noJobs();
         std::cout << "\tMKSPN: " << a.makespan();
       }
