@@ -54,7 +54,7 @@ typedef std::pair<JobTuplePtr, ResourceListPtr> JobResPair;
 typedef std::shared_ptr<JobResPair> JobResPairPtr;
 
 /* Collections of Bases */
-typedef std::deque<ResourcePtr> ResourcePool;
+typedef concurrent_deque<ResourcePtr> ResourcePool;
 typedef std::deque<JobTuplePtr> JobQueue;
 typedef concurrent_deque<JobTuplePtr> ConcurrentJobQueue;
 typedef std::deque<JobResPairPtr> JobResPairQ;

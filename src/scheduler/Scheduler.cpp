@@ -96,8 +96,7 @@ ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
 
   if (resPool->size() >= min_res) {
     while (max_res-- > 0 && resPool->size() > 0) {
-      allocatedResources.push_back(*resPool->back());
-      resPool->pop_back();
+      allocatedResources.push_back(*resPool->wait_pop_back());
     }
 
     LOGF(debug, "Allocated %1% resources to %2% ") % allocatedResources.size() % j;
