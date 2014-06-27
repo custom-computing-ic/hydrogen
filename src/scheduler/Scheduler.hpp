@@ -24,9 +24,18 @@ class Scheduler;
 #include <algs.hpp>
 #include "ElasticityManager.hpp"
 
-/** The scheduler is a server for the client API and a client of the dispatcher
- * **/
-
+/**
+ * The scheduler is a server for the client API and a client of the
+ * dispatcher. It waits for jobs to be added to the ready queue (by
+ * the concurrentHandler) and creates an execution schedule based on
+ * which it moves jobs from the ready queue to the run queue (from
+ * where they are picked up by the dispatcher thread).
+ *
+ * The scheduler runs on a thread of its own and we assume there will
+ * be no more than one scheduler thread running at any given time. As
+ * such all function in the scheduler API are NOT to be assumed THREAD
+ * SAFE unless explicitly documented.
+ */
 
 namespace bc = boost::chrono;
 
@@ -76,7 +85,9 @@ public:
     finishedQ = ConcurrentJobQueuePtr(new ConcurrentJobQueue());
 
     resourceId = 1;
-    addResource(dispatcherPortNumber, dispatcherHostname);
+    provisionedResources = 0;
+    // TOOD[paul-g]: this should be done by the elasticity manager
+    provisionResource();
 
     nextJid = 1;
     strat = "Completion Time";
@@ -202,7 +213,7 @@ public:
   void updateUtilization(JobPtr j) {
     totBusyTime += j->getActualExecutionTime();
     auto tp = bc::system_clock::now();
-    auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp - startTime);
+h    auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp - startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
     meanUtilization = (double)busyTimeMs.count() / (double)totTimeMs.count();
   }
@@ -237,20 +248,27 @@ public:
   }
 
   inline void addResource(Resource &r) {
-    boost::lock_guard<boost::mutex> lk(resPoolMtx);
-    resPool->push_back(
-        boost::shared_ptr<Resource>(new Resource(r)));
+    resPool->push_back(boost::shared_ptr<Resource>(new Resource(r)));
   }
 
+  /** Add a resource permanently to the reesource pool. Note! This
+      function is not thread safe. */
   void provisionResource() {
     // TODO[paul-g] check resources are available
     LOG(debug) << "Adding resource to pool";
     addResource(dispatcherPortNumber, dispatcherHostname);
+    provisionedResources++;
   }
 
+  /** Remove resources permanently from the resource pool. Can be
+      added again with a call to provision resource. Note! This
+      function is not thread safe! */
   void deprovisionResource() {
     LOG(debug) << "Removing resource from pool";
-    resPool.wait_pop_back();
+    if (provisionedResources > 0)  {
+      provisionedResources--;
+      resPool->wait_pop_back();
+    }
   }
 
 private:
@@ -333,6 +351,7 @@ private:
   int resourceId;
   int dispatcherPortNumber;
   const std::string &dispatcherHostname;
+  int provisionedResources; // all resources in the pool
 
   const ElasticityManager &elasticityManager;
 };
