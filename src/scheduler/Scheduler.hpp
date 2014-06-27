@@ -250,6 +250,7 @@ public:
 
   void deprovisionResource() {
     LOG(debug) << "Removing resource from pool";
+    resPool.wait_pop_back();
   }
 
 private:
