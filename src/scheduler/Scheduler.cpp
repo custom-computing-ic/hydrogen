@@ -30,7 +30,7 @@ bool resPtrEQ(const Resource &lhs, const boost::shared_ptr<Resource> &rhs) {
 
 void Scheduler::claimResources(JobResPairPtr elem) {
   boost::lock_guard<boost::mutex> lk(resPoolMtx);
-  LOG(debug) << "resPool[" << resPool->size() << "]\t";
+  // LOG(debug) << "resPool[" << resPool->size() << "]\t";
   ResourceListPtr r = std::get<1>(*elem);
   for (auto rit = r->begin(); rit != r->end(); rit++) {
     auto remove =
@@ -38,7 +38,7 @@ void Scheduler::claimResources(JobResPairPtr elem) {
                    std::bind(resPtrEQ, *rit, std::placeholders::_1));
     resPool->erase(remove);
   }
-  LOG(debug) << "resPool[" << resPool->size() << "]";
+  // LOG(debug) << "resPool[" << resPool->size() << "]";
 }
 
 void Scheduler::returnResources(ResourceListPtr res) {
@@ -53,8 +53,8 @@ bc::duration<double> Scheduler::estimateExecutionTime(JobPtr j) {
   double milliseconds = (double)j->getReq()->predictedTimeMillis;
   bc::duration<double, boost::ratio<1, 1000> > milli_sec(milliseconds);
   auto micro_sec = bc::duration_cast<bc::microseconds>(milli_sec);
-  LOG(debug) << milli_sec.count() << "ms"
-             << ", " << micro_sec.count() << "us";
+  // LOG(debug) << milli_sec.count() << "ms"
+  //             << ", " << micro_sec.count() << "us";
   return milli_sec;
 }
 
@@ -79,10 +79,10 @@ Allocations *Scheduler::schedule(size_t choice, bool flag) {
   flag = false;
   Allocations *a = nullptr;
   if (resPool->size() <= 0) {
-    LOG(debug) << "No free resources.";
+    // LOG(debug) << "No free resources.";
   }
   if (readyQ->size() <= 0) {
-    LOG(debug) << "No waiting jobs.";
+    // LOG(debug) << "No waiting jobs.";
   }
 
   if (resPool->size() > 0 && readyQ->size() > 0) {
@@ -100,14 +100,14 @@ ResourceList Scheduler::allocate(Job &j, size_t max_res, size_t min_res) {
       resPool->pop_back();
     }
 
-    LOGF(debug, "Allocated %1% resources to %2% ") % allocatedResources.size() % j;
+    // LOGF(debug, "Allocated %1% resources to %2% ") % allocatedResources.size() % j;
   }
   return allocatedResources;
 }
 
 /* Server Handling */
 msg_t *Scheduler::handle_request(msg_t *request) {
-  LOGF(debug, "Scheduler recieved request msgID[%1%]") % request->msgId;
+  // LOGF(debug, "Scheduler recieved request msgID[%1%]") % request->msgId;
   msg_t *response;
   unsigned long sizeBytes = 0;
   switch (request->msgId) {
@@ -117,7 +117,7 @@ msg_t *Scheduler::handle_request(msg_t *request) {
   case MSG_OPTION_PRICE:
     sizeBytes = sizeof(msg_t) + request->expDataSizeBytes;
     response = (msg_t *)calloc(sizeBytes, 1);
-    LOG(debug) << "Handling MSG_OPTION_PRICE request";
+    // LOG(debug) << "Handling MSG_OPTION_PRICE request";
     concurrentHandler(*request, *response, sizeBytes);
     return response;
   case MSG_MOVING_AVG:
@@ -128,7 +128,7 @@ msg_t *Scheduler::handle_request(msg_t *request) {
       (int)bc::duration_cast<bc::milliseconds>(meanWaitTime).count();
     return response;
   default:
-    LOGF(error, "Unsuported msg_id %1%") % request->msgId;
+    // LOGF(error, "Unsuported msg_id %1%") % request->msgId;
   case MSG_DONE:
     return msg_ack();
   }
@@ -139,8 +139,8 @@ void Scheduler::runJob(JobResPairPtr j) {
   JobTuplePtr jobTuplePtr;
   std::tie(jobTuplePtr, resourceList) = *j;
   JobPtr jobPtr = std::get<0>(*jobTuplePtr);
-  LOG(debug) << "- Scheduler::runJob(" << *jobPtr << ")";
-  LOG(debug) << "- Allocated[" << resourceList->size() << "]";
+  // LOG(debug) << "- Scheduler::runJob(" << *jobPtr << ")";
+  // LOG(debug) << "- Allocated[" << resourceList->size() << "]";
   char packed_rids = 0x0;
 
   std::stringstream ss;
@@ -162,14 +162,14 @@ void Scheduler::runJob(JobResPairPtr j) {
       break;
     }
   }
-  LOG(debug) << "\t* Rids: { " << ss.str()  <<  "}";
+  // LOG(debug) << "\t* Rids: { " << ss.str()  <<  "}";
   const Resource& r = resourceList->front();
   const string &name = r.getName().c_str();
   int portNumber = r.getPort();
   msg_t *req = jobPtr->getReq();
 
-  LOG(debug) << "\t* Opening connection to: " << name << ":"
-             << portNumber << "";
+  // LOG(debug) << "\t* Opening connection to: " << name << ":"
+  //             << portNumber << "";
 
   Client c(portNumber, name);
   auto start = bc::system_clock::now();
@@ -185,7 +185,7 @@ void Scheduler::runJob(JobResPairPtr j) {
   char *buff = (char *)calloc(sizeBytes, 1);
 
   if (buff == NULL) {
-    LOG(debug) << "\tUnable to allocate result buffer";
+    // LOG(debug) << "\tUnable to allocate result buffer";
     c.stop();
     returnResources(resourceList);
     resourceList = nullptr;
@@ -194,10 +194,10 @@ void Scheduler::runJob(JobResPairPtr j) {
   msg_t *rsp = (msg_t *)buff;
 
   do {
-    LOG(debug) << "\t Reading reply, size: " << sizeBytes;
+    // LOG(debug) << "\t Reading reply, size: " << sizeBytes;
     c.read(buff, sizeBytes);
   } while (rsp->msgId != MSG_RESULT);
-  LOG(debug) << "\t* Got Result";
+  // LOG(debug) << "\t* Got Result";
   c.stop();
   auto end = bc::system_clock::now();
   jobPtr->setMeasuredExecutionTime(end - start);
@@ -207,13 +207,13 @@ void Scheduler::runJob(JobResPairPtr j) {
   resourceList = nullptr;
   std::get<0>(*jobTuplePtr)->setFinishTime(bc::system_clock::now());
   finishedQ->push_front(jobTuplePtr);
-  LOG(debug) << "Removing job from runQ";
+  // LOG(debug) << "Removing job from runQ";
   removeJobFromRunQ(jobPtr->getId());
 }
 
 void Scheduler::removeJobFromRunQ(int jid) {
   //  boost::lock_guard<boost::mutex> lk(runQMtx);
-  LOG(debug) << "removing job from runQ";
+  // LOG(debug) << "removing job from runQ";
   auto it = std::find_if(runQ->begin(), runQ->end(),
                          std::bind(&idEq, jid, std::placeholders::_1));
   if (it != runQ->end())
@@ -224,7 +224,7 @@ void Scheduler::schedLoop() {
   try {
     while (true) {
       readyQ->wait_not_empty();
-      LOG(debug) << "Got job in schedLoop";
+      // LOG(debug) << "Got job in schedLoop";
       auto start = bc::system_clock::now();
       Allocations *a = nullptr;
       if (resPool->size() > 0) {
@@ -242,18 +242,18 @@ void Scheduler::schedLoop() {
         a->serviceAllocations(*this);
         auto end = bc::system_clock::now();
         auto duration = bc::duration_cast<bc::microseconds>(end - start);
-        LOGF(debug, "Scheduling took: %1%") % duration.count();
+        // LOGF(debug, "Scheduling took: %1%") % duration.count();
         totalSchedTime += duration;
         numSchedules++;
       }
       delete a;
-      LOGF(debug, "MMode scheduled %1% job(s)") % numJobsScheduled;
+      // LOGF(debug, "MMode scheduled %1% job(s)") % numJobsScheduled;
       totalJobsScheduled += numJobsScheduled;
-      LOG(debug) << "\t(" << readyQ->size() << " Job(s) left)";
+      // LOG(debug) << "\t(" << readyQ->size() << " Job(s) left)";
     }
   }
   catch (std::exception &e) {
-    LOG(error) << "Scheduling thread - " << e.what();
+    // LOG(error) << "Scheduling thread - " << e.what();
   }
 }
 
@@ -261,11 +261,11 @@ void Scheduler::dispatcherLoop() {
   try {
     while (true) {
       auto job_pair_ptr = runQ->wait_pop_front();
-      LOG(debug) << "Dispatcher serving job...";
+      // LOG(debug) << "Dispatcher serving job...";
       JobTuplePtr jobTuplePtr = std::get<0>(*job_pair_ptr);
       auto jobInfo = std::get<1>(*jobTuplePtr);
       if (!jobInfo->isStarted()) {
-	LOG(debug) << "Start job on separate thread";
+	// LOG(debug) << "Start job on separate thread";
 	jobInfo->setStarted(true);
 	boost::thread jobThread (
 				boost::bind(&Scheduler::runJob, this, job_pair_ptr));
@@ -275,7 +275,7 @@ void Scheduler::dispatcherLoop() {
     }
   }
   catch (boost::thread_interrupted &) {
-    LOG(debug) << "\t* Dispatcher thread recieved interrupt";
+    // LOG(debug) << "\t* Dispatcher thread recieved interrupt";
     return;
   }
 }
@@ -289,13 +289,13 @@ void Scheduler::finishedLoop() {
       // sure what is deleting the jobs and causing a segfault
       auto j = finishedQ->wait_pop_front();
       updateStatistics(std::get<0>(*j));
-      LOG(debug) << "Updated statistics";
+      // LOG(debug) << "Updated statistics";
       std::get<1>(*j)->setFinished(true);
       std::get<2>(*j)->notify_all();
     }
   }
   catch (std::exception &e) {
-    LOG(debug) << "FinishedQ thread - " << e.what();
+    // LOG(debug) << "FinishedQ thread - " << e.what();
   }
 }
 
@@ -316,15 +316,15 @@ msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
   std::get<0>(*jobPtr)->setIssueTime(bc::system_clock::now());
   readyQ->push_front(jobPtr);
 
-  LOGF(debug, " New conn tid = %1%, Added job to readyQ %2%")
-    % boost::this_thread::get_id() % *nJob;
+  // LOGF(debug, " New conn tid = %1%, Added job to readyQ %2%")
+  //    % boost::this_thread::get_id() % *nJob;
 
   try {
     while (!jInfo->isFinished()) {
       jCondVar->wait(lock);
     }
     lock.unlock();
-    LOG(debug) << *nJob << " finished";
+    // LOG(debug) << *nJob << " finished";
     msg_t *rsp = nJob->getRsp();
     if (rsp == NULL) {
       // ERROR
@@ -339,7 +339,7 @@ msg_t *Scheduler::concurrentHandler(msg_t &request, msg_t &response,
     }
   }
   catch (boost::thread_interrupted &) {
-    LOG(debug) << "Concurrent handler interrupted";
+    // LOG(debug) << "Concurrent handler interrupted";
     return &response;
   }
 #ifdef DEBUG
@@ -363,7 +363,7 @@ JobResPairPtr Scheduler::removeJobFromReadyQ(const JobResPairPtr &j) {
 			     std::bind(&idEqrq, std::get<0>(*(std::get<0>(*j)))->getId(),
 				       std::placeholders::_1));
     if (elem != readyQ->end()) {
-      LOG(debug) << "Erasing job";
+      // LOG(debug) << "Erasing job";
       readyQ->erase(elem);
     }
   }
