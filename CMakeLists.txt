@@ -77,6 +77,9 @@ add_subdirectory (test)
 include_directories ("${PROJECT_SOURCE_DIR}/test/common")
 add_subdirectory (test/common)
 
+include_directories ("${PROJECT_SOURCE_DIR}/test/common")
+add_subdirectory (test/dispatcher)
+
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client Common)
 
 # Dispatcher Executable
@@ -121,7 +124,7 @@ target_link_libraries (MultiUserSingleJobTypeSmall ${EXTRA_LIBS} TestLib)
 add_executable (MultiUserSingleJobTypeLarge test/MultiUserSingleJobTypeLarge.cpp)
 target_link_libraries (MultiUserSingleJobTypeLarge ${EXTRA_LIBS} TestLib)
 
-add_executable (DispatcherTest test/DispatcherTest.cpp)
+add_executable (DispatcherTest test/dispatcher/DispatcherTest.cpp)
 target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
 
 add_executable (OptionPricing test/OptionPricingTest.cpp)
