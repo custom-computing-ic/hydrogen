@@ -138,7 +138,8 @@ target_link_libraries(ConcurrentDequeTest ${EXTRA_LIBS} TestLib)
 
 enable_testing ()
 
-# add_test ("DispatcherTest" DispatcherTest)
+add_test ("DispatcherTest" DispatcherTest)
+
 # add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
 # add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
 # add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
