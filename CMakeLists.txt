@@ -74,6 +74,9 @@ add_subdirectory (src/executor)
 include_directories ("${PROJECT_SOURCE_DIR}/test")
 add_subdirectory (test)
 
+include_directories ("${PROJECT_SOURCE_DIR}/test/common")
+add_subdirectory (test/common)
+
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client Common)
 
 # Dispatcher Executable
@@ -130,18 +133,25 @@ target_link_libraries (OptionPricingJlo ${EXTRA_LIBS} TestLib)
 add_executable (TerminateServer test/TerminateServer.cpp)
 target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
 
+add_executable(ConcurrentDequeTest test/common/ConcurrentDequeTest.cpp)
+target_link_libraries(ConcurrentDequeTest ${EXTRA_LIBS} TestLib)
+
 enable_testing ()
-add_test ("DispatcherTest" DispatcherTest)
-add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
-add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
-add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
-add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
-add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 
-add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
-add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
+# add_test ("DispatcherTest" DispatcherTest)
+# add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
+# add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
+# add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
+# add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
+# add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 
-add_test ("OptionPricing" OptionPricing)
-add_test ("OptionPricingJlo" OptionPricingJlo)
+# add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
+# add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
 
-add_test ("TerminateServer" TerminateServer)
+# add_test ("OptionPricing" OptionPricing)
+# add_test ("OptionPricingJlo" OptionPricingJlo)
+
+# add_test ("TerminateServer" TerminateServer)
+
+# Common tests
+add_test ("ConcurrentDequeTest" ConcurrentDequeTest)

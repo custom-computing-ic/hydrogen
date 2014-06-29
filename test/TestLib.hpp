@@ -3,13 +3,14 @@
 #ifndef _TESTLIB_H_
 #define _TESTLIB_H_
 
+#define ASSERT(x) status = status && (x);
+
 /** Moving average functions */
-/* sizes: tiny   - 150KB   
+/* sizes: tiny   - 150KB
  *        small  - 1.5MB
  *        medium - 15MB
  *        large  - 150MB
  */
-
 
 const int mavg_data_150K = 384 * 100;
 const int mavg_data_size = 384 * 100 * 10;
