@@ -20,8 +20,7 @@ int main() {
   int *exp = mavg_threept_exp(n, a);
 
   try {
-    const string& host = "localhost";
-    Client c(8112, host);
+    Client c(dispatcherPort, localhost);
     c.start();
 
     msg_t* msg = msg_moving_avg(n, 3, a);

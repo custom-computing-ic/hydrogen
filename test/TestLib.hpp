@@ -3,6 +3,12 @@
 #ifndef _TESTLIB_H_
 #define _TESTLIB_H_
 
+#include <string>
+
+const std::string localhost = "localhost";
+const int dispatcherPort = 8113;
+const int schedulerPort = 8112;
+
 #define ASSERT(x) status = status && (x);
 
 /** Moving average functions */
