@@ -13,8 +13,12 @@ void ElasticityManager::updateResourcePool(Scheduler &scheduler,
   double jloMetric = allocations.getJLOMetric();
   LOG(debug) << "JLOMetric: " << jloMetric;
 
+  double beta = 1;
   if (jloMetric < 0) {
     LOG(debug) << "JLO missed, adding resources" << endl;
     scheduler.provisionResource();
+  } else if (jloMetric > beta) {
+    LOG(debug) << "JLO exceeded, removing resources" << endl;
+    scheduler.deprovisionResource();
   }
 }

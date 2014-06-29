@@ -213,7 +213,7 @@ public:
   void updateUtilization(JobPtr j) {
     totBusyTime += j->getActualExecutionTime();
     auto tp = bc::system_clock::now();
-h    auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp - startTime);
+    auto totTimeMs = bc::duration_cast<bc::milliseconds>(tp - startTime);
     auto busyTimeMs = bc::duration_cast<bc::milliseconds>(totBusyTime);
     meanUtilization = (double)busyTimeMs.count() / (double)totTimeMs.count();
   }

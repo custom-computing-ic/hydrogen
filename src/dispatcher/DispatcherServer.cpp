@@ -156,7 +156,7 @@ msg_t* DispatcherServer::handle_request(msg_t* request) {
 			    &res,
 			    request->nDfes());
      auto end = bc::system_clock::now();
-     LOG(debug) << "   " << bc::duration_cast<bc::milliseconds>(end - start).count();
+     LOG(debug) << "Dispatcher took: " << bc::duration_cast<bc::milliseconds>(end - start).count();
 
     // write the response
     size_t sizeBytes = sizeof(msg_t) + sizeof(double);
