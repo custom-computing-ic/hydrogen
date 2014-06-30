@@ -5,7 +5,7 @@ sleep 0.2
 echo "Running test: "
 for i in {1..10}
 do
-   CLIENT_ID=1 ./MovingAverageOneDfe 1> mav.out 2> mav.err &
+   CLIENT_ID=1 ./MovingAverageOneDfeSmall 1> mav.out 2> mav.err &
 #   sleep 0.1
 done
 echo -n "["
@@ -24,4 +24,5 @@ do
   echo -n "."
 done
 echo "]"
- ./TerminateServer
+CLIENT_ID=1 ./TerminateServer
+../scripts/killprocs.sh
