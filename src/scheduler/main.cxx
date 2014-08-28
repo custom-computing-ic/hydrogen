@@ -4,10 +4,13 @@
 #include <iostream>
 #include <cstdlib>
 #include <csignal>
+#include <Logging.hpp>
 
 using namespace std;
 
 int main(int argc, char** argv) {
+
+  initLogging("scheduler.log");
 
   if (argc < 3) {
     cout << "Usage ./scheduler <portNumber> <dispatcherPortNumber>" << endl;
@@ -16,8 +19,15 @@ int main(int argc, char** argv) {
 
   int dispatcherPortNumber = atoi(argv[2]);
 
-  const string& localhost = string("localhost");
-  Scheduler s(argv[1], localhost, dispatcherPortNumber, localhost);
+  const string& localhost = "localhost";
+
+  auto elasticityManager = ElasticityManager();
+
+  Scheduler s(elasticityManager,
+	      argv[1],
+	      localhost,
+	      dispatcherPortNumber,
+	      localhost);
 
   /* Add some scheduling algorithms */
   /* 0 */

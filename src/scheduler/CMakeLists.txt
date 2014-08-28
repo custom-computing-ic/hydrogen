@@ -1,3 +1,7 @@
-add_library(Scheduler Scheduler.cpp algs.cpp Allocations.cpp)
+add_library(Scheduler
+	Scheduler.cpp
+	algs.cpp
+	Allocations.cpp
+	ElasticityManager.cpp)
 
-target_link_libraries (Scheduler Common)
+target_link_libraries (Scheduler Common boost_log)

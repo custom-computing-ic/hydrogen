@@ -4,26 +4,25 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/locks.hpp>
 
+#include <concurrent_deque.hpp>
+
 class Allocations;
 class Scheduler;
 class Job;
 class Resource;
 
-/* Deleter for boost::unqiue_ptr 
- * From - http://stackoverflow.com/questions/3873750/boost-unique-ptr-deletor 
+/* Deleter for boost::unqiue_ptr
+ * From - http://stackoverflow.com/questions/3873750/boost-unique-ptr-deletor
  */
-template<typename T> struct Deleter {
-      void operator()(T *p)
-            {
-                      delete p;
-                          }
+template <typename T> struct Deleter {
+  void operator()(T *p) { delete p; }
 };
 struct JobInfo {
   bool finished;
   bool started;
   boost::mutex finishedLock;
   boost::mutex startedLock;
-  bool isFinished() { 
+  bool isFinished() {
     boost::lock_guard<boost::mutex> l1(finishedLock);
     return finished;
   }
@@ -31,7 +30,7 @@ struct JobInfo {
     boost::lock_guard<boost::mutex> l1(finishedLock);
     finished = p;
   }
-  bool isStarted() { 
+  bool isStarted() {
     boost::lock_guard<boost::mutex> l1(startedLock);
     return started;
   }
@@ -41,38 +40,39 @@ struct JobInfo {
   }
 };
 /* Base Types */
-//typedef boost::unique_ptr<Resource,Deleter<Resource>> ResourcePtr;
+// typedef boost::unique_ptr<Resource,Deleter<Resource>> ResourcePtr;
 typedef boost::shared_ptr<Resource> ResourcePtr;
-//typedef std::unique_ptr<Job> JobPtr;
+// typedef std::unique_ptr<Job> JobPtr;
 typedef boost::shared_ptr<Job> JobPtr;
 typedef boost::shared_ptr<struct JobInfo> JobInfoPtr;
 typedef boost::shared_ptr<boost::condition_variable> CondVarPtr;
 typedef std::tuple<JobPtr, JobInfoPtr, CondVarPtr> JobTuple;
 typedef std::shared_ptr<JobTuple> JobTuplePtr;
-typedef std::deque<Resource> ResourceList;   //TODO: change this maybe?
+typedef std::deque<Resource> ResourceList; // TODO: change this maybe?
 typedef std::shared_ptr<ResourceList> ResourceListPtr;
-typedef std::pair<JobTuplePtr,ResourceListPtr> JobResPair;
+typedef std::pair<JobTuplePtr, ResourceListPtr> JobResPair;
 typedef std::shared_ptr<JobResPair> JobResPairPtr;
+
 /* Collections of Bases */
-typedef std::deque<ResourcePtr> ResourcePool;
+typedef concurrent_deque<ResourcePtr> ResourcePool;
 typedef std::deque<JobTuplePtr> JobQueue;
-typedef std::deque<JobResPairPtr>  JobResPairQ;
+typedef concurrent_deque<JobTuplePtr> ConcurrentJobQueue;
+typedef std::deque<JobResPairPtr> JobResPairQ;
+typedef concurrent_deque<JobResPairPtr> ConcurrentJobResPairQ;
 
 /* Pointers to Collections */
-typedef std::shared_ptr<JobQueue>     JobQueuePtr;
+typedef std::shared_ptr<JobQueue> JobQueuePtr;
+typedef std::shared_ptr<ConcurrentJobQueue> ConcurrentJobQueuePtr;
 typedef std::shared_ptr<ResourcePool> ResourcePoolPtr;
-typedef std::shared_ptr<JobResPairQ>  JobResPairQPtr;
-
+typedef std::shared_ptr<JobResPairQ> JobResPairQPtr;
+typedef std::shared_ptr<ConcurrentJobResPairQ> ConcurrentJobResPairQPtr;
 
 /* Algorithm Base and Collection Types */
-typedef std::function<Allocations* (Scheduler &)> AlgType;
+typedef std::function<Allocations *(Scheduler &)> AlgType;
 typedef std::vector<AlgType> AlgVecType;
-typedef std::function<float(JobResPair&) > CostFunctionType;
+typedef std::function<float(JobResPair &)> CostFunctionType;
 
-
-
-
-// Simple data structure to indicate which Q an event occured on with atomic 
+// Simple data structure to indicate which Q an event occured on with atomic
 // get/set methods.
 struct QInfo {
   bool readyQEvent;
@@ -101,7 +101,7 @@ struct QInfo {
   void setReadyQStatus(bool p) {
     boost::lock_guard<boost::mutex> l1(readyQStatusLock);
     readyQEvent = p;
-  } 
+  }
   void setRunQStatus(bool p) {
     boost::lock_guard<boost::mutex> l2(runQStatusLock);
     runQEvent = p;
@@ -111,14 +111,6 @@ struct QInfo {
     boost::lock_guard<boost::mutex> l3(finishedQStatusLock);
     finishedQEvent = p;
   }
-
 };
-
-
-
-
-
-
-
 
 #endif

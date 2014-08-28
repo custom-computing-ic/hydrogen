@@ -2,16 +2,18 @@
 #include <Client.hpp>
 #include <message.hpp>
 
+#include <boost/current_function.hpp>
+
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
+#include <Logging.hpp>
+
 using namespace std;
 
 void movingAverage(size_t n, size_t size, int* data, int* out) {
-  cout << "(DEBUG): Send job :: movingAverage" << endl;
-
   msg_t *msg = msg_moving_avg(n, size, data);
 
   const string& name = "localhost";
@@ -24,7 +26,7 @@ void movingAverage(size_t n, size_t size, int* data, int* out) {
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
+    LOG(debug) << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
@@ -47,7 +49,7 @@ void optionPricing(double strike,
 		   int numPathGroup,
 		   double T,
 		   double *out) {
-  cout << "(DEBUG): Send job :: optionPricing" << endl;
+  LOG(debug) << "Send optionPricing request ";
 
   msg_t *msg = msg_option_pricing(strike,
 				  sigma,
@@ -67,12 +69,67 @@ void optionPricing(double strike,
          << " is not set!\n(ERROR): Using default port 8111\n";
   } else {
     client_id = atoi(clientIdCh);
-    cout << "(DEBUG):\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
+    LOG(debug) << "\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
          << client_id + 8110 << "\n";
   }
   /* hack to make the default port 8111 and client ports 8112-8120 */
   portNumber += client_id > 0 ? client_id -1 : client_id;
   msg->clientId = client_id;
+
+  Client c(portNumber, name);
+  c.start();
+  c.send(msg);
+  c.getResult(out, sizeof(double));
+  c.stop();
+
+  free(msg);
+}
+
+/** For running without executor and with predicted and target
+    execution times */
+void optionPricingJlo(double strike,
+		      double sigma,
+		      double timestep,
+		      int numMaturity,
+		      int paraNode,
+		      int numPathGroup,
+		      double T,
+		      double *out,
+		      int predictedTimeMillis,
+		      int targetExecutionTimeMillis) {
+  LOG(debug) << "Send optionPricing request ";
+
+  msg_t *msg = msg_option_pricing(strike,
+				  sigma,
+				  timestep,
+				  numMaturity,
+				  paraNode,
+				  numPathGroup,
+				  T);
+
+  const string& name = "localhost";
+  int client_id = 0;
+  int portNumber = 8111;
+
+  char* clientIdCh = getenv("CLIENT_ID");
+  if (clientIdCh == NULL) {
+    cout << "(ERROR): ClientAPI Call- Environmental Variable CLIENT_ID"
+         << " is not set!\n(ERROR): Using default port 8111\n";
+  } else {
+    client_id = atoi(clientIdCh);
+    LOG(debug) << "\t- CLIENT_ID= " << clientIdCh << "\tConnecting to "
+         << client_id + 8110 << "\n";
+  }
+  /* hack to make the default port 8111 and client ports 8112-8120 */
+  portNumber += client_id > 0 ? client_id -1 : client_id;
+  msg->clientId = client_id;
+
+  msg->priority = 1;
+  msg->avg_wt = 3;
+  msg->predictedTimeMillis = predictedTimeMillis;
+  msg->resourceType = DFE;
+  msg->targetExecutionTimeMillis = targetExecutionTimeMillis;
+
   Client c(portNumber, name);
   c.start();
   c.send(msg);
@@ -83,7 +140,7 @@ void optionPricing(double strike,
 }
 
 void TerminateServer() {
-  cout << "(DEBUG): Send job :: Terminate Server" << endl;
+  LOG(debug) << "Start";
 
   msg_t *msg = msg_empty();
 

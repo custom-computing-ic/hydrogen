@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <csignal>
+#include <Logging.hpp>
 
 using namespace std;
 
@@ -13,6 +14,8 @@ int main(int argc, char** argv) {
     cout << "Usage ./dispatcher <portNumber>" << endl;
     return 1;
   }
+
+  initLogging("dispatcher.log");
 
   int portnumber = atoi(argv[1]);
   const string& localhost = string("localhost");

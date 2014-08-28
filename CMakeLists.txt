@@ -1,17 +1,27 @@
 cmake_minimum_required (VERSION 2.6)
 project (elastic-dfe)
-SET (BOOST_MIN_VERSION "1.49.0")
 
-# XXX This is a really bad hack...
+SET (BOOST_ROOT "/usr/local/boost_1_55_0")
+SET (BOOST_MIN_VERSION "1.55.0")
+SET (BOOST_INCLUDEDIR "/usr/local/boost_1_55_0/include")
+SET (BOOST_LIBRARYDIR "/usr/local/boost_1_55_0/lib")
 
+ADD_DEFINITIONS(-DBOOST_LOG_DYN_LINK)
+SET(Boost_USE_STATIC_LIBS ON)
 FIND_PACKAGE(Boost ${BOOST_MIN_VERSION} REQUIRED)
 if (NOT Boost_FOUND)
-  message(FATAL_ERROR "Fatal error: Boost (version >= 1.49) required.")
+  message(FATAL_ERROR "Fatal error: Boost (version >= 1.55) required.")
+else()
+  message(STATUS "Setting up boost")
+  message(STATUS "   ${Boost_INCLUDE_DIRS}")
+  message(STATUS "   ${Boost_LIBRARY_DIRS}")
+  include_directories(${Boost_INCLUDE_DIRS})
+  link_directories(${Boost_LIBRARY_DIRS})
 endif (NOT Boost_FOUND)
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
-  message(STATUS "OpenMP supported, compiling parllel bitstreams!")
+  message(STATUS "OpenMP supported, compiling parallel bitstreams!")
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
@@ -49,8 +59,6 @@ endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/src/common")
 add_subdirectory (src/common)
 
-
-
 include_directories ("${PROJECT_SOURCE_DIR}/src/dispatcher")
 add_subdirectory (src/dispatcher)
 
@@ -67,6 +75,8 @@ include_directories ("${PROJECT_SOURCE_DIR}/test")
 add_subdirectory (test)
 
 set (EXTRA_LIBS ${EXTRA_LIBS} Dispatcher Scheduler Client Common)
+add_subdirectory (test/common)
+add_subdirectory (test/dispatcher)
 
 # Dispatcher Executable
 add_executable (dispatcher src/dispatcher/main.cxx)
@@ -110,26 +120,32 @@ target_link_libraries (MultiUserSingleJobTypeSmall ${EXTRA_LIBS} TestLib)
 add_executable (MultiUserSingleJobTypeLarge test/MultiUserSingleJobTypeLarge.cpp)
 target_link_libraries (MultiUserSingleJobTypeLarge ${EXTRA_LIBS} TestLib)
 
-add_executable (DispatcherTest test/DispatcherTest.cpp)
-target_link_libraries (DispatcherTest ${EXTRA_LIBS} TestLib)
-
 add_executable (OptionPricing test/OptionPricingTest.cpp)
 target_link_libraries (OptionPricing ${EXTRA_LIBS} TestLib)
+
+add_executable (OptionPricingJlo test/OptionPricingJloTest.cpp)
+target_link_libraries (OptionPricingJlo ${EXTRA_LIBS} TestLib)
 
 add_executable (TerminateServer test/TerminateServer.cpp)
 target_link_libraries (TerminateServer ${EXTRA_LIBS} TestLib)
 
-
 enable_testing ()
+
 add_test ("DispatcherTest" DispatcherTest)
-add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
-add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
-add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
-add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
-add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 
-add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
-add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
+# add_test ("MovingAverageOneDfe" MovingAverageOneDfe)
+# add_test ("MovingAverageOneDfeSmall" MovingAverageOneDfeSmall)
+# add_test ("MovingAverageOneDfeMedium" MovingAverageOneDfeMedium)
+# add_test ("MovingAverageOneDfeLarge" MovingAverageOneDfeLarge)
+# add_test ("MultiUserSingleJobType" MultiUserSingleJobType)
 
-add_test ("OptionPricing" OptionPricing)
-add_test ("TerminateServer" TerminateServer)
+# add_test ("MultiUserSingleJobTypeSmall" MultiUserSingleJobTypeSmall)
+# add_test ("MultiUserSingleJobTypeLarge" MultiUserSingleJobTypeLarge)
+
+# add_test ("OptionPricing" OptionPricing)
+# add_test ("OptionPricingJlo" OptionPricingJlo)
+
+# add_test ("TerminateServer" TerminateServer)
+
+# Common tests
+add_test ("ConcurrentDequeTest" ConcurrentDequeTest)

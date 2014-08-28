@@ -20,7 +20,7 @@ int main() {
   int *exp = mavg_threept_exp(n, a);
 
   try {
-    Client c(8112, "localhost");
+    Client c(dispatcherPort, localhost);
     c.start();
 
     msg_t* msg = msg_moving_avg(n, 3, a);
